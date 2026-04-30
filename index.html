@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldPulse — Sales Activity Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── SPLASH / LOADER ── -->
+  <div id="splash">
+    <div class="splash-inner">
+      <div class="logo-mark">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.3"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+      </div>
+      <h1 class="splash-title">FieldPulse</h1>
+      <p class="splash-sub">Sales Activity Tracker</p>
+      <div class="splash-bar"><div class="splash-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ── APP SHELL ── -->
+  <div id="app" class="hidden">
+
+    <!-- Sidebar Nav -->
+    <nav id="sidebar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+        <span>FieldPulse</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#" class="nav-item active" data-page="dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Dashboard
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="log">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+          Log Activity
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="history">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          History
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="questionnaire">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Questionnaire
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a></li>
+      </ul>
+      <div class="nav-footer">
+        <div class="user-badge" id="userBadge">
+          <div class="avatar" id="userAvatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">Guest</span>
+            <span class="user-role">Sales Rep</span>
+          </div>
+        </div>
+        <button class="sign-out-btn" id="signOutBtn">Sign out</button>
+      </div>
+    </nav>
+
+    <!-- Mobile header -->
+    <header id="mobileHeader">
+      <button id="menuToggle" class="menu-toggle">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="mobile-brand">FieldPulse</span>
+      <div class="avatar sm" id="mobileAvatar">?</div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main">
+
+      <!-- ── DASHBOARD PAGE ── -->
+      <section id="page-dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Dashboard</h2>
+            <p class="page-sub">Your sales pulse at a glance</p>
+          </div>
+          <div class="header-actions">
+            <span class="date-chip" id="todayDate">—</span>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card accent">
+            <div class="stat-label">Today's Activities</div>
+            <div class="stat-value" id="statToday">0</div>
+            <div class="stat-icon">📍</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Week</div>
+            <div class="stat-value" id="statWeek">0</div>
+            <div class="stat-icon">📅</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Logged</div>
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-icon">📊</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Locations Visited</div>
+            <div class="stat-value" id="statLocations">0</div>
+            <div class="stat-icon">🗺️</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Recent Activity</h3>
+              <a href="#" class="link-btn" data-page="history">See all →</a>
+            </div>
+            <div class="activity-feed" id="recentFeed">
+              <div class="empty-state">No activities yet. <a href="#" data-page="log">Log one →</a></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Activity Map</h3>
+              <span class="badge" id="mapBadge">0 pins</span>
+            </div>
+            <div id="dashMap" class="map-container"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── LOG ACTIVITY PAGE ── -->
+      <section id="page-log" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Log Activity</h2>
+            <p class="page-sub">Record a new sales touchpoint</p>
+          </div>
+        </div>
+        <div class="log-layout">
+          <div class="card log-form-card">
+            <div class="geo-strip" id="geoStrip">
+              <div class="geo-icon">📡</div>
+              <div class="geo-text">
+                <strong id="geoStatus">Acquiring location…</strong>
+                <span id="geoCoords">—</span>
+              </div>
+              <button class="geo-refresh" id="geoRefresh" title="Refresh location">
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+
+            <div id="logMap" class="map-container sm"></div>
+
+            <form id="logForm" novalidate>
+              <div class="form-group">
+                <label for="clientName">Client / Account Name <span class="req">*</span></label>
+                <input type="text" id="clientName" placeholder="e.g. Acme Corp" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="activityType">Activity Type <span class="req">*</span></label>
+                  <select id="activityType" required>
+                    <option value="">Select…</option>
+                    <option>Cold Call</option>
+                    <option>Follow-up Visit</option>
+                    <option>Demo</option>
+                    <option>Contract Signing</option>
+                    <option>Site Survey</option>
+                    <option>Relationship Building</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="outcome">Outcome</label>
+                  <select id="outcome">
+                    <option value="">Select…</option>
+                    <option>Interested</option>
+                    <option>Not Interested</option>
+                    <option>Follow-up Required</option>
+                    <option>Closed Won</option>
+                    <option>Closed Lost</option>
+                    <option>No Decision</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Dynamic questionnaire fields injected here -->
+              <div id="dynamicFields"></div>
+
+              <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" rows="4" placeholder="Key talking points, next steps…"></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="clearFormBtn">Clear</button>
+                <button type="submit" class="btn primary" id="submitBtn">
+                  <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  Save Activity
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── HISTORY PAGE ── -->
+      <section id="page-history" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Activity History</h2>
+            <p class="page-sub">All logged field activities</p>
+          </div>
+          <div class="header-actions">
+            <input type="search" id="histSearch" placeholder="Search…" class="search-input" />
+            <select id="histFilter" class="filter-select">
+              <option value="">All Types</option>
+              <option>Cold Call</option>
+              <option>Follow-up Visit</option>
+              <option>Demo</option>
+              <option>Contract Signing</option>
+              <option>Site Survey</option>
+              <option>Relationship Building</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="histTable">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Client</th>
+                  <th>Type</th>
+                  <th>Outcome</th>
+                  <th>Location</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="histBody">
+                <tr><td colspan="6" class="empty-td">No activities logged yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Detail modal -->
+        <div id="detailModal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel">
+            <button class="modal-close" id="modalClose">✕</button>
+            <h3 id="modalTitle">Activity Detail</h3>
+            <div id="modalBody"></div>
+            <div id="modalMap" class="map-container sm" style="margin-top:1rem"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── QUESTIONNAIRE PAGE ── -->
+      <section id="page-questionnaire" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Questionnaire Builder</h2>
+            <p class="page-sub">Design custom questions for activity logs</p>
+          </div>
+          <button class="btn primary" id="addQuestionBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Question
+          </button>
+        </div>
+
+        <div class="card">
+          <p class="helper-text">Questions defined here will appear in the <strong>Log Activity</strong> form, letting your team collect structured data on every visit.</p>
+          <div id="questionList" class="question-list">
+            <div class="empty-state">No custom questions yet. Click <strong>Add Question</strong> to start.</div>
+          </div>
+        </div>
+
+        <!-- Add/Edit Question Modal -->
+        <div id="qModal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel">
+            <button class="modal-close" id="qModalClose">✕</button>
+            <h3 id="qModalTitle">New Question</h3>
+            <form id="qForm" novalidate>
+              <div class="form-group">
+                <label>Question Label <span class="req">*</span></label>
+                <input type="text" id="qLabel" placeholder="e.g. Was the decision maker present?" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Field Type <span class="req">*</span></label>
+                  <select id="qType" required>
+                    <option value="text">Short Text</option>
+                    <option value="textarea">Long Text</option>
+                    <option value="select">Dropdown</option>
+                    <option value="radio">Multiple Choice</option>
+                    <option value="checkbox">Checkboxes</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Required?</label>
+                  <select id="qRequired">
+                    <option value="false">Optional</option>
+                    <option value="true">Required</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" id="optionsGroup" style="display:none">
+                <label>Options <span class="req">*</span> <small>(one per line)</small></label>
+                <textarea id="qOptions" rows="4" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="qModalCancel">Cancel</button>
+                <button type="submit" class="btn primary">Save Question</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS PAGE ── -->
+      <section id="page-settings" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Settings</h2>
+            <p class="page-sub">Configure your FieldPulse workspace</p>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <div class="card">
+            <h3 class="card-section-title">Firebase Configuration</h3>
+            <p class="helper-text">Enter your Firebase project credentials. These are stored locally in your browser.</p>
+            <form id="firebaseForm" novalidate>
+              <div class="form-group">
+                <label>API Key <span class="req">*</span></label>
+                <input type="text" id="fbApiKey" placeholder="AIza…" />
+              </div>
+              <div class="form-group">
+                <label>Auth Domain <span class="req">*</span></label>
+                <input type="text" id="fbAuthDomain" placeholder="your-app.firebaseapp.com" />
+              </div>
+              <div class="form-group">
+                <label>Project ID <span class="req">*</span></label>
+                <input type="text" id="fbProjectId" placeholder="your-project-id" />
+              </div>
+              <div class="form-group">
+                <label>Storage Bucket</label>
+                <input type="text" id="fbStorageBucket" placeholder="your-app.appspot.com" />
+              </div>
+              <div class="form-group">
+                <label>Messaging Sender ID</label>
+                <input type="text" id="fbMessagingSenderId" placeholder="123456789" />
+              </div>
+              <div class="form-group">
+                <label>App ID <span class="req">*</span></label>
+                <input type="text" id="fbAppId" placeholder="1:…:web:…" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Save & Connect</button>
+              </div>
+              <div id="fbStatus" class="status-chip hidden"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Profile</h3>
+            <form id="profileForm" novalidate>
+              <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="profileName" placeholder="Your name" />
+              </div>
+              <div class="form-group">
+                <label>Team / Region</label>
+                <input type="text" id="profileTeam" placeholder="e.g. West Coast" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Update Profile</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Data Management</h3>
+            <p class="helper-text">Danger zone — these actions cannot be undone.</p>
+            <div class="danger-actions">
+              <button class="btn danger" id="exportBtn">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+              </button>
+              <button class="btn danger" id="clearDataBtn">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                Clear All Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── AUTH WALL ── -->
+  <div id="authWall" class="hidden">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+        <h1>FieldPulse</h1>
+      </div>
+      <p class="auth-tagline">Sales Activity Tracker</p>
+      <div id="authTabs" class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Sign In</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+      <form id="authForm" novalidate>
+        <div class="form-group" id="regNameGroup" style="display:none">
+          <label>Full Name</label>
+          <input type="text" id="authName" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="authEmail" placeholder="you@company.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="authPassword" placeholder="••••••••" required minlength="6" />
+        </div>
+        <div id="authError" class="auth-error hidden"></div>
+        <button type="submit" class="btn primary full" id="authSubmitBtn">Sign In</button>
+      </form>
+      <p class="auth-note">Configure Firebase in Settings after first sign-in, or use the demo mode (data stored locally).</p>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toastContainer"></div>
+
+  <!-- Firebase SDKs (loaded dynamically) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
