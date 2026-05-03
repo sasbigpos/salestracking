@@ -1096,6 +1096,1645 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script type="module" src="js/app.js"></script>
+  <script>
+// ── Utils ──
+
+// utils.js — Shared helpers
+
+function toast(message, type = 'ok') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diffDays = Math.floor((now - d) / 86400000);
+  if (diffDays === 0) return 'Today ' + d.toLocaleTimeString('en-MY', { hour:'2-digit', minute:'2-digit' });
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return d.toLocaleDateString('en-MY', { weekday: 'short' });
+  return d.toLocaleDateString('en-MY', { day:'numeric', month:'short' });
+}
+
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleString('en-MY', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function outcomeClass(outcome) {
+  if (!outcome) return 'neutral';
+  const o = outcome.toLowerCase();
+  if (o.includes('won') || o.includes('closed w')) return 'won';
+  if (o.includes('lost') || o.includes('not interested')) return 'lost';
+  if (o.includes('follow')) return 'follow';
+  return 'neutral';
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── Geo ──
+
+// geo.js — Geolocation service
+
+class GeoService {
+  getCurrentPosition(options = {}) {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported by this browser'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, err => {
+        const msgs = {
+          1: 'Location permission denied. Please allow in browser settings.',
+          2: 'Position unavailable. Check GPS/network.',
+          3: 'Location request timed out.',
+        };
+        reject(new Error(msgs[err.code] || 'Unknown geolocation error'));
+      }, {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 30000,
+        ...options
+      });
+    });
+  }
+
+  watchPosition(callback, errorCallback) {
+    if (!navigator.geolocation) return null;
+    return navigator.geolocation.watchPosition(callback, errorCallback, {
+      enableHighAccuracy: true, maximumAge: 15000
+    });
+  }
+
+  clearWatch(id) {
+    if (id) navigator.geolocation.clearWatch(id);
+  }
+
+  // Haversine distance in km
+  distance(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+}
+
+
+// ── Maps ──
+
+// maps.js — Leaflet map helpers
+
+let leafletLoaded = false;
+const markers = new WeakMap();
+
+const MapService = {
+  async loadLeaflet() {
+    if (leafletLoaded || window.L) { leafletLoaded = true; return; }
+    await Promise.all([
+      loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
+      loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
+    ]);
+    leafletLoaded = true;
+  },
+
+  createMap(elementId, lat = 3.139, lng = 101.686, zoom = 11) {
+    const el = document.getElementById(elementId);
+    if (!el) return null;
+    // Destroy existing
+    if (el._leaflet_id) {
+      try { el._map?.remove(); } catch (_) {}
+    }
+    const map = L.map(elementId, { zoomControl: true, attributionControl: true }).setView([lat, lng], zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+    el._map = map;
+    markers.set(map, []);
+    return map;
+  },
+
+  addMarker(map, lat, lng, popupHtml = '') {
+    if (!map || !L) return null;
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:14px;height:14px;background:var(--accent,#f5a623);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    });
+    const m = L.marker([lat, lng], { icon }).addTo(map);
+    if (popupHtml) m.bindPopup(popupHtml);
+    const list = markers.get(map) || [];
+    list.push(m);
+    markers.set(map, list);
+    return m;
+  },
+
+  clearMarkers(map) {
+    if (!map) return;
+    const list = markers.get(map) || [];
+    list.forEach(m => { try { m.remove(); } catch (_) {} });
+    markers.set(map, []);
+  },
+
+  setView(map, lat, lng, zoom = 15) {
+    if (map) map.setView([lat, lng], zoom);
+  },
+
+  fitMarkers(map) {
+    const list = markers.get(map) || [];
+    if (!list.length || !map) return;
+    const group = L.featureGroup(list);
+    map.fitBounds(group.getBounds().pad(0.2));
+  },
+
+  invalidate(map) {
+    if (map) setTimeout(() => map.invalidateSize(), 100);
+  }
+};
+
+function loadCSS(href) {
+  return new Promise(resolve => {
+    if (document.querySelector(`link[href="${href}"]`)) { resolve(); return; }
+    const el = document.createElement('link');
+    el.rel = 'stylesheet'; el.href = href;
+    el.onload = resolve; el.onerror = resolve;
+    document.head.appendChild(el);
+  });
+}
+
+function loadScript(src) {
+  return new Promise(resolve => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = resolve; el.onerror = resolve;
+    document.head.appendChild(el);
+  });
+}
+
+
+// ── DB ──
+
+// db.js — Database abstraction (LocalStorage + Firestore)
+
+const KEYS = {
+  activities: 'fp_activities',
+  questions:  'fp_questions',
+  config:     'fp_firebase_config',
+  profile:    'fp_profile',
+  user:       'fp_user',
+};
+
+class DB {
+  constructor() {
+    this._firestore = null;
+    this._app = null;
+    this._fs  = null;
+  }
+
+  async init() {
+    const cfg = this.getLocalConfig();
+    if (cfg?.apiKey) {
+      try { await this.connectFirestore(cfg); } catch (_) {}
+    }
+  }
+
+  // ── Firestore Connection ──────────────────────
+  async connectFirestore(config) {
+    const { initializeApp, getApps }
+      = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getFirestore, collection, addDoc, getDocs, deleteDoc, query,
+            where, orderBy, doc, setDoc, getDoc, updateDoc }
+      = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const existing = getApps().find(a => a.name === 'fieldpulse');
+    this._app       = existing || initializeApp(config, 'fieldpulse');
+    this._firestore = getFirestore(this._app);
+    this._fs        = { collection, addDoc, getDocs, deleteDoc, query, where, orderBy, doc, setDoc, getDoc, updateDoc };
+    const testQ = query(collection(this._firestore, 'activities'), where('_test','==',true));
+    await getDocs(testQ);
+    console.log('[DB] Firestore connected');
+  }
+
+  get isOnline() { return !!this._firestore; }
+
+  // ── Activities ────────────────────────────────
+  async addActivity(activity) {
+    activity.id = activity.id || `local_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    if (this.isOnline) {
+      const ref = await this._fs.addDoc(this._fs.collection(this._firestore, 'activities'), activity);
+      activity.firestoreId = ref.id;
+    }
+    const all = this._localGet(KEYS.activities);
+    all.push(activity);
+    this._localSet(KEYS.activities, all);
+    return activity;
+  }
+
+  async getActivities(userId = null) {
+    if (this.isOnline) {
+      try {
+        const { collection, getDocs, orderBy, query } = this._fs;
+        const col = collection(this._firestore, 'activities');
+        const q   = query(col, orderBy('timestamp', 'desc'));
+        const snap = await getDocs(q);
+        const remote = snap.docs.map(d => ({ ...d.data(), firestoreId: d.id }));
+        const fids = new Set(remote.map(a => a.firestoreId));
+        const local = this._localGet(KEYS.activities).filter(a => !a.firestoreId || !fids.has(a.firestoreId));
+        let all = [...remote, ...local].sort((a,b) => b.timestamp - a.timestamp);
+        if (userId) all = all.filter(a => a.userId === userId);
+        return all;
+      } catch (_) {}
+    }
+    let all = [...this._localGet(KEYS.activities)].sort((a,b) => b.timestamp - a.timestamp);
+    if (userId) all = all.filter(a => a.userId === userId);
+    return all;
+  }
+
+  async deleteActivity(id) {
+    const all  = this._localGet(KEYS.activities);
+    const item = all.find(a => a.id === id);
+    this._localSet(KEYS.activities, all.filter(a => a.id !== id));
+    if (this.isOnline && item?.firestoreId) {
+      const { doc, deleteDoc } = this._fs;
+      await deleteDoc(doc(this._firestore, 'activities', item.firestoreId));
+    }
+  }
+
+  async clearActivities() {
+    this._localSet(KEYS.activities, []);
+    if (this.isOnline) {
+      const { collection, getDocs, deleteDoc, doc } = this._fs;
+      const snap = await getDocs(collection(this._firestore, 'activities'));
+      await Promise.all(snap.docs.map(d => deleteDoc(doc(this._firestore, 'activities', d.id))));
+    }
+  }
+
+  // ── User roles (Firestore) ─────────────────────
+  async getUserRole(uid) {
+    if (!this.isOnline) return null;
+    try {
+      const { doc, getDoc } = this._fs;
+      const snap = await getDoc(doc(this._firestore, 'userRoles', uid));
+      return snap.exists() ? snap.data().role : null;
+    } catch { return null; }
+  }
+
+  async saveUserRole(uid, role) {
+    if (!this.isOnline) return;
+    const { doc, setDoc } = this._fs;
+    await setDoc(doc(this._firestore, 'userRoles', uid), { role, updatedAt: Date.now() });
+  }
+
+  // ── Questions ─────────────────────────────────
+  getQuestions() { return this._localGet(KEYS.questions); }
+  saveQuestions(questions) {
+    this._localSet(KEYS.questions, questions);
+    if (this.isOnline) {
+      const { doc, setDoc } = this._fs;
+      setDoc(doc(this._firestore, 'config', 'questions'), { questions }).catch(() => {});
+    }
+  }
+
+  // ── Config / Profile ──────────────────────────
+  getLocalConfig()      { return this._localGet(KEYS.config, null); }
+  saveLocalConfig(cfg)  { localStorage.setItem(KEYS.config, JSON.stringify(cfg)); }
+  getProfile()          { return this._localGet(KEYS.profile, null); }
+  saveProfile(p)        { localStorage.setItem(KEYS.profile, JSON.stringify(p)); }
+
+  // ── Auth data ─────────────────────────────────
+  getUser()       { return this._localGet(KEYS.user, null); }
+  saveUser(u)     { localStorage.setItem(KEYS.user, JSON.stringify(u)); }
+  clearUser()     { localStorage.removeItem(KEYS.user); }
+
+  // ── Helpers ───────────────────────────────────
+  _localGet(key, def = []) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+  }
+  _localSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+}
+
+
+// ── Auth ──
+
+// auth.js — Auth with roles: superadmin | admin | user
+// KEY FIX: Firebase Auth uses IndexedDB for its own session — we must
+// (1) set persistence to SESSION so it doesn't survive page reload,
+// (2) always await signOut() from Firebase before reloading,
+// (3) on init, use onAuthStateChanged to detect the real Firebase state.
+
+const SUPER_ADMIN = {
+  uid:      'superadmin',
+  email:    'admin@fieldpulse.app',
+  password: btoa('Admin@1234'),
+  name:     'Super Admin',
+  role:     'superadmin',
+  team:     'Management',
+  active:   true,
+};
+
+class Auth {
+  constructor(db) {
+    this.db    = db;
+    this._user = null;
+    this._fbAuth = null;   // holds the Firebase Auth instance once initialised
+  }
+
+  // ── Init ────────────────────────────────────────
+  async init() {
+    this._ensureSuperAdmin();
+
+    // If we just signed out (URL has ?signout=), do not restore any session
+    if (window.location.search.includes('signout=')) {
+      this._user = null;
+      // Clean the URL without reload
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+      return;
+    }
+
+    // If Firebase is configured, let Firebase Auth be the source of truth.
+    if (this.db.isOnline && this.db._app) {
+      await this._initFirebaseAuth();
+      return;
+    }
+
+    // Local-only mode — validate the stored session
+    this._loadLocalSession();
+  }
+
+  // Initialise Firebase Auth with SESSION persistence so it won't
+  // silently restore a session after a page reload following sign-out.
+  async _initFirebaseAuth() {
+    try {
+      const { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged }
+        = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+      this._fbAuth = getAuth(this.db._app);
+
+      // SESSION persistence: the Firebase session lives only for this browser tab.
+      // After signOut() + reload, Firebase will NOT auto-restore the user.
+      await setPersistence(this._fbAuth, browserSessionPersistence);
+
+      // Wait for Firebase to tell us if a user is already logged in
+      await new Promise(resolve => {
+        const unsub = onAuthStateChanged(this._fbAuth, async fbUser => {
+          unsub();   // only need the first emission
+          if (fbUser) {
+            // Firebase says someone is logged in — sync to our session
+            const role = await this.db.getUserRole(fbUser.uid) || 'user';
+            this._user = {
+              uid:    fbUser.uid,
+              email:  fbUser.email,
+              name:   fbUser.displayName || fbUser.email.split('@')[0],
+              role,
+              active: true,
+            };
+            this.db.saveUser(this._user);
+          } else {
+            // Firebase says no one is logged in — clear any stale local copy
+            this._user = null;
+            localStorage.removeItem('fp_user');
+          }
+          resolve();
+        });
+      });
+    } catch (err) {
+      console.warn('[Auth] Firebase Auth init failed, falling back to local:', err.message);
+      this._loadLocalSession();
+    }
+  }
+
+  _loadLocalSession() {
+    const stored = this.db.getUser();
+    if (!stored) { this._user = null; return; }
+    const acc = this._getAccount(stored.uid);
+    if (acc && acc.active !== false) {
+      this._user = { ...stored, role: acc.role, active: acc.active };
+    } else {
+      // Stale or deactivated — wipe it
+      localStorage.removeItem('fp_user');
+      this._user = null;
+    }
+  }
+
+  _ensureSuperAdmin() {
+    const accounts = this.db._localGet('fp_accounts', []);
+    if (!accounts.find(a => a.uid === SUPER_ADMIN.uid)) {
+      accounts.unshift({ ...SUPER_ADMIN });
+      localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    }
+  }
+
+  // ── Getters ─────────────────────────────────────
+  isAuthenticated()            { return !!this._user; }
+  currentUser()                { return this._user; }
+  isSuperAdmin(u = this._user) { return u?.role === 'superadmin'; }
+  isAdmin(u = this._user)      { return u?.role === 'admin' || u?.role === 'superadmin'; }
+
+  can(action, u = this._user) {
+    const role  = u?.role || 'user';
+    const perms = {
+      superadmin: ['view_dashboard','log_activity','view_history','manage_questionnaire',
+                   'manage_settings','manage_users','assign_roles','delete_any_activity'],
+      admin:      ['view_dashboard','log_activity','view_history','manage_questionnaire','manage_settings'],
+      user:       ['view_dashboard','log_activity','view_history'],
+    };
+    return (perms[role] || perms.user).includes(action);
+  }
+
+  // ── Login ────────────────────────────────────────
+  async login(email, password) {
+    if (!email || !password) throw new Error('Email and password required');
+
+    if (this.db.isOnline && this.db._app) {
+      try {
+        const { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence }
+          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const fbAuth = getAuth(this.db._app);
+        this._fbAuth = fbAuth;
+        await setPersistence(fbAuth, browserSessionPersistence);
+        const cred = await signInWithEmailAndPassword(fbAuth, email, password);
+        const role = await this.db.getUserRole(cred.user.uid) || 'user';
+        const user = {
+          uid:    cred.user.uid,
+          email:  cred.user.email,
+          name:   cred.user.displayName || email.split('@')[0],
+          role,
+          active: true,
+        };
+        this._user = user;
+        this.db.saveUser(user);
+        return user;
+      } catch (err) {
+        if (err.code && err.code !== 'auth/configuration-not-found')
+          throw new Error(this._fbErrMsg(err.code));
+      }
+    }
+
+    // Local demo mode
+    const acc = this._getAccountByEmail(email);
+    if (!acc || acc.password !== btoa(password)) throw new Error('Invalid email or password');
+    if (acc.active === false) throw new Error('Account deactivated. Contact an administrator.');
+    const user = { uid: acc.uid, email: acc.email, name: acc.name, role: acc.role || 'user', active: true, team: acc.team || '' };
+    this._user = user;
+    this.db.saveUser(user);
+    return user;
+  }
+
+  // ── Register ─────────────────────────────────────
+  async register(email, password, name) {
+    if (!email || !password) throw new Error('Email and password required');
+    if (password.length < 6) throw new Error('Password must be at least 6 characters');
+
+    if (this.db.isOnline && this.db._app) {
+      try {
+        const { getAuth, createUserWithEmailAndPassword, updateProfile, setPersistence, browserSessionPersistence }
+          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const fbAuth = getAuth(this.db._app);
+        this._fbAuth = fbAuth;
+        await setPersistence(fbAuth, browserSessionPersistence);
+        const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
+        if (name) await updateProfile(cred.user, { displayName: name });
+        const user = { uid: cred.user.uid, email, name: name || email.split('@')[0], role: 'user', active: true };
+        await this.db.saveUserRole(cred.user.uid, 'user');
+        this._user = user;
+        this.db.saveUser(user);
+        return user;
+      } catch (err) {
+        if (err.code && err.code !== 'auth/configuration-not-found')
+          throw new Error(this._fbErrMsg(err.code));
+      }
+    }
+
+    // Local demo mode
+    if (this._getAccountByEmail(email)) throw new Error('Email already registered');
+    const uid = 'local_' + Math.random().toString(36).slice(2);
+    const accounts = this.db._localGet('fp_accounts', []);
+    accounts.push({ uid, email, password: btoa(password), name: name || email.split('@')[0], role: 'user', active: true });
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    const user = { uid, email, name: name || email.split('@')[0], role: 'user', active: true };
+    this._user = user;
+    this.db.saveUser(user);
+    return user;
+  }
+
+  // ── Sign Out ─────────────────────────────────────
+  // This is the critical path. We MUST await Firebase signOut before
+  // reloading — otherwise Firebase's IndexedDB session survives.
+  async signOut() {
+    // 1. Sign out from Firebase Auth (clears IndexedDB session)
+    if (this._fbAuth) {
+      try {
+        const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signOut(this._fbAuth);
+      } catch (err) {
+        console.warn('[Auth] Firebase signOut error:', err.message);
+      }
+    } else if (this.db.isOnline && this.db._app) {
+      // _fbAuth might not be set if init ran before Firebase was ready
+      try {
+        const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signOut(getAuth(this.db._app));
+      } catch (_) {}
+    }
+
+    // 2. Clear ALL local session data
+    this._user   = null;
+    this._fbAuth = null;
+    const keysToRemove = ['fp_user', 'fp_profile'];
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+
+    // 3. Clear any Firebase Auth IndexedDB remnants by name
+    //    (belt-and-suspenders in case signOut() didn't fully clear)
+    try {
+      const dbNames = await indexedDB.databases?.() ?? [];
+      for (const info of dbNames) {
+        if (info.name?.includes('firebase') || info.name?.includes('firebaseLocalStorage')) {
+          indexedDB.deleteDatabase(info.name);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // ── User Management ──────────────────────────────
+  getAllAccounts() {
+    return this.db._localGet('fp_accounts', []).map(a => ({
+      uid: a.uid, email: a.email, name: a.name, role: a.role || 'user',
+      active: a.active !== false, team: a.team || ''
+    }));
+  }
+
+  updateAccount(uid, changes) {
+    if (uid === 'superadmin' && (changes.role !== undefined || changes.active === false))
+      throw new Error('Cannot modify the Super Admin account');
+    const accounts = this.db._localGet('fp_accounts', []);
+    const idx = accounts.findIndex(a => a.uid === uid);
+    if (idx === -1) throw new Error('Account not found');
+    accounts[idx] = { ...accounts[idx], ...changes };
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    if (this._user?.uid === uid) {
+      this._user = { ...this._user, ...changes };
+      this.db.saveUser(this._user);
+    }
+  }
+
+  deleteAccount(uid) {
+    if (uid === 'superadmin')    throw new Error('Cannot delete the Super Admin account');
+    if (uid === this._user?.uid) throw new Error('Cannot delete your own account');
+    const accounts = this.db._localGet('fp_accounts', []).filter(a => a.uid !== uid);
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+  }
+
+  updateProfile(p) {
+    if (!this._user) return;
+    this._user = { ...this._user, ...p };
+    this.db.saveUser(this._user);
+    try { this.updateAccount(this._user.uid, p); } catch (_) {}
+  }
+
+  // ── Helpers ──────────────────────────────────────
+  _getAccount(uid)          { return this.db._localGet('fp_accounts', []).find(a => a.uid === uid); }
+  _getAccountByEmail(email) { return this.db._localGet('fp_accounts', []).find(a => a.email === email); }
+
+  _fbErrMsg(code) {
+    const map = {
+      'auth/user-not-found':       'No account found with this email',
+      'auth/wrong-password':       'Incorrect password',
+      'auth/invalid-credential':   'Invalid email or password',
+      'auth/email-already-in-use': 'Email already registered',
+      'auth/invalid-email':        'Invalid email address',
+      'auth/weak-password':        'Password too weak (min 6 chars)',
+      'auth/too-many-requests':    'Too many attempts. Try again later.',
+    };
+    return map[code] || 'Authentication error: ' + code;
+  }
+}
+
+
+// ── Questionnaire ──
+
+// questionnaire.js — Custom question builder
+
+class QuestionnaireManager {
+  constructor(db) {
+    this.db = db;
+    this.questions = [];
+    this._editId = null;
+  }
+
+  init() {
+    this.questions = this.db.getQuestions();
+    this.render();
+    this.renderDynamicFields();
+    this._bindModal();
+  }
+
+  render() {
+    const list = document.getElementById('questionList');
+    if (!list) return;
+    this.questions = this.db.getQuestions();
+    if (!this.questions.length) {
+      list.innerHTML = '<div class="empty-state">No custom questions yet. Click <strong>Add Question</strong> to start.</div>';
+      return;
+    }
+    list.innerHTML = this.questions.map((q, i) => `
+      <div class="q-item" data-id="${esc(q.id)}">
+        <div class="q-drag">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+        </div>
+        <div class="q-body">
+          <div class="q-label">${esc(q.label)}</div>
+          <div class="q-meta">${typeLabel(q.type)}${q.required === 'true' ? ' · Required' : ' · Optional'}${q.options?.length ? ` · ${q.options.length} options` : ''}</div>
+        </div>
+        <div class="q-actions">
+          <button class="icon-btn edit-q" data-id="${esc(q.id)}" title="Edit">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn del-q" data-id="${esc(q.id)}" title="Delete">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.edit-q').forEach(btn => {
+      btn.addEventListener('click', () => this.openModal(btn.dataset.id));
+    });
+    list.querySelectorAll('.del-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('Delete this question?')) return;
+        this.questions = this.questions.filter(q => q.id !== btn.dataset.id);
+        this.db.saveQuestions(this.questions);
+        this.render();
+        this.renderDynamicFields();
+      });
+    });
+  }
+
+  renderDynamicFields() {
+    const container = document.getElementById('dynamicFields');
+    if (!container) return;
+    const qs = this.db.getQuestions();
+    container.innerHTML = qs.map(q => `
+      <div class="form-group">
+        <label>${esc(q.label)}${q.required === 'true' ? ' <span class="req">*</span>' : ''}</label>
+        ${this._renderInput(q)}
+      </div>
+    `).join('');
+  }
+
+  _renderInput(q) {
+    const id = `dyn_${q.id}`;
+    const req = q.required === 'true' ? 'required' : '';
+    switch (q.type) {
+      case 'text':
+        return `<input type="text" id="${id}" ${req} />`;
+      case 'textarea':
+        return `<textarea id="${id}" rows="3" ${req}></textarea>`;
+      case 'number':
+        return `<input type="number" id="${id}" ${req} />`;
+      case 'date':
+        return `<input type="date" id="${id}" ${req} />`;
+      case 'select': {
+        const opts = (q.options || []).map(o => `<option>${esc(o)}</option>`).join('');
+        return `<select id="${id}" ${req}><option value="">Select…</option>${opts}</select>`;
+      }
+      case 'radio': {
+        const opts = (q.options || []).map(o => `
+          <label class="radio-label"><input type="radio" name="${id}" value="${esc(o)}" ${req} /> ${esc(o)}</label>
+        `).join('');
+        return `<div class="radio-group">${opts}</div>`;
+      }
+      case 'checkbox': {
+        const opts = (q.options || []).map(o => `
+          <label class="check-label"><input type="checkbox" name="${id}" value="${esc(o)}" /> ${esc(o)}</label>
+        `).join('');
+        return `<div class="check-group">${opts}</div>`;
+      }
+      default:
+        return `<input type="text" id="${id}" ${req} />`;
+    }
+  }
+
+  collectAnswers() {
+    const answers = {};
+    const qs = this.db.getQuestions();
+    qs.forEach(q => {
+      const id = `dyn_${q.id}`;
+      if (q.type === 'checkbox') {
+        const checked = [...document.querySelectorAll(`input[name="${id}"]:checked`)].map(el => el.value);
+        answers[q.id] = checked;
+      } else if (q.type === 'radio') {
+        const el = document.querySelector(`input[name="${id}"]:checked`);
+        answers[q.id] = el?.value || '';
+      } else {
+        const el = document.getElementById(id);
+        answers[q.id] = el?.value || '';
+      }
+    });
+    return answers;
+  }
+
+  openModal(editId = null) {
+    this._editId = editId;
+    const modal = document.getElementById('qModal');
+    const titleEl = document.getElementById('qModalTitle');
+    const form = document.getElementById('qForm');
+    form.reset();
+    document.getElementById('optionsGroup').style.display = 'none';
+
+    if (editId) {
+      const q = this.questions.find(x => x.id === editId);
+      if (q) {
+        document.getElementById('qLabel').value = q.label;
+        document.getElementById('qType').value = q.type;
+        document.getElementById('qRequired').value = q.required;
+        if (q.options?.length) {
+          document.getElementById('qOptions').value = q.options.join('\n');
+          document.getElementById('optionsGroup').style.display = 'block';
+        }
+      }
+      titleEl.textContent = 'Edit Question';
+    } else {
+      titleEl.textContent = 'New Question';
+    }
+    modal.classList.remove('hidden');
+  }
+
+  _bindModal() {
+    const modal = document.getElementById('qModal');
+    const close = () => modal.classList.add('hidden');
+    document.getElementById('qModalClose').addEventListener('click', close);
+    document.getElementById('qModalCancel').addEventListener('click', close);
+    modal.querySelector('.modal-backdrop').addEventListener('click', close);
+
+    document.getElementById('qType').addEventListener('change', e => {
+      const show = ['select','radio','checkbox'].includes(e.target.value);
+      document.getElementById('optionsGroup').style.display = show ? 'block' : 'none';
+    });
+
+    document.getElementById('qForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const label = document.getElementById('qLabel').value.trim();
+      const type = document.getElementById('qType').value;
+      const required = document.getElementById('qRequired').value;
+      const optionsRaw = document.getElementById('qOptions').value;
+      const options = optionsRaw ? optionsRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+      if (!label) return;
+
+      if (this._editId) {
+        this.questions = this.questions.map(q => q.id === this._editId ? { ...q, label, type, required, options } : q);
+      } else {
+        this.questions.push({ id: `q_${Date.now()}`, label, type, required, options });
+      }
+      this.db.saveQuestions(this.questions);
+      this.render();
+      this.renderDynamicFields();
+      close();
+    });
+  }
+}
+
+function typeLabel(type) {
+  const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown', radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
+  return map[type] || type;
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── History ──
+
+// history.js — Activity history (role-aware)
+
+
+class HistoryManager {
+  constructor(db, q) {
+    this.db   = db;
+    this.q    = q;
+    this.auth = null;   // set via init(auth)
+    this._all = [];
+    this._modalMap = null;
+  }
+
+  init(auth) {
+    this.auth = auth;
+    document.getElementById('histSearch').addEventListener('input',  () => this._filter());
+    document.getElementById('histFilter').addEventListener('change', () => this._filter());
+    document.getElementById('modalClose').addEventListener('click',  () => this._closeModal());
+    document.querySelector('#detailModal .modal-backdrop').addEventListener('click', () => this._closeModal());
+  }
+
+  async render() {
+    const user = this.auth?.currentUser();
+    // Admins see all activities; normal users see only their own
+    this._all = this.auth?.isAdmin()
+      ? await this.db.getActivities()
+      : await this.db.getActivities(user?.uid);
+    this._filter();
+  }
+
+  _filter() {
+    const search = document.getElementById('histSearch').value.toLowerCase();
+    const type   = document.getElementById('histFilter').value;
+    const filtered = this._all.filter(a => {
+      const matchSearch = !search ||
+        a.clientName?.toLowerCase().includes(search) ||
+        a.activityType?.toLowerCase().includes(search) ||
+        a.notes?.toLowerCase().includes(search) ||
+        a.userName?.toLowerCase().includes(search);
+      const matchType = !type || a.activityType === type;
+      return matchSearch && matchType;
+    });
+    this._renderTable(filtered);
+  }
+
+  _renderTable(activities) {
+    const body      = document.getElementById('histBody');
+    const isAdmin   = this.auth?.isAdmin();
+    const isSuperAdmin = this.auth?.isSuperAdmin();
+
+    if (!activities.length) {
+      body.innerHTML = '<tr><td colspan="7" class="empty-td">No activities found.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = activities.map(a => `
+      <tr>
+        <td style="white-space:nowrap;font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${formatDateTime(a.timestamp)}</td>
+        <td><strong>${esc(a.clientName)}</strong></td>
+        <td>${esc(a.activityType)}</td>
+        <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
+        ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
+        <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
+          ${a.lat ? `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}` : '<span style="color:var(--text3)">No GPS</span>'}
+        </td>
+        <td>
+          <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          ${isSuperAdmin || a.userId === this.auth?.currentUser()?.uid ? `
+          <button class="icon-btn del-btn" data-id="${esc(a.id)}" title="Delete" style="margin-left:.25rem">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>` : ''}
+        </td>
+      </tr>
+    `).join('');
+
+    // Update thead to include Rep column for admins
+    const thead = document.querySelector('#histTable thead tr');
+    if (thead) {
+      const hasRepCol = thead.querySelector('.rep-col');
+      if (isAdmin && !hasRepCol) {
+        const th = document.createElement('th');
+        th.className = 'rep-col';
+        th.textContent = 'Rep';
+        thead.children[3].after(th);
+      } else if (!isAdmin && hasRepCol) {
+        hasRepCol.remove();
+      }
+    }
+
+    body.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.openDetail(btn.dataset.id));
+    });
+    body.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this activity?')) return;
+        await this.db.deleteActivity(btn.dataset.id);
+        await this.render();
+      });
+    });
+  }
+
+  async openDetail(id) {
+    const all  = await this.db.getActivities();
+    const activity = all.find(a => a.id === id);
+    if (!activity) return;
+
+    // Access check: normal users can only see their own
+    if (!this.auth?.isAdmin() && activity.userId !== this.auth?.currentUser()?.uid) {
+      return;
+    }
+
+    document.getElementById('modalTitle').textContent = esc(activity.clientName);
+
+    const questions = this.db.getQuestions();
+    const answers   = activity.customAnswers || {};
+    const customHtml = questions.map(q => {
+      const val = answers[q.id];
+      if (!val || (Array.isArray(val) && !val.length)) return '';
+      return `<div class="detail-row"><span class="detail-label">${esc(q.label)}</span><span class="detail-val">${esc(Array.isArray(val) ? val.join(', ') : val)}</span></div>`;
+    }).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-row"><span class="detail-label">Date & Time</span><span class="detail-val">${formatDateTime(activity.timestamp)}</span></div>
+        <div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">${esc(activity.activityType)}</span></div>
+        <div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ${outcomeClass(activity.outcome)}">${esc(activity.outcome)||'—'}</span></span></div>
+        ${activity.userName ? `<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">${esc(activity.userName)}</span></div>` : ''}
+        ${activity.lat ? `<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-val" style="font-family:var(--font-mono);font-size:.8rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</span></div>` : ''}
+        ${activity.notes ? `<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">${esc(activity.notes)}</p></div>` : ''}
+        ${customHtml}
+      </div>
+      <style>
+        .detail-grid{display:flex;flex-direction:column;gap:.6rem}
+        .detail-row{display:flex;gap:.75rem;align-items:baseline}
+        .detail-row.full{flex-direction:column;gap:.3rem}
+        .detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}
+        .detail-val{font-size:.88rem}
+        .detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}
+      </style>
+    `;
+
+    document.getElementById('detailModal').classList.remove('hidden');
+
+    const mapEl = document.getElementById('modalMap');
+    if (activity.lat) {
+      mapEl.style.display = 'block';
+      await MapService.loadLeaflet();
+      if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} }
+      this._modalMap = MapService.createMap('modalMap', activity.lat, activity.lng, 15);
+      MapService.addMarker(this._modalMap, activity.lat, activity.lng, `<strong>${esc(activity.clientName)}</strong>`);
+      setTimeout(() => MapService.invalidate(this._modalMap), 100);
+    } else {
+      mapEl.style.display = 'none';
+    }
+  }
+
+  _closeModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+    if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} this._modalMap = null; }
+  }
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── UserMgmt ──
+
+// usermgmt.js — User Management (superadmin & admin)
+
+class UserManager {
+  constructor(auth, db) {
+    this.auth = auth;
+    this.db   = db;
+    this._editUid = null;
+  }
+
+  // ── Render user list ──────────────────────────
+  render() {
+    const container = document.getElementById('userListContainer');
+    if (!container) return;
+
+    const accounts = this.auth.getAllAccounts();
+    const me = this.auth.currentUser();
+    const isSuperAdmin = this.auth.isSuperAdmin();
+
+    container.innerHTML = `
+      <div class="user-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Team</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accounts.map(acc => {
+              const isMe = acc.uid === me?.uid;
+              const isSA = acc.uid === 'superadmin';
+              const roleBadge = rolePill(acc.role);
+              const statusBadge = acc.active
+                ? '<span class="status-dot active">Active</span>'
+                : '<span class="status-dot inactive">Inactive</span>';
+              return `
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:.6rem">
+                      <div class="avatar sm" style="background:${avatarColor(acc.role)}">${(acc.name||acc.email).charAt(0).toUpperCase()}</div>
+                      <div>
+                        <div style="font-weight:600;font-size:.88rem">${esc(acc.name||'—')}</div>
+                        ${isMe ? '<div style="font-size:.72rem;color:var(--accent);font-family:var(--font-mono)">You</div>' : ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${esc(acc.email)}</td>
+                  <td>${roleBadge}</td>
+                  <td style="font-size:.82rem;color:var(--text2)">${esc(acc.team||'—')}</td>
+                  <td>${statusBadge}</td>
+                  <td>
+                    ${!isSA || isSuperAdmin ? `
+                      <button class="icon-btn edit-user-btn" data-uid="${acc.uid}" title="Edit"
+                        ${isSA && !isSuperAdmin ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      ${!isSA && !isMe ? `
+                        <button class="icon-btn del-user-btn" data-uid="${acc.uid}" title="Delete" style="margin-left:.25rem">
+                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        </button>
+                      ` : ''}
+                    ` : '<span style="color:var(--text3);font-size:.75rem">Protected</span>'}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.querySelectorAll('.edit-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.openEditModal(btn.dataset.uid));
+    });
+    container.querySelectorAll('.del-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => this._deleteUser(btn.dataset.uid));
+    });
+  }
+
+  // ── Edit Modal ────────────────────────────────
+  openEditModal(uid) {
+    const acc = this.auth.getAllAccounts().find(a => a.uid === uid);
+    if (!acc) return;
+    this._editUid = uid;
+    const me = this.auth.currentUser();
+    const isSuperAdmin = this.auth.isSuperAdmin();
+    const isSA = uid === 'superadmin';
+
+    document.getElementById('editUserTitle').textContent = `Edit: ${acc.name || acc.email}`;
+    document.getElementById('editUserName').value   = acc.name || '';
+    document.getElementById('editUserTeam').value   = acc.team || '';
+    document.getElementById('editUserEmail').value  = acc.email;
+    document.getElementById('editUserRole').value   = acc.role || 'user';
+    document.getElementById('editUserActive').value = acc.active ? 'true' : 'false';
+    document.getElementById('editUserPassword').value = '';
+
+    // Role selector — only superadmin can assign roles; protect SA row
+    const roleSelect  = document.getElementById('editUserRole');
+    const activeSelect= document.getElementById('editUserActive');
+    roleSelect.disabled   = !isSuperAdmin || isSA;
+    activeSelect.disabled = isSA;
+
+    document.getElementById('editUserModal').classList.remove('hidden');
+  }
+
+  bindModal() {
+    const modal = document.getElementById('editUserModal');
+    const close = () => modal.classList.add('hidden');
+    document.getElementById('editUserModalClose').addEventListener('click', close);
+    document.getElementById('editUserCancel').addEventListener('click', close);
+    modal.querySelector('.modal-backdrop').addEventListener('click', close);
+
+    document.getElementById('editUserForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const changes = {
+        name:   document.getElementById('editUserName').value.trim(),
+        team:   document.getElementById('editUserTeam').value.trim(),
+        role:   document.getElementById('editUserRole').value,
+        active: document.getElementById('editUserActive').value === 'true',
+      };
+      const newPwd = document.getElementById('editUserPassword').value;
+      if (newPwd) {
+        if (newPwd.length < 6) { alert('Password must be at least 6 characters'); return; }
+        changes.password = btoa(newPwd);
+      }
+      try {
+        this.auth.updateAccount(this._editUid, changes);
+        // Sync to Firestore if online
+        if (this.db.isOnline && changes.role) {
+          this.db.saveUserRole(this._editUid, changes.role).catch(() => {});
+        }
+        close();
+        this.render();
+        showToast('User updated successfully');
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Add new user form
+    document.getElementById('addUserForm')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const name  = document.getElementById('newUserName').value.trim();
+      const email = document.getElementById('newUserEmail').value.trim();
+      const pwd   = document.getElementById('newUserPassword').value;
+      const role  = document.getElementById('newUserRole').value;
+      const team  = document.getElementById('newUserTeam').value.trim();
+      if (!email || !pwd) return;
+      if (pwd.length < 6) { alert('Password must be at least 6 characters'); return; }
+      const accounts = this.db._localGet('fp_accounts', []);
+      if (accounts.find(a => a.email === email)) { alert('Email already registered'); return; }
+      const uid = 'local_' + Math.random().toString(36).slice(2);
+      accounts.push({ uid, email, password: btoa(pwd), name: name || email.split('@')[0], role, team, active: true });
+      localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+      document.getElementById('addUserForm').reset();
+      this.render();
+      showToast('User created');
+    });
+  }
+
+  _deleteUser(uid) {
+    const acc = this.auth.getAllAccounts().find(a => a.uid === uid);
+    if (!confirm(`Delete user "${acc?.name || acc?.email}"? This cannot be undone.`)) return;
+    try {
+      this.auth.deleteAccount(uid);
+      this.render();
+      showToast('User deleted');
+    } catch (err) { alert(err.message); }
+  }
+}
+
+// ── Helpers ───────────────────────────────────────
+function rolePill(role) {
+  const styles = {
+    superadmin: 'background:rgba(245,166,35,.18);color:#f5a623;border:1px solid rgba(245,166,35,.3)',
+    admin:      'background:rgba(79,142,247,.15);color:#4f8ef7;border:1px solid rgba(79,142,247,.3)',
+    user:       'background:var(--surface2);color:var(--text2);border:1px solid var(--border)',
+  };
+  const labels = { superadmin:'Super Admin', admin:'Admin', user:'User' };
+  return `<span style="display:inline-block;padding:.2rem .65rem;border-radius:99px;font-size:.72rem;font-weight:600;${styles[role]||styles.user}">${labels[role]||role}</span>`;
+}
+
+function avatarColor(role) {
+  if (role === 'superadmin') return 'linear-gradient(135deg,#f5a623,#ff6b35)';
+  if (role === 'admin')      return 'linear-gradient(135deg,#4f8ef7,#7b5ea7)';
+  return 'linear-gradient(135deg,#3ecf8e,#1ea87e)';
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type = 'ok') {
+  const c = document.getElementById('toastContainer');
+  if (!c) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+
+// ── App ──
+
+// ────────────────────────────────────────────────
+//  FieldPulse — app.js  (role-aware)
+// ────────────────────────────────────────────────
+
+
+const db      = new DB();
+const geo     = new GeoService();
+const auth    = new Auth(db);
+const q       = new QuestionnaireManager(db);
+const history = new HistoryManager(db, q);
+const userMgr = new UserManager(auth, db);
+let logMap = null, dashMap = null;
+
+// ── Boot ─────────────────────────────────────────
+async function boot() {
+  const splash = document.getElementById('splash');
+  await new Promise(r => setTimeout(r, 1800));
+  splash.classList.add('out');
+  setTimeout(() => splash.remove(), 600);
+
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  await db.init();
+  await auth.init();
+
+  if (auth.isAuthenticated()) {
+    showApp();
+  } else {
+    document.getElementById('authWall').classList.remove('hidden');
+    initAuthForm();
+  }
+}
+
+// ── Show App ──────────────────────────────────────
+function showApp() {
+  document.getElementById('authWall').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  applyRoleUI();
+  updateUserBadge();
+  initNavigation();
+  initLogForm();
+  initQuestionnaire();
+  initHistory();
+  initSettings();
+  initUserManagement();
+  initDashboard();
+  initMobileSidebar();
+}
+
+
+// ── Role-based UI gating ──────────────────────────
+function applyRoleUI() {
+  const user = auth.currentUser();
+  const isAdmin = auth.isAdmin();
+  const isSuperAdmin = auth.isSuperAdmin();
+
+  // Show/hide nav items
+  document.getElementById('navUsers').classList.toggle('hidden', !isAdmin);
+  document.getElementById('navSettings').classList.toggle('hidden', !isAdmin);
+
+  // Super admin info banner only for superadmin
+  const banner = document.getElementById('superAdminBanner');
+  if (banner) banner.classList.toggle('hidden', !isSuperAdmin);
+
+  // Hide "Super Admin" option in add-user form for non-superadmins
+  const saOpt = document.getElementById('newUserSuperAdminOption');
+  if (saOpt) saOpt.style.display = isSuperAdmin ? '' : 'none';
+
+  // Questionnaire — allow admin+ only to add/edit questions
+  const addQBtn = document.getElementById('addQuestionBtn');
+  if (addQBtn) addQBtn.classList.toggle('hidden', !isAdmin);
+}
+
+// ── Navigation ────────────────────────────────────
+function initNavigation() {
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      const page = el.dataset.page;
+      // Guard: non-admins cannot access settings or users pages
+      if ((page === 'settings' || page === 'users') && !auth.isAdmin()) {
+        toast('Access denied — admin only', 'error');
+        return;
+      }
+      navigateTo(page);
+    });
+  });
+}
+
+function navigateTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${page}`)?.classList.add('active');
+
+  if (page === 'dashboard')     refreshDashboard();
+  if (page === 'history')       history.render();
+  if (page === 'log')           initLogMap();
+  if (page === 'questionnaire') q.render();
+  if (page === 'users')         userMgr.render();
+
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function initMobileSidebar() {
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+}
+
+// ── Auth ──────────────────────────────────────────
+function initAuthForm() {
+  let mode = 'login';
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      mode = tab.dataset.tab;
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.getElementById('regNameGroup').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('authSubmitBtn').textContent  = mode === 'register' ? 'Create Account' : 'Sign In';
+      document.getElementById('authError').classList.add('hidden');
+    });
+  });
+
+  document.getElementById('authForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const name     = document.getElementById('authName').value.trim();
+    const errEl    = document.getElementById('authError');
+    errEl.classList.add('hidden');
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true;
+    try {
+      if (mode === 'register') await auth.register(email, password, name);
+      else                     await auth.login(email, password);
+      showApp();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+}
+
+function updateUserBadge() {
+  const user = auth.currentUser();
+  if (!user) return;
+  const name = user.name || user.email || 'User';
+  const roleLabels = { superadmin: '⭐ Super Admin', admin: '🔑 Admin', user: 'Sales Rep' };
+  document.getElementById('userName').textContent      = name;
+  document.getElementById('userRoleLabel').textContent = roleLabels[user.role] || 'Sales Rep';
+  document.getElementById('userAvatar').textContent    = name.charAt(0).toUpperCase();
+  document.getElementById('mobileAvatar').textContent  = name.charAt(0).toUpperCase();
+
+  // Colour avatar by role
+  const avatarColors = {
+    superadmin: 'linear-gradient(135deg,#f5a623,#ff6b35)',
+    admin:      'linear-gradient(135deg,#4f8ef7,#7b5ea7)',
+    user:       'linear-gradient(135deg,#3ecf8e,#1ea87e)',
+  };
+  const av = document.getElementById('userAvatar');
+  av.style.background = avatarColors[user.role] || avatarColors.user;
+}
+
+// ── Dashboard ─────────────────────────────────────
+async function initDashboard() { await refreshDashboard(); }
+
+async function refreshDashboard() {
+  const user        = auth.currentUser();
+  // Admins see all; normal users see only their own
+  const activities  = auth.isAdmin()
+    ? await db.getActivities()
+    : await db.getActivities(user?.uid);
+
+  const today   = new Date().toDateString();
+  const weekAgo = Date.now() - 7 * 86400000;
+
+  document.getElementById('statToday').textContent     = activities.filter(a => new Date(a.timestamp).toDateString() === today).length;
+  document.getElementById('statWeek').textContent      = activities.filter(a => a.timestamp >= weekAgo).length;
+  document.getElementById('statTotal').textContent     = activities.length;
+  document.getElementById('statLocations').textContent = new Set(activities.filter(a => a.lat).map(a => `${a.lat?.toFixed(3)},${a.lng?.toFixed(3)}`)).size;
+
+  const feed   = document.getElementById('recentFeed');
+  const recent = [...activities].sort((a,b) => b.timestamp - a.timestamp).slice(0, 6);
+  feed.innerHTML = recent.length ? recent.map(a => `
+    <div class="feed-item" data-id="${a.id}">
+      <div class="feed-dot"></div>
+      <div class="feed-body">
+        <div class="feed-client">${esc(a.clientName)}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}</div>
+      </div>
+      <div class="feed-time">${formatDate(a.timestamp)}</div>
+    </div>
+  `).join('') : '<div class="empty-state">No activities yet. <a href="#" data-page="log">Log one →</a></div>';
+
+  feed.querySelectorAll('.feed-item').forEach(el => {
+    el.addEventListener('click', () => { navigateTo('history'); setTimeout(() => history.openDetail(el.dataset.id), 200); });
+  });
+  feed.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); navigateTo(el.dataset.page); });
+  });
+
+  const pinned = activities.filter(a => a.lat).length;
+  document.getElementById('mapBadge').textContent = `${pinned} pin${pinned !== 1 ? 's' : ''}`;
+
+  await MapService.loadLeaflet();
+  if (!dashMap) dashMap = MapService.createMap('dashMap');
+  MapService.clearMarkers(dashMap);
+  activities.filter(a => a.lat).forEach(a => {
+    MapService.addMarker(dashMap, a.lat, a.lng, `<strong>${esc(a.clientName)}</strong><br>${esc(a.activityType)}`);
+  });
+  if (activities.some(a => a.lat)) MapService.fitMarkers(dashMap);
+}
+
+// ── Log Activity ──────────────────────────────────
+let currentGeo = null;
+
+function initLogForm() {
+  acquireLocation();
+  document.getElementById('geoRefresh').addEventListener('click', acquireLocation);
+
+  document.getElementById('logForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const activity = {
+        clientName:   document.getElementById('clientName').value.trim(),
+        activityType: document.getElementById('activityType').value,
+        outcome:      document.getElementById('outcome').value,
+        notes:        document.getElementById('notes').value.trim(),
+        lat:          currentGeo?.lat   ?? null,
+        lng:          currentGeo?.lng   ?? null,
+        accuracy:     currentGeo?.accuracy ?? null,
+        timestamp:    Date.now(),
+        userId:       auth.currentUser()?.uid  || 'local',
+        userName:     auth.currentUser()?.name || 'Unknown',
+        customAnswers: q.collectAnswers(),
+      };
+      if (!activity.clientName || !activity.activityType) {
+        toast('Please fill in required fields', 'error'); return;
+      }
+      await db.addActivity(activity);
+      toast('✅ Activity saved!');
+      document.getElementById('logForm').reset();
+      q.renderDynamicFields();
+    } catch (err) {
+      toast('Error saving: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Save Activity';
+    }
+  });
+
+  document.getElementById('clearFormBtn').addEventListener('click', () => {
+    document.getElementById('logForm').reset();
+    q.renderDynamicFields();
+  });
+}
+
+async function initLogMap() {
+  await MapService.loadLeaflet();
+  if (!logMap) logMap = MapService.createMap('logMap');
+  if (currentGeo) {
+    MapService.setView(logMap, currentGeo.lat, currentGeo.lng, 15);
+    MapService.addMarker(logMap, currentGeo.lat, currentGeo.lng, 'Your location');
+  }
+}
+
+async function acquireLocation() {
+  const strip  = document.getElementById('geoStrip');
+  const status = document.getElementById('geoStatus');
+  const coords = document.getElementById('geoCoords');
+  strip.className = 'geo-strip';
+  status.textContent = 'Acquiring location…';
+  coords.textContent = '—';
+  try {
+    const pos  = await geo.getCurrentPosition();
+    currentGeo = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+    status.textContent = 'Location acquired';
+    coords.textContent = `${currentGeo.lat.toFixed(5)}, ${currentGeo.lng.toFixed(5)} (±${Math.round(currentGeo.accuracy)}m)`;
+    strip.classList.add('ok');
+    if (logMap) {
+      MapService.clearMarkers(logMap);
+      MapService.setView(logMap, currentGeo.lat, currentGeo.lng, 15);
+      MapService.addMarker(logMap, currentGeo.lat, currentGeo.lng, 'Your location');
+    }
+  } catch (err) {
+    status.textContent = 'Location unavailable';
+    coords.textContent = err.message;
+    strip.classList.add('error');
+    currentGeo = null;
+  }
+}
+
+// ── Questionnaire ─────────────────────────────────
+function initQuestionnaire() {
+  q.init();
+  document.getElementById('addQuestionBtn').addEventListener('click', () => {
+    if (!auth.isAdmin()) { toast('Admin access required', 'error'); return; }
+    q.openModal();
+  });
+}
+
+// ── History ───────────────────────────────────────
+function initHistory() { history.init(auth); }
+
+// ── User Management ───────────────────────────────
+function initUserManagement() {
+  if (!auth.isAdmin()) return;
+  userMgr.bindModal();
+
+  // Add user panel toggle
+  const addBtn    = document.getElementById('addUserToggleBtn');
+  const panel     = document.getElementById('addUserPanel');
+  const cancelBtn = document.getElementById('cancelAddUserBtn');
+
+  addBtn?.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    addBtn.textContent = panel.classList.contains('hidden') ? '+ Add User' : '✕ Cancel';
+  });
+  cancelBtn?.addEventListener('click', () => {
+    panel.classList.add('hidden');
+    addBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add User';
+  });
+
+  // Add user form submit wired inside usermgmt.js via bindModal()
+}
+
+// ── Settings ──────────────────────────────────────
+function initSettings() {
+  if (!auth.isAdmin()) return;
+
+  const cfg = db.getLocalConfig();
+  if (cfg) {
+    document.getElementById('fbApiKey').value          = cfg.apiKey          || '';
+    document.getElementById('fbAuthDomain').value      = cfg.authDomain      || '';
+    document.getElementById('fbProjectId').value       = cfg.projectId       || '';
+    document.getElementById('fbStorageBucket').value   = cfg.storageBucket   || '';
+    document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
+    document.getElementById('fbAppId').value           = cfg.appId           || '';
+  }
+
+  const profile = db.getProfile();
+  if (profile) {
+    document.getElementById('profileName').value = profile.name || '';
+    document.getElementById('profileTeam').value = profile.team || '';
+  }
+
+  // Pre-fill profile from current user too
+  const user = auth.currentUser();
+  if (user) {
+    if (!document.getElementById('profileName').value) document.getElementById('profileName').value = user.name || '';
+    if (!document.getElementById('profileTeam').value) document.getElementById('profileTeam').value = user.team || '';
+  }
+
+  document.getElementById('firebaseForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    const config = {
+      apiKey:            document.getElementById('fbApiKey').value.trim(),
+      authDomain:        document.getElementById('fbAuthDomain').value.trim(),
+      projectId:         document.getElementById('fbProjectId').value.trim(),
+      storageBucket:     document.getElementById('fbStorageBucket').value.trim(),
+      messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
+      appId:             document.getElementById('fbAppId').value.trim(),
+    };
+    const statusEl = document.getElementById('fbStatus');
+    try {
+      await db.connectFirestore(config);
+      db.saveLocalConfig(config);
+      statusEl.textContent = '✓ Connected to Firestore';
+      statusEl.className   = 'status-chip ok';
+      statusEl.classList.remove('hidden');
+      toast('Firebase connected!');
+    } catch (err) {
+      statusEl.textContent = '✗ ' + err.message;
+      statusEl.className   = 'status-chip error';
+      statusEl.classList.remove('hidden');
+      toast('Connection failed', 'error');
+    }
+  });
+
+  document.getElementById('profileForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const profile = {
+      name: document.getElementById('profileName').value.trim(),
+      team: document.getElementById('profileTeam').value.trim(),
+    };
+    db.saveProfile(profile);
+    auth.updateProfile(profile);
+    updateUserBadge();
+    toast('Profile updated');
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const activities = auth.isAdmin() ? await db.getActivities() : await db.getActivities(auth.currentUser()?.uid);
+    exportCSV(activities);
+  });
+
+  document.getElementById('clearDataBtn').addEventListener('click', async () => {
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    if (!confirm('Delete ALL activities? This cannot be undone.')) return;
+    await db.clearActivities();
+    toast('All data cleared');
+    refreshDashboard();
+  });
+}
+
+// ── CSV Export ────────────────────────────────────
+function exportCSV(activities) {
+  if (!activities.length) { toast('No data to export', 'error'); return; }
+  const headers = ['Date','Client','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const rows = activities.map(a => [
+    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
+    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+  ]);
+  const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `fieldpulse-export-${Date.now()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+boot();
+
+  </script>
 </body>
 </html>
