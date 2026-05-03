@@ -48,6 +48,7 @@ function showApp() {
   applyRoleUI();
   updateUserBadge();
   initNavigation();
+  initSignOut();      // always bind sign-out when app is shown
   initLogForm();
   initQuestionnaire();
   initHistory();
@@ -55,6 +56,26 @@ function showApp() {
   initUserManagement();
   initDashboard();
   initMobileSidebar();
+}
+
+// ── Sign Out ──────────────────────────────────────
+function initSignOut() {
+  const btn = document.getElementById('signOutBtn');
+  // Clone to remove any previously attached listeners
+  const fresh = btn.cloneNode(true);
+  btn.replaceWith(fresh);
+  fresh.addEventListener('click', async () => {
+    fresh.disabled = true;
+    fresh.textContent = 'Signing out…';
+    try {
+      await auth.signOut();
+    } catch(e) {
+      console.error('signOut error', e);
+    } finally {
+      // replace() so Back button doesn't restore session
+      window.location.replace(window.location.pathname);
+    }
+  });
 }
 
 // ── Role-based UI gating ──────────────────────────
@@ -150,19 +171,7 @@ function initAuthForm() {
     }
   });
 
-  document.getElementById('signOutBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('signOutBtn');
-    btn.disabled = true;
-    btn.textContent = 'Signing out…';
-    try {
-      // Must fully await signOut so Firebase clears its IndexedDB session
-      // BEFORE the page reloads — otherwise Firebase restores the session.
-      await auth.signOut();
-    } finally {
-      // Replace current history entry so the Back button won't restore the session
-      window.location.replace(window.location.href.split('?')[0]);
-    }
-  });
+  // signOut is handled by initSignOut() called from showApp()
 }
 
 function updateUserBadge() {
