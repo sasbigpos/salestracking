@@ -400,3 +400,89 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Role Pills ── */
+.role-pill {
+  display: inline-block;
+  padding: .22rem .7rem;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.role-pill.superadmin { background: rgba(245,166,35,.18); color: #f5a623; border: 1px solid rgba(245,166,35,.35); }
+.role-pill.admin      { background: rgba(79,142,247,.15);  color: #4f8ef7; border: 1px solid rgba(79,142,247,.3); }
+.role-pill.user       { background: var(--surface2);        color: var(--text2); border: 1px solid var(--border); }
+
+/* ── Status dots ── */
+.status-dot { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 600; }
+.status-dot::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; }
+.status-dot.active::before   { background: var(--green); box-shadow: 0 0 6px rgba(62,207,142,.5); }
+.status-dot.inactive::before { background: var(--text3); }
+.status-dot.active   { color: var(--green); }
+.status-dot.inactive { color: var(--text3); }
+
+/* ── Role legend ── */
+.role-legend { margin-bottom: 1.25rem; }
+.role-legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: .75rem; }
+.role-legend-item { display: flex; flex-direction: column; gap: .4rem; }
+.role-legend-item p { font-size: .8rem; color: var(--text2); line-height: 1.5; }
+
+/* ── Info banner ── */
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  background: rgba(245,166,35,.07);
+  border: 1px solid rgba(245,166,35,.25);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+  font-size: .85rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.info-banner svg { color: var(--accent); margin-top: .15rem; }
+.info-banner code {
+  background: rgba(245,166,35,.15);
+  border: 1px solid rgba(245,166,35,.2);
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--accent);
+}
+.info-banner small { color: var(--text3); font-size: .77rem; }
+
+/* ── Auth hint box ── */
+.auth-hint-box {
+  margin-top: 1.1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: .75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+.auth-hint-label { font-size: .7rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--text3); }
+.auth-hint-box code {
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--accent);
+  background: rgba(245,166,35,.1);
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* ── User table ── */
+.user-table-wrap { overflow-x: auto; }
+.user-table-wrap .data-table td { padding: .7rem 1rem; }
+
+/* ── Add user panel ── */
+#addUserPanel { margin-bottom: 1.25rem; border-color: rgba(245,166,35,.25); }
+
+/* ── Nav footer role label ── */
+.user-role { font-size: .72rem; color: var(--accent); font-family: var(--font-mono); }
