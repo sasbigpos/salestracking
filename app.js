@@ -151,10 +151,17 @@ function initAuthForm() {
   });
 
   document.getElementById('signOutBtn').addEventListener('click', async () => {
-    await auth.signOut();
-    // Hard reload — cleanest way to fully reset all in-memory state,
-    // map instances, module-level vars, and re-run the auth wall fresh.
-    window.location.reload();
+    const btn = document.getElementById('signOutBtn');
+    btn.disabled = true;
+    btn.textContent = 'Signing out…';
+    try {
+      // Must fully await signOut so Firebase clears its IndexedDB session
+      // BEFORE the page reloads — otherwise Firebase restores the session.
+      await auth.signOut();
+    } finally {
+      // Replace current history entry so the Back button won't restore the session
+      window.location.replace(window.location.href.split('?')[0]);
+    }
   });
 }
 
