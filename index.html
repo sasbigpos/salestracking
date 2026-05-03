@@ -2324,8 +2324,13 @@ async function boot() {
     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
   });
 
-  await db.init();
-  await auth.init();
+  try {
+    await db.init();
+  } catch(e) { console.warn('db.init failed (non-fatal):', e.message); }
+
+  try {
+    await auth.init();
+  } catch(e) { console.warn('auth.init failed (non-fatal):', e.message); }
 
   if (auth.isAuthenticated()) {
     showApp();
@@ -2733,7 +2738,19 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-boot();
+document.addEventListener('DOMContentLoaded', function() {
+  boot().catch(function(err) {
+    console.error('FieldPulse boot error:', err);
+    // Always remove splash even on error so user isn't stuck
+    var splash = document.getElementById('splash');
+    if (splash) splash.remove();
+    var authWall = document.getElementById('authWall');
+    if (authWall) authWall.classList.remove('hidden');
+    // Show error in auth area
+    var errEl = document.getElementById('authError');
+    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
+  });
+});
 
   </script>
 </body>
