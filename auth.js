@@ -18,10 +18,17 @@ export class Auth {
 
   async init() {
     this._ensureSuperAdmin();
-    this._user = this.db.getUser();
-    if (this._user) {
-      const acc = this._getAccount(this._user.uid);
-      if (acc) this._user = { ...this._user, role: acc.role, active: acc.active };
+    const stored = this.db.getUser();
+    if (stored) {
+      const acc = this._getAccount(stored.uid);
+      // Validate: account must still exist and be active
+      if (acc && acc.active !== false) {
+        this._user = { ...stored, role: acc.role, active: acc.active };
+      } else {
+        // Stale/deactivated session — clear it
+        localStorage.removeItem('fp_user');
+        this._user = null;
+      }
     }
   }
 
@@ -103,7 +110,9 @@ export class Auth {
         await signOut(getAuth(this.db._app));
       } catch (_) {}
     }
-    this._user = null; this.db.clearUser();
+    this._user = null;
+    localStorage.removeItem("fp_user");
+    localStorage.removeItem("fp_profile");
   }
 
   getAllAccounts() {
