@@ -78,7 +78,25 @@
             <span class="user-role" id="userRoleLabel">—</span>
           </div>
         </div>
-        <button class="sign-out-btn" id="signOutBtn">Sign out</button>
+        <button class="sign-out-btn" id="signOutBtn" onclick="
+          (async function() {
+            try {
+              // 1. Clear all localStorage keys for this app
+              Object.keys(localStorage).forEach(function(k) {
+                if (k.startsWith('fp_') || k.startsWith('firebase')) localStorage.removeItem(k);
+              });
+              // 2. Nuke all IndexedDB databases (where Firebase stores its session)
+              if (window.indexedDB && indexedDB.databases) {
+                var dbs = await indexedDB.databases();
+                dbs.forEach(function(db) { indexedDB.deleteDatabase(db.name); });
+              }
+              // 3. Clear sessionStorage too
+              sessionStorage.clear();
+            } catch(e) { console.warn(e); }
+            // 4. Hard navigate — clears all JS state
+            window.location.href = window.location.pathname + '?signout=' + Date.now();
+          })();
+        ">Sign out</button>
       </div>
     </nav>
 

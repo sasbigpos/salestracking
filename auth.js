@@ -25,11 +25,19 @@ export class Auth {
   async init() {
     this._ensureSuperAdmin();
 
+    // If we just signed out (URL has ?signout=), do not restore any session
+    if (window.location.search.includes('signout=')) {
+      this._user = null;
+      // Clean the URL without reload
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+      return;
+    }
+
     // If Firebase is configured, let Firebase Auth be the source of truth.
-    // We wait for it to settle (onAuthStateChanged fires once on load).
     if (this.db.isOnline && this.db._app) {
       await this._initFirebaseAuth();
-      return;   // _initFirebaseAuth sets this._user
+      return;
     }
 
     // Local-only mode — validate the stored session
