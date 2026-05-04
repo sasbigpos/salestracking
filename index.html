@@ -572,9 +572,9 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           (async function() {
             try {
               // 1. Clear all localStorage keys for this app
-              var fbConfig = localStorage.getItem('fp_firebase_config');
-              localStorage.clear();
-              if (fbConfig) localStorage.setItem('fp_firebase_config', fbConfig);
+              // Only clear session — NEVER wipe fp_accounts (that holds all users!)
+              localStorage.removeItem('fp_user');
+              localStorage.removeItem('fp_profile');
               // 2. Nuke all IndexedDB databases (where Firebase stores its session)
               if (window.indexedDB && indexedDB.databases) {
                 var dbs = await indexedDB.databases();
@@ -2733,20 +2733,6 @@ function esc(str) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // ── Storage version gate ──
-  // Bump APP_VERSION whenever a breaking change is made to the auth/accounts schema.
-  // This forces a clean slate for all users on old versions.
-  var APP_VERSION = '5';
-  var storedVersion = localStorage.getItem('fp_version');
-  if (storedVersion !== APP_VERSION) {
-    // Clear all app data except Firebase config (so user doesn't have to re-enter it)
-    var fbConfig = localStorage.getItem('fp_firebase_config');
-    localStorage.clear();
-    if (fbConfig) localStorage.setItem('fp_firebase_config', fbConfig);
-    localStorage.setItem('fp_version', APP_VERSION);
-    console.log('[FieldPulse] Storage reset to version', APP_VERSION);
-  }
-
   boot().catch(function(err) {
     console.error('FieldPulse boot error:', err);
     var splash = document.getElementById('splash');
