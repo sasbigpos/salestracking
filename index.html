@@ -1106,7 +1106,18 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script>
+  <script>// Simple consistent password hash (replaces btoa which can differ across environments)
+function hashPwd(pwd) {
+  // Simple djb2-style hash, returns a fixed hex string
+  var h = 5381;
+  for (var i = 0; i < pwd.length; i++) {
+    h = ((h << 5) + h) ^ pwd.charCodeAt(i);
+    h = h & 0xffffffff;
+  }
+  return 'h_' + (h >>> 0).toString(16) + '_' + pwd.length;
+}
+
+
 // ── Utils ──
 
 // utils.js — Shared helpers
@@ -1448,7 +1459,7 @@ class DB {
 const SUPER_ADMIN = {
   uid:      'superadmin',
   email:    'allan.koay@bigpos.com',
-  password: btoa('demo1234'),
+  password: hashPwd('demo1234'),
   name:     'Super Admin',
   role:     'superadmin',
   team:     'Management',
@@ -1534,7 +1545,7 @@ class Auth {
     const newAccount  = {
       uid,
       email:    email.trim(),
-      password: btoa(password),
+      password: hashPwd(password),
       name:     displayName,
       role:     'user',
       team:     team.trim() || '',
@@ -1581,7 +1592,7 @@ class Auth {
     const acc = accounts.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
 
     if (!acc)                        throw new Error('No account found with this email');
-    if (acc.password !== btoa(password)) throw new Error('Incorrect password');
+    if (acc.password !== hashPwd(password)) throw new Error('Incorrect password');
     if (acc.active === false)        throw new Error('Your account has been deactivated. Contact an administrator.');
 
     const user = {
@@ -1641,7 +1652,7 @@ class Auth {
     const accounts = this._safeGet('fp_accounts') || [];
     const idx = accounts.findIndex(a => a.uid === uid);
     if (idx === -1) throw new Error('Account not found');
-    if (changes.password) changes.password = btoa(changes.password);
+    if (changes.password) changes.password = hashPwd(changes.password);
     accounts[idx] = { ...accounts[idx], ...changes };
     localStorage.setItem('fp_accounts', JSON.stringify(accounts));
     if (this._user?.uid === uid) {
@@ -2167,7 +2178,7 @@ class UserManager {
       const newPwd = document.getElementById('editUserPassword').value;
       if (newPwd) {
         if (newPwd.length < 6) { alert('Password must be at least 6 characters'); return; }
-        changes.password = btoa(newPwd);
+        changes.password = hashPwd(newPwd);
       }
       try {
         this.auth.updateAccount(this._editUid, changes);
@@ -2204,7 +2215,7 @@ class UserManager {
       const uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2);
       accounts.push({
         uid, email: email.trim(),
-        password: btoa(pwd),
+        password: hashPwd(pwd),
         name: name || email.split('@')[0],
         role: role || 'user',
         team: team || '',
@@ -2725,7 +2736,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── Storage version gate ──
   // Bump APP_VERSION whenever a breaking change is made to the auth/accounts schema.
   // This forces a clean slate for all users on old versions.
-  var APP_VERSION = '4';
+  var APP_VERSION = '5';
   var storedVersion = localStorage.getItem('fp_version');
   if (storedVersion !== APP_VERSION) {
     // Clear all app data except Firebase config (so user doesn't have to re-enter it)
