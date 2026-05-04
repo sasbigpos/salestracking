@@ -977,7 +977,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <div>
             <strong>Default Super Admin credentials:</strong>
-            Email: <code>admin@fieldpulse.app</code> &nbsp;|&nbsp; Password: <code>Admin@1234</code>
+            Email: <code>allan.koay@bigpos.com</code> &nbsp;|&nbsp; Password: <code>demo1234</code>
             <br><small>Change this password immediately in User Management after first login.</small>
           </div>
         </div>
@@ -1089,8 +1089,8 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
       </form>
       <div class="auth-hint-box">
         <span class="auth-hint-label">Default Super Admin</span>
-        <code>admin@fieldpulse.app</code>
-        <code>Admin@1234</code>
+        <code>allan.koay@bigpos.com</code>
+        <code>demo1234</code>
       </div>
     </div>
   </div>
@@ -1437,8 +1437,8 @@ class DB {
 
 const SUPER_ADMIN = {
   uid:      'superadmin',
-  email:    'admin@fieldpulse.app',
-  password: btoa('Admin@1234'),
+  email:    'allan.koay@bigpos.com',
+  password: btoa('demo1234'),
   name:     'Super Admin',
   role:     'superadmin',
   team:     'Management',
@@ -1532,10 +1532,15 @@ class Auth {
 
   _ensureSuperAdmin() {
     const accounts = this.db._localGet('fp_accounts', []);
-    if (!accounts.find(a => a.uid === SUPER_ADMIN.uid)) {
+    const idx = accounts.findIndex(a => a.uid === SUPER_ADMIN.uid);
+    if (idx === -1) {
+      // First time — seed the superadmin
       accounts.unshift({ ...SUPER_ADMIN });
-      localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    } else {
+      // Always sync email+password in case credentials changed in a new deploy
+      accounts[idx] = { ...accounts[idx], email: SUPER_ADMIN.email, password: SUPER_ADMIN.password, name: SUPER_ADMIN.name };
     }
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
   }
 
   // ── Getters ─────────────────────────────────────
