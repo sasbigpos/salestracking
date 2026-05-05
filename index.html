@@ -241,6 +241,36 @@ textarea { resize: vertical; }
 .map-container { height: 240px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); overflow: hidden; }
 .map-container.sm { height: 180px; }
 
+/* ── Location Picker ── */
+.loc-picker { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.25rem; }
+.loc-picker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .85rem; flex-wrap: wrap; gap: .5rem; }
+.loc-picker-label { font-size: .8rem; font-weight: 700; color: var(--text2); letter-spacing: .05em; text-transform: uppercase; }
+.loc-picker-actions { display: flex; gap: .5rem; }
+.btn-loc { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .75rem; border-radius: 7px; font-size: .78rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all var(--transition); }
+.btn-loc svg { width: 13px; height: 13px; }
+.btn-loc.gps-btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-loc.clear-loc-btn:hover { border-color: var(--red); color: var(--red); }
+.loc-search-wrap { position: relative; margin-bottom: .75rem; }
+.loc-search-icon { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text3); pointer-events: none; }
+.loc-search-input { width: 100%; padding: .55rem .85rem .55rem 2.2rem; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: .88rem; outline: none; transition: border-color var(--transition); }
+.loc-search-input:focus { border-color: var(--accent); }
+.loc-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); z-index: 500; max-height: 220px; overflow-y: auto; box-shadow: var(--shadow); }
+.loc-suggestion { padding: .65rem .9rem; cursor: pointer; font-size: .85rem; border-bottom: 1px solid var(--border); transition: background var(--transition); display: flex; align-items: flex-start; gap: .5rem; }
+.loc-suggestion:last-child { border-bottom: none; }
+.loc-suggestion:hover { background: var(--surface2); }
+.loc-suggestion-icon { color: var(--accent); font-size: .9rem; flex-shrink: 0; margin-top: .1rem; }
+.loc-suggestion-text { flex: 1; min-width: 0; }
+.loc-suggestion-main { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-suggestion-sub { font-size: .75rem; color: var(--text2); margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-map { height: 280px; cursor: crosshair; border-radius: var(--radius); overflow: hidden; margin-bottom: .6rem; }
+.loc-hint { font-size: .72rem; color: var(--text3); text-align: center; margin-bottom: .75rem; font-family: var(--font-mono); }
+.loc-result { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .9rem; }
+.loc-result.has-loc { border-color: rgba(62,207,142,.3); background: rgba(62,207,142,.05); }
+.loc-result-inner { display: flex; flex-direction: column; gap: .15rem; }
+.loc-result-addr { font-size: .85rem; font-weight: 500; color: var(--text); }
+.loc-result-coords { font-size: .72rem; font-family: var(--font-mono); color: var(--text3); }
+.loc-search-loading { padding: .75rem .9rem; font-size: .83rem; color: var(--text2); text-align: center; }
+
 /* ── Log Form ── */
 .log-layout { max-width: 700px; }
 .log-form-card { }
@@ -663,17 +693,43 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         </div>
         <div class="log-layout">
           <div class="card log-form-card">
-            <div class="geo-strip" id="geoStrip">
-              <div class="geo-icon">📡</div>
-              <div class="geo-text">
-                <strong id="geoStatus">Acquiring location…</strong>
-                <span id="geoCoords">—</span>
+
+            <!-- ── Location Picker ── -->
+            <div class="loc-picker">
+              <div class="loc-picker-header">
+                <span class="loc-picker-label">📍 Location</span>
+                <div class="loc-picker-actions">
+                  <button type="button" class="btn-loc gps-btn" id="gpsBtn" title="Use my current GPS location">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+                    Use GPS
+                  </button>
+                  <button type="button" class="btn-loc clear-loc-btn" id="clearLocBtn" title="Clear location">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Clear
+                  </button>
+                </div>
               </div>
-              <button class="geo-refresh" id="geoRefresh" title="Refresh location">
-                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              </button>
+
+              <!-- Search box -->
+              <div class="loc-search-wrap">
+                <svg class="loc-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="locSearch" class="loc-search-input" placeholder="Search address or place name…" autocomplete="off" />
+                <div id="locSuggestions" class="loc-suggestions hidden"></div>
+              </div>
+
+              <!-- Map — click or drag pin to set location -->
+              <div id="logMap" class="map-container loc-map"></div>
+              <p class="loc-hint">🖱 Click anywhere on the map to drop a pin &nbsp;·&nbsp; Drag the pin to adjust</p>
+
+              <!-- Selected location display -->
+              <div class="loc-result" id="locResult">
+                <div class="loc-result-inner">
+                  <span class="loc-result-addr" id="locAddr">No location selected</span>
+                  <span class="loc-result-coords" id="locCoordsDisplay">—</span>
+                </div>
+              </div>
             </div>
-            <div id="logMap" class="map-container sm"></div>
+
             <form id="logForm" novalidate>
               <div class="form-group">
                 <label for="clientName">Client / Account Name <span class="req">*</span></label>
@@ -1943,7 +1999,7 @@ class HistoryManager {
         <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
         ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
         <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
-          ${a.lat ? `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}` : '<span style="color:var(--text3)">No GPS</span>'}
+          ${a.lat ? (a.address ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc(a.address.split(',').slice(0,2).join(','))}</span>` : `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}`) : '<span style="color:var(--text3)">No location</span>'}
         </td>
         <td>
           <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
@@ -2009,7 +2065,7 @@ class HistoryManager {
         <div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">${esc(activity.activityType)}</span></div>
         <div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ${outcomeClass(activity.outcome)}">${esc(activity.outcome)||'—'}</span></span></div>
         ${activity.userName ? `<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">${esc(activity.userName)}</span></div>` : ''}
-        ${activity.lat ? `<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-val" style="font-family:var(--font-mono);font-size:.8rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</span></div>` : ''}
+        ${activity.lat ? `<div class="detail-row"><span class="detail-label">Location</span><div><div class="detail-val">${activity.address ? escHtml2(activity.address) : ''}</div><div style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);margin-top:.15rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</div></div></div>` : ''}
         ${activity.notes ? `<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">${esc(activity.notes)}</p></div>` : ''}
         ${customHtml}
       </div>
@@ -2491,7 +2547,7 @@ async function refreshDashboard() {
       <div class="feed-dot"></div>
       <div class="feed-body">
         <div class="feed-client">${esc(a.clientName)}</div>
-        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.address ? '<br><span style="font-size:.7rem;color:var(--text3);">📍 ' + esc(a.address.split(',').slice(0,2).join(',')) + '</span>' : ''}</div>
       </div>
       <div class="feed-time">${formatDate(a.timestamp)}</div>
     </div>
@@ -2519,10 +2575,90 @@ async function refreshDashboard() {
 // ── Log Activity ──────────────────────────────────
 let currentGeo = null;
 
-function initLogForm() {
-  acquireLocation();
-  document.getElementById('geoRefresh').addEventListener('click', acquireLocation);
+// ── Location Picker State ────────────────────────
+let locMarker = null;
+let locSearchTimer = null;
 
+// Set a location on the log map (pin + reverse geocode display)
+async function setLogLocation(lat, lng, label) {
+  currentGeo = { lat, lng, accuracy: null, address: label || null };
+
+  // Update display
+  document.getElementById('locCoordsDisplay').textContent =
+    `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  document.getElementById('locAddr').textContent = label || 'Fetching address…';
+  document.getElementById('locResult').classList.add('has-loc');
+
+  // Move / create draggable marker
+  if (logMap) {
+    if (locMarker) {
+      locMarker.setLatLng([lat, lng]);
+    } else {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:18px;height:18px;
+          background:var(--accent,#f5a623);
+          border:3px solid #fff;
+          border-radius:50%;
+          box-shadow:0 2px 8px rgba(0,0,0,.5);
+          cursor:grab;
+        "></div>`,
+        iconSize: [18,18], iconAnchor: [9,9]
+      });
+      locMarker = L.marker([lat,lng], { icon, draggable: true }).addTo(logMap);
+      locMarker.on('dragend', async e => {
+        const p = e.target.getLatLng();
+        const addr = await reverseGeocode(p.lat, p.lng);
+        setLogLocation(p.lat, p.lng, addr);
+      });
+    }
+    logMap.setView([lat, lng], 16);
+  }
+
+  // Reverse geocode if no label given
+  if (!label) {
+    const addr = await reverseGeocode(lat, lng);
+    document.getElementById('locAddr').textContent = addr;
+    currentGeo.address = addr;
+  }
+}
+
+// Reverse geocode via Nominatim
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const d = await r.json();
+    return d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  } catch {
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
+}
+
+// Forward geocode search via Nominatim
+async function searchPlaces(query) {
+  const r = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`,
+    { headers: { 'Accept-Language': 'en' } }
+  );
+  return r.json();
+}
+
+function clearLogLocation() {
+  currentGeo = null;
+  if (locMarker && logMap) { logMap.removeLayer(locMarker); locMarker = null; }
+  document.getElementById('locAddr').textContent = 'No location selected';
+  document.getElementById('locCoordsDisplay').textContent = '—';
+  document.getElementById('locResult').classList.remove('has-loc');
+  document.getElementById('locSearch').value = '';
+  document.getElementById('locSuggestions').classList.add('hidden');
+}
+
+function initLogForm() {
+  // ── Form submit ──
   document.getElementById('logForm').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
@@ -2530,16 +2666,17 @@ function initLogForm() {
     btn.textContent = 'Saving…';
     try {
       const activity = {
-        clientName:   document.getElementById('clientName').value.trim(),
-        activityType: document.getElementById('activityType').value,
-        outcome:      document.getElementById('outcome').value,
-        notes:        document.getElementById('notes').value.trim(),
-        lat:          currentGeo?.lat   ?? null,
-        lng:          currentGeo?.lng   ?? null,
-        accuracy:     currentGeo?.accuracy ?? null,
-        timestamp:    Date.now(),
-        userId:       auth.currentUser()?.uid  || 'local',
-        userName:     auth.currentUser()?.name || 'Unknown',
+        clientName:    document.getElementById('clientName').value.trim(),
+        activityType:  document.getElementById('activityType').value,
+        outcome:       document.getElementById('outcome').value,
+        notes:         document.getElementById('notes').value.trim(),
+        lat:           currentGeo?.lat    ?? null,
+        lng:           currentGeo?.lng    ?? null,
+        accuracy:      currentGeo?.accuracy ?? null,
+        address:       currentGeo?.address  ?? null,
+        timestamp:     Date.now(),
+        userId:        auth.currentUser()?.uid  || 'local',
+        userName:      auth.currentUser()?.name || 'Unknown',
         customAnswers: q.collectAnswers(),
       };
       if (!activity.clientName || !activity.activityType) {
@@ -2549,6 +2686,7 @@ function initLogForm() {
       toast('✅ Activity saved!');
       document.getElementById('logForm').reset();
       q.renderDynamicFields();
+      clearLogLocation();
     } catch (err) {
       toast('Error saving: ' + err.message, 'error');
     } finally {
@@ -2560,42 +2698,101 @@ function initLogForm() {
   document.getElementById('clearFormBtn').addEventListener('click', () => {
     document.getElementById('logForm').reset();
     q.renderDynamicFields();
+    clearLogLocation();
   });
+
+  // ── GPS button ──
+  document.getElementById('gpsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('gpsBtn');
+    btn.textContent = 'Locating…';
+    btn.disabled = true;
+    try {
+      const pos = await geo.getCurrentPosition();
+      await setLogLocation(pos.coords.latitude, pos.coords.longitude, null);
+      toast('📍 GPS location set');
+    } catch (err) {
+      toast('GPS unavailable: ' + err.message, 'error');
+    } finally {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Use GPS';
+      btn.disabled = false;
+    }
+  });
+
+  // ── Clear location button ──
+  document.getElementById('clearLocBtn').addEventListener('click', clearLogLocation);
+
+  // ── Search box ──
+  const searchInput = document.getElementById('locSearch');
+  const suggestions = document.getElementById('locSuggestions');
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(locSearchTimer);
+    const q2 = searchInput.value.trim();
+    if (q2.length < 3) { suggestions.classList.add('hidden'); return; }
+    suggestions.innerHTML = '<div class="loc-search-loading">Searching…</div>';
+    suggestions.classList.remove('hidden');
+    locSearchTimer = setTimeout(async () => {
+      try {
+        const results = await searchPlaces(q2);
+        if (!results.length) {
+          suggestions.innerHTML = '<div class="loc-search-loading">No results found</div>';
+          return;
+        }
+        suggestions.innerHTML = results.map((r, i) => {
+          const main = r.name || r.display_name.split(',')[0];
+          const sub  = r.display_name;
+          return `<div class="loc-suggestion" data-idx="${i}">
+            <span class="loc-suggestion-icon">📍</span>
+            <div class="loc-suggestion-text">
+              <div class="loc-suggestion-main">${escHtml(main)}</div>
+              <div class="loc-suggestion-sub">${escHtml(sub)}</div>
+            </div>
+          </div>`;
+        }).join('');
+        // Store results for click handler
+        suggestions._results = results;
+        suggestions.querySelectorAll('.loc-suggestion').forEach(el => {
+          el.addEventListener('click', async () => {
+            const res = suggestions._results[+el.dataset.idx];
+            searchInput.value = res.display_name.split(',').slice(0,2).join(',');
+            suggestions.classList.add('hidden');
+            await setLogLocation(+res.lat, +res.lon, res.display_name);
+          });
+        });
+      } catch {
+        suggestions.innerHTML = '<div class="loc-search-loading">Search failed — check connection</div>';
+      }
+    }, 500);
+  });
+
+  // Close suggestions when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#locSearch') && !e.target.closest('#locSuggestions')) {
+      suggestions.classList.add('hidden');
+    }
+  }, true);
 }
 
 async function initLogMap() {
   await MapService.loadLeaflet();
-  if (!logMap) logMap = MapService.createMap('logMap');
-  if (currentGeo) {
-    MapService.setView(logMap, currentGeo.lat, currentGeo.lng, 15);
-    MapService.addMarker(logMap, currentGeo.lat, currentGeo.lng, 'Your location');
+  if (!logMap) {
+    // Default center: Kuala Lumpur
+    logMap = MapService.createMap('logMap', 3.139, 101.686, 12);
+
+    // Click on map to drop pin
+    logMap.on('click', async e => {
+      await setLogLocation(e.latlng.lat, e.latlng.lng, null);
+    });
+  }
+  MapService.invalidate(logMap);
+  // If we already have a location, show it
+  if (currentGeo?.lat && locMarker) {
+    logMap.setView([currentGeo.lat, currentGeo.lng], 16);
   }
 }
 
-async function acquireLocation() {
-  const strip  = document.getElementById('geoStrip');
-  const status = document.getElementById('geoStatus');
-  const coords = document.getElementById('geoCoords');
-  strip.className = 'geo-strip';
-  status.textContent = 'Acquiring location…';
-  coords.textContent = '—';
-  try {
-    const pos  = await geo.getCurrentPosition();
-    currentGeo = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-    status.textContent = 'Location acquired';
-    coords.textContent = `${currentGeo.lat.toFixed(5)}, ${currentGeo.lng.toFixed(5)} (±${Math.round(currentGeo.accuracy)}m)`;
-    strip.classList.add('ok');
-    if (logMap) {
-      MapService.clearMarkers(logMap);
-      MapService.setView(logMap, currentGeo.lat, currentGeo.lng, 15);
-      MapService.addMarker(logMap, currentGeo.lat, currentGeo.lng, 'Your location');
-    }
-  } catch (err) {
-    status.textContent = 'Location unavailable';
-    coords.textContent = err.message;
-    strip.classList.add('error');
-    currentGeo = null;
-  }
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Questionnaire ─────────────────────────────────
