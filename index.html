@@ -2230,9 +2230,17 @@ class HistoryManager {
   }
 
   async openDetail(id) {
-    const all  = await this.db.getActivities();
-    const activity = all.find(a => a.id === id);
-    if (!activity) return;
+    let activity = null;
+    try {
+      const all = await this.db.getActivities();
+      activity  = all.find(a => a.id === id);
+      // Also check by stringified id in case of type mismatch
+      if (!activity) activity = all.find(a => String(a.id) === String(id));
+    } catch(e) {
+      console.error('openDetail fetch error:', e);
+      return;
+    }
+    if (!activity) { console.warn('Activity not found for id:', id); return; }
 
     // Access check: normal users can only see their own
     if (!this.auth?.isAdmin() && activity.userId !== this.auth?.currentUser()?.uid) {
@@ -2294,7 +2302,11 @@ class HistoryManager {
   </style>
     `;
 
-    document.getElementById('detailModal').classList.remove('hidden');
+    try {
+      document.getElementById('detailModal').classList.remove('hidden');
+    } catch(modalErr) {
+      console.error('Modal open error:', modalErr);
+    }
 
     const mapEl = document.getElementById('modalMap');
     if (activity.lat) {
@@ -3365,6 +3377,8 @@ function exportCSV(activities) {
 function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function escHtml2(str) { return esc(str); }
+
 
 document.addEventListener('DOMContentLoaded', function() {
   boot().catch(function(err) {
