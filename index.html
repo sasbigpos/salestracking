@@ -528,6 +528,31 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 /* ── Nav footer role label ── */
 .user-role { font-size: .72rem; color: var(--accent); font-family: var(--font-mono); }
 
+  
+/* ── Dependent Dropdown Builder ── */
+.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
+.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
+.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
+.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
+.btn-dep-add:hover { background:rgba(245,166,35,.22); }
+.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
+.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
+.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
+.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
+.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
+.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
+.dep-remove-btn:hover { color:var(--red); }
+.dep-children-area { padding:.6rem .75rem; }
+.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
+.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
+.dep-children-input:focus { border-color:var(--accent); }
+
+/* Log form — dependent select pair */
+.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
+.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
+.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
+
   </style>
 </head>
 <body>
@@ -843,13 +868,13 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         </div>
         <div id="qModal" class="modal hidden">
           <div class="modal-backdrop"></div>
-          <div class="modal-panel">
+          <div class="modal-panel" style="max-width:600px">
             <button class="modal-close" id="qModalClose">✕</button>
             <h3 id="qModalTitle">New Question</h3>
             <form id="qForm" novalidate>
               <div class="form-group">
                 <label>Question Label <span class="req">*</span></label>
-                <input type="text" id="qLabel" placeholder="e.g. Was the decision maker present?" required />
+                <input type="text" id="qLabel" placeholder="e.g. Product Category" required />
               </div>
               <div class="form-row">
                 <div class="form-group">
@@ -858,6 +883,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                     <option value="text">Short Text</option>
                     <option value="textarea">Long Text</option>
                     <option value="select">Dropdown</option>
+                    <option value="dependent_select">Dependent Dropdown</option>
                     <option value="radio">Multiple Choice</option>
                     <option value="checkbox">Checkboxes</option>
                     <option value="number">Number</option>
@@ -872,10 +898,28 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                   </select>
                 </div>
               </div>
+
+              <!-- Standard options (for select/radio/checkbox) -->
               <div class="form-group" id="optionsGroup" style="display:none">
                 <label>Options <span class="req">*</span> <small>(one per line)</small></label>
                 <textarea id="qOptions" rows="4" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
               </div>
+
+              <!-- Dependent Dropdown builder -->
+              <div id="depGroup" style="display:none">
+                <div class="dep-info-box">
+                  <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Define parent options, then add child options for each parent. In the Log form, selecting a parent automatically filters its children.</span>
+                </div>
+                <div class="dep-parent-section">
+                  <div class="dep-section-title">
+                    <span>Parent Options</span>
+                    <button type="button" class="btn-dep-add" id="addParentBtn">+ Add Parent</button>
+                  </div>
+                  <div id="depParentList" class="dep-parent-list"></div>
+                </div>
+              </div>
+
               <div class="form-actions">
                 <button type="button" class="btn secondary" id="qModalCancel">Cancel</button>
                 <button type="submit" class="btn primary">Save Question</button>
@@ -1746,9 +1790,10 @@ class Auth {
 
 class QuestionnaireManager {
   constructor(db) {
-    this.db = db;
-    this.questions = [];
-    this._editId = null;
+    this.db       = db;
+    this.questions= [];
+    this._editId  = null;
+    this._depData = [];   // [{parent:'', children:['','']}]
   }
 
   init() {
@@ -1758,6 +1803,7 @@ class QuestionnaireManager {
     this._bindModal();
   }
 
+  // ── Render question list ────────────────────────
   render() {
     const list = document.getElementById('questionList');
     if (!list) return;
@@ -1766,130 +1812,245 @@ class QuestionnaireManager {
       list.innerHTML = '<div class="empty-state">No custom questions yet. Click <strong>Add Question</strong> to start.</div>';
       return;
     }
-    list.innerHTML = this.questions.map((q, i) => `
-      <div class="q-item" data-id="${esc(q.id)}">
-        <div class="q-drag">
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
-        </div>
-        <div class="q-body">
-          <div class="q-label">${esc(q.label)}</div>
-          <div class="q-meta">${typeLabel(q.type)}${q.required === 'true' ? ' · Required' : ' · Optional'}${q.options?.length ? ` · ${q.options.length} options` : ''}</div>
-        </div>
-        <div class="q-actions">
-          <button class="icon-btn edit-q" data-id="${esc(q.id)}" title="Edit">
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="icon-btn del-q" data-id="${esc(q.id)}" title="Delete">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-          </button>
-        </div>
-      </div>
-    `).join('');
+    const isAdmin = typeof auth !== 'undefined' ? auth.isAdmin() : true;
+    list.innerHTML = this.questions.map((q, idx) => {
+      const typeLabels = {
+        text:'Short Text', textarea:'Long Text', select:'Dropdown',
+        dependent_select:'Dependent Dropdown',
+        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date'
+      };
+      const typeLabel = typeLabels[q.type] || q.type;
+      const reqLabel  = q.required === 'true' ? 'Required' : 'Optional';
+      let optSummary  = '';
+      if (q.type === 'dependent_select' && q.depData?.length) {
+        optSummary = ` · ${q.depData.length} parent${q.depData.length>1?'s':''}`;
+      } else if (q.options?.length) {
+        optSummary = ` · ${q.options.length} option${q.options.length>1?'s':''}`;
+      }
+      return `
+        <div class="q-item" data-id="${q.id}">
+          <div class="q-drag" style="cursor:grab;color:var(--text3)">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4;stroke:currentColor;fill:none;stroke-width:1.8">
+              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
+            </svg>
+          </div>
+          <div class="q-body">
+            <div class="q-label">${esc(q.label)}</div>
+            <div class="q-meta">${typeLabel} · ${reqLabel}${optSummary}</div>
+            ${q.type === 'dependent_select' && q.depData?.length ? `
+              <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem">
+                ${q.depData.map(p=>`<span style="font-size:.7rem;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);border-radius:4px;padding:.1rem .45rem;color:var(--accent)">${esc(p.parent)}</span>`).join('')}
+              </div>` : ''}
+          </div>
+          <div class="q-actions">
+            ${isAdmin ? `
+            <button class="icon-btn edit-q" data-id="${q.id}" title="Edit">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="icon-btn del-q" data-id="${q.id}" title="Delete" style="margin-left:.25rem">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
 
-    list.querySelectorAll('.edit-q').forEach(btn => {
-      btn.addEventListener('click', () => this.openModal(btn.dataset.id));
-    });
-    list.querySelectorAll('.del-q').forEach(btn => {
+    list.querySelectorAll('.edit-q').forEach(btn =>
+      btn.addEventListener('click', () => this.openModal(btn.dataset.id)));
+    list.querySelectorAll('.del-q').forEach(btn =>
       btn.addEventListener('click', () => {
         if (!confirm('Delete this question?')) return;
         this.questions = this.questions.filter(q => q.id !== btn.dataset.id);
         this.db.saveQuestions(this.questions);
         this.render();
         this.renderDynamicFields();
-      });
-    });
+      }));
   }
 
+  // ── Render dynamic fields in Log Activity form ──
   renderDynamicFields() {
     const container = document.getElementById('dynamicFields');
     if (!container) return;
     const qs = this.db.getQuestions();
     container.innerHTML = qs.map(q => `
       <div class="form-group">
-        <label>${esc(q.label)}${q.required === 'true' ? ' <span class="req">*</span>' : ''}</label>
+        <label>${esc(q.label)}${q.required==='true'?' <span class="req">*</span>':''}</label>
         ${this._renderInput(q)}
-      </div>
-    `).join('');
+      </div>`).join('');
+
+    // Wire up dependent dropdowns
+    qs.filter(q => q.type === 'dependent_select').forEach(q => {
+      this._wireDependentSelect(q);
+    });
   }
 
   _renderInput(q) {
-    const id = `dyn_${q.id}`;
+    const id  = `dyn_${q.id}`;
     const req = q.required === 'true' ? 'required' : '';
     switch (q.type) {
-      case 'text':
-        return `<input type="text" id="${id}" ${req} />`;
-      case 'textarea':
-        return `<textarea id="${id}" rows="3" ${req}></textarea>`;
-      case 'number':
-        return `<input type="number" id="${id}" ${req} />`;
-      case 'date':
-        return `<input type="date" id="${id}" ${req} />`;
+      case 'text':     return `<input type="text" id="${id}" ${req} />`;
+      case 'textarea': return `<textarea id="${id}" rows="3" ${req}></textarea>`;
+      case 'number':   return `<input type="number" id="${id}" ${req} />`;
+      case 'date':     return `<input type="date" id="${id}" ${req} />`;
       case 'select': {
-        const opts = (q.options || []).map(o => `<option>${esc(o)}</option>`).join('');
+        const opts = (q.options||[]).map(o=>`<option>${esc(o)}</option>`).join('');
         return `<select id="${id}" ${req}><option value="">Select…</option>${opts}</select>`;
       }
+      case 'dependent_select': {
+        // Parent dropdown + child dropdown (shown/hidden based on parent selection)
+        const parents = (q.depData||[]);
+        const parentOpts = parents.map(p=>`<option value="${esc(p.parent)}">${esc(p.parent)}</option>`).join('');
+        return `
+          <div class="dep-select-pair">
+            <select id="${id}_parent" ${req} data-dep-parent="${q.id}">
+              <option value="">Select…</option>${parentOpts}
+            </select>
+            <div class="dep-child-group hidden-dep" id="${id}_child_wrap">
+              <select id="${id}_child" data-dep-child="${q.id}">
+                <option value="">Select…</option>
+              </select>
+            </div>
+          </div>`;
+      }
       case 'radio': {
-        const opts = (q.options || []).map(o => `
-          <label class="radio-label"><input type="radio" name="${id}" value="${esc(o)}" ${req} /> ${esc(o)}</label>
-        `).join('');
+        const opts = (q.options||[]).map(o=>`
+          <label class="radio-label">
+            <input type="radio" name="${id}" value="${esc(o)}" ${req}/> ${esc(o)}
+          </label>`).join('');
         return `<div class="radio-group">${opts}</div>`;
       }
       case 'checkbox': {
-        const opts = (q.options || []).map(o => `
-          <label class="check-label"><input type="checkbox" name="${id}" value="${esc(o)}" /> ${esc(o)}</label>
-        `).join('');
+        const opts = (q.options||[]).map(o=>`
+          <label class="check-label">
+            <input type="checkbox" name="${id}" value="${esc(o)}"/> ${esc(o)}
+          </label>`).join('');
         return `<div class="check-group">${opts}</div>`;
       }
-      default:
-        return `<input type="text" id="${id}" ${req} />`;
+      default: return `<input type="text" id="${id}" ${req} />`;
     }
   }
 
+  // ── Wire up parent→child filtering ──────────────
+  _wireDependentSelect(q) {
+    const id       = `dyn_${q.id}`;
+    const parentEl = document.getElementById(`${id}_parent`);
+    const childWrap= document.getElementById(`${id}_child_wrap`);
+    const childEl  = document.getElementById(`${id}_child`);
+    if (!parentEl || !childEl) return;
+
+    const depData  = q.depData || [];
+
+    parentEl.addEventListener('change', () => {
+      const selected = parentEl.value;
+      const entry    = depData.find(p => p.parent === selected);
+      const children = entry?.children || [];
+
+      if (selected && children.length) {
+        childEl.innerHTML = '<option value="">Select…</option>' +
+          children.map(c => `<option>${esc(c)}</option>`).join('');
+        childWrap.classList.remove('hidden-dep');
+      } else {
+        childEl.innerHTML = '<option value="">Select…</option>';
+        childWrap.classList.add('hidden-dep');
+      }
+    });
+  }
+
+  // ── Collect answers including dependent selects ──
   collectAnswers() {
     const answers = {};
     const qs = this.db.getQuestions();
     qs.forEach(q => {
       const id = `dyn_${q.id}`;
       if (q.type === 'checkbox') {
-        const checked = [...document.querySelectorAll(`input[name="${id}"]:checked`)].map(el => el.value);
-        answers[q.id] = checked;
+        answers[q.id] = [...document.querySelectorAll(`input[name="${id}"]:checked`)].map(el=>el.value);
       } else if (q.type === 'radio') {
         const el = document.querySelector(`input[name="${id}"]:checked`);
         answers[q.id] = el?.value || '';
+      } else if (q.type === 'dependent_select') {
+        const parent = document.getElementById(`${id}_parent`)?.value || '';
+        const child  = document.getElementById(`${id}_child`)?.value  || '';
+        answers[q.id] = parent ? (child ? `${parent} › ${child}` : parent) : '';
       } else {
-        const el = document.getElementById(id);
-        answers[q.id] = el?.value || '';
+        answers[q.id] = document.getElementById(id)?.value || '';
       }
     });
     return answers;
   }
 
+  // ── Modal open ──────────────────────────────────
   openModal(editId = null) {
     this._editId = editId;
-    const modal = document.getElementById('qModal');
-    const titleEl = document.getElementById('qModalTitle');
-    const form = document.getElementById('qForm');
+    this._depData = [];
+    const modal  = document.getElementById('qModal');
+    const form   = document.getElementById('qForm');
     form.reset();
     document.getElementById('optionsGroup').style.display = 'none';
+    document.getElementById('depGroup').style.display     = 'none';
+    document.getElementById('depParentList').innerHTML    = '';
 
     if (editId) {
       const q = this.questions.find(x => x.id === editId);
       if (q) {
-        document.getElementById('qLabel').value = q.label;
-        document.getElementById('qType').value = q.type;
+        document.getElementById('qLabel').value    = q.label;
+        document.getElementById('qType').value     = q.type;
         document.getElementById('qRequired').value = q.required;
-        if (q.options?.length) {
+        if (q.type === 'dependent_select' && q.depData) {
+          this._depData = JSON.parse(JSON.stringify(q.depData));
+          document.getElementById('depGroup').style.display = 'block';
+          this._renderDepBuilder();
+        } else if (q.options?.length) {
           document.getElementById('qOptions').value = q.options.join('\n');
           document.getElementById('optionsGroup').style.display = 'block';
         }
       }
-      titleEl.textContent = 'Edit Question';
+      document.getElementById('qModalTitle').textContent = 'Edit Question';
     } else {
-      titleEl.textContent = 'New Question';
+      document.getElementById('qModalTitle').textContent = 'New Question';
     }
     modal.classList.remove('hidden');
   }
 
+  // ── Render the dependent builder rows ────────────
+  _renderDepBuilder() {
+    const list = document.getElementById('depParentList');
+    list.innerHTML = this._depData.map((entry, idx) => `
+      <div class="dep-parent-block" data-dep-idx="${idx}">
+        <div class="dep-parent-header">
+          <input class="dep-parent-input" type="text"
+            placeholder="Parent option name…"
+            value="${esc(entry.parent)}"
+            data-dep-parent-input="${idx}" />
+          <button type="button" class="dep-remove-btn" data-dep-remove="${idx}" title="Remove">✕</button>
+        </div>
+        <div class="dep-children-area">
+          <div class="dep-children-label">Child options (one per line)</div>
+          <textarea class="dep-children-input" rows="3"
+            placeholder="Child A&#10;Child B&#10;Child C"
+            data-dep-children="${idx}">${esc(entry.children.join('\n'))}</textarea>
+        </div>
+      </div>`).join('');
+
+    // Bind events
+    list.querySelectorAll('[data-dep-parent-input]').forEach(el => {
+      el.addEventListener('input', () => {
+        this._depData[+el.dataset.depParentInput].parent = el.value;
+      });
+    });
+    list.querySelectorAll('[data-dep-children]').forEach(el => {
+      el.addEventListener('input', () => {
+        this._depData[+el.dataset.depChildren].children =
+          el.value.split('\n').map(s=>s.trim()).filter(Boolean);
+      });
+    });
+    list.querySelectorAll('[data-dep-remove]').forEach(el => {
+      el.addEventListener('click', () => {
+        this._depData.splice(+el.dataset.depRemove, 1);
+        this._renderDepBuilder();
+      });
+    });
+  }
+
+  // ── Bind modal events ────────────────────────────
   _bindModal() {
     const modal = document.getElementById('qModal');
     const close = () => modal.classList.add('hidden');
@@ -1897,25 +2058,55 @@ class QuestionnaireManager {
     document.getElementById('qModalCancel').addEventListener('click', close);
     modal.querySelector('.modal-backdrop').addEventListener('click', close);
 
+    // Type change → show/hide option groups
     document.getElementById('qType').addEventListener('change', e => {
-      const show = ['select','radio','checkbox'].includes(e.target.value);
-      document.getElementById('optionsGroup').style.display = show ? 'block' : 'none';
+      const t = e.target.value;
+      const needsOptions = ['select','radio','checkbox'].includes(t);
+      const isDep        = t === 'dependent_select';
+      document.getElementById('optionsGroup').style.display = needsOptions ? 'block' : 'none';
+      document.getElementById('depGroup').style.display     = isDep       ? 'block' : 'none';
     });
 
+    // Add parent button
+    document.getElementById('addParentBtn').addEventListener('click', () => {
+      this._depData.push({ parent: '', children: [] });
+      this._renderDepBuilder();
+      // Focus the new input
+      const inputs = document.querySelectorAll('[data-dep-parent-input]');
+      if (inputs.length) inputs[inputs.length-1].focus();
+    });
+
+    // Form submit
     document.getElementById('qForm').addEventListener('submit', e => {
       e.preventDefault();
-      const label = document.getElementById('qLabel').value.trim();
-      const type = document.getElementById('qType').value;
+      const label    = document.getElementById('qLabel').value.trim();
+      const type     = document.getElementById('qType').value;
       const required = document.getElementById('qRequired').value;
-      const optionsRaw = document.getElementById('qOptions').value;
-      const options = optionsRaw ? optionsRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+      const optsRaw  = document.getElementById('qOptions').value;
+      const options  = optsRaw ? optsRaw.split('\n').map(s=>s.trim()).filter(Boolean) : [];
 
       if (!label) return;
 
+      // Validate dependent select
+      if (type === 'dependent_select') {
+        const valid = this._depData.filter(p => p.parent.trim());
+        if (!valid.length) { alert('Add at least one parent option'); return; }
+        const invalid = valid.filter(p => !p.children.length);
+        if (invalid.length) { alert(`"${invalid[0].parent}" has no child options`); return; }
+      }
+
+      const q = {
+        id:       this._editId || `q_${Date.now()}`,
+        label, type, required, options,
+        depData:  type === 'dependent_select'
+          ? this._depData.filter(p => p.parent.trim())
+          : [],
+      };
+
       if (this._editId) {
-        this.questions = this.questions.map(q => q.id === this._editId ? { ...q, label, type, required, options } : q);
+        this.questions = this.questions.map(x => x.id === this._editId ? q : x);
       } else {
-        this.questions.push({ id: `q_${Date.now()}`, label, type, required, options });
+        this.questions.push(q);
       }
       this.db.saveQuestions(this.questions);
       this.render();
@@ -1926,13 +2117,12 @@ class QuestionnaireManager {
 }
 
 function typeLabel(type) {
-  const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown', radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
+  const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown',
+    dependent_select:'Dependent Dropdown',
+    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
   return map[type] || type;
 }
 
-function esc(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 
 
 // ── History ──
@@ -2076,7 +2266,32 @@ class HistoryManager {
         .detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}
         .detail-val{font-size:.88rem}
         .detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}
-      </style>
+      
+/* ── Dependent Dropdown Builder ── */
+.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
+.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
+.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
+.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
+.btn-dep-add:hover { background:rgba(245,166,35,.22); }
+.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
+.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
+.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
+.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
+.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
+.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
+.dep-remove-btn:hover { color:var(--red); }
+.dep-children-area { padding:.6rem .75rem; }
+.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
+.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
+.dep-children-input:focus { border-color:var(--accent); }
+
+/* Log form — dependent select pair */
+.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
+.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
+.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
+
+  </style>
     `;
 
     document.getElementById('detailModal').classList.remove('hidden');
