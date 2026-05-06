@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f0f10" />
   <title>SAS Sales Tracking App</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,7 +43,10 @@
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 15px; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html { font-size: 15px; -webkit-text-size-adjust: 100%; }
+
 body {
   font-family: var(--font-body);
   background: var(--bg);
@@ -411,29 +418,199 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 .leaflet-control-attribution a { color: var(--accent) !important; }
 
 /* ── Mobile ── */
+/* ═══════════════════════════════════════════════
+   MOBILE — full responsive overhaul
+   ═══════════════════════════════════════════════ */
+
+/* ── Sidebar overlay backdrop ── */
+#sidebarOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 199;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#sidebarOverlay.active { display: block; }
+
 @media (max-width: 768px) {
-  #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  /* ── Mobile header ── */
   #mobileHeader {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
   }
-  .mobile-brand { font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; color: var(--accent); }
-  .menu-toggle { background: none; border: none; cursor: pointer; color: var(--text); display: flex; }
-  .menu-toggle svg { width: 22px; height: 22px; }
+  .mobile-brand {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: -.01em;
+  }
+  .menu-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+  .menu-toggle svg { width: 20px; height: 20px; }
+
+  /* ── Sidebar drawer ── */
   #sidebar {
-    position: fixed; inset: 0 0 0 0; z-index: 200;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    width: min(280px, 82vw);
     transform: translateX(-100%);
-    transition: transform var(--transition);
-    width: var(--sidebar-w);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  #sidebar.open { transform: none; }
-  .page { padding: 1.25rem; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+  #sidebar.open { transform: translateX(0); }
+
+  /* ── Main content ── */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+  }
+
+  /* ── Pages ── */
+  .page { padding: .9rem; }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+  }
+  .page-title { font-size: 1.35rem; }
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .header-actions .search-input,
+  .header-actions .filter-select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card { padding: 1rem; }
+  .stat-value { font-size: 1.75rem; }
+
+  /* ── Dash grid ── */
+  .dash-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+  /* ── Cards ── */
+  .card { padding: 1rem; margin-bottom: 1rem; }
+  .card-header { margin-bottom: .75rem; }
+
+  /* ── Forms ── */
+  .form-row { grid-template-columns: 1fr; gap: .75rem; }
   .log-layout { max-width: 100%; }
+  input, select, textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+    padding: .65rem .85rem;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: .65rem;
+  }
+  .form-actions .btn { width: 100%; justify-content: center; padding: .75rem; }
+
+  /* ── Location picker ── */
+  .loc-map { height: 220px; }
+  .loc-picker-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .loc-picker-actions { width: 100%; display: flex; gap: .5rem; }
+  .btn-loc { flex: 1; justify-content: center; padding: .5rem .75rem; }
+
+  /* ── Map ── */
+  .map-container { height: 200px; }
+
+  /* ── Activity feed ── */
+  .activity-feed { max-height: 240px; }
+
+  /* ── Table — horizontal scroll ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 580px; font-size: .8rem; }
+  .data-table th, .data-table td { padding: .6rem .75rem; }
+
+  /* ── Modals ── */
+  .modal { padding: .5rem; align-items: flex-end; }
+  .modal-panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90dvh;
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  /* ── Settings ── */
   .settings-grid { grid-template-columns: 1fr; }
+  .danger-actions { flex-direction: column; }
+  .danger-actions .btn { width: 100%; justify-content: center; }
+
+  /* ── Role legend ── */
+  .role-legend-grid { grid-template-columns: 1fr; }
+
+  /* ── User table ── */
+  .user-table-wrap { overflow-x: auto; }
+
+  /* ── Auth card ── */
+  .auth-card { padding: 1.5rem 1.1rem; }
+
+  /* ── Questionnaire ── */
+  .q-item { flex-wrap: wrap; gap: .5rem; }
+  .q-body { min-width: 0; width: 100%; }
+  .q-actions { margin-left: auto; }
+  #addUserPanel .form-row { grid-template-columns: 1fr; }
+
+  /* ── Splash ── */
+  .splash-title { font-size: 1.8rem; }
+
+  /* ── Buttons ── */
+  .btn { min-height: 42px; }
+  .page-header .btn { width: 100%; justify-content: center; }
+
+  /* ── Nav footer ── */
+  .nav-footer { padding: .75rem; }
+  .sign-out-btn { padding: .55rem; font-size: .8rem; }
+}
+
+/* ── Small phones ── */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .page { padding: .75rem; }
+  .stat-value { font-size: 1.5rem; }
+  .mobile-brand { font-size: .85rem; }
 }
 
 /* ── Scrollbar ── */
@@ -644,14 +821,18 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         ">Sign out</button>
       </div>
     </nav>
+    <!-- Sidebar overlay -->
+    <div id="sidebarOverlay" onclick="document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('active')"></div>
 
     <!-- Mobile header -->
     <header id="mobileHeader">
-      <button id="menuToggle" class="menu-toggle">
+      <button id="menuToggle" class="menu-toggle" aria-label="Open menu">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span class="mobile-brand">SAS Sales</span>
-      <div class="avatar sm" id="mobileAvatar">?</div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div class="avatar sm" id="mobileAvatar" style="cursor:pointer" title="Signed in"></div>
+      </div>
     </header>
 
     <!-- Main Content -->
@@ -2716,8 +2897,26 @@ function navigateTo(page) {
 }
 
 function initMobileSidebar() {
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
   document.getElementById('menuToggle').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
+    const isOpen = document.getElementById('sidebar').classList.contains('open');
+    isOpen ? closeSidebar() : openSidebar();
+  });
+  document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+  // Close sidebar on nav item click (mobile)
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
   });
 }
 
