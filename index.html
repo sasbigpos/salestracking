@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FieldPulse — Sales Activity Tracker</title>
+  <title>SAS Sales Tracking App</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
 /* ──────────────────────────────────────────────
-   FieldPulse — Sales Activity Tracker
+   SAS Sales Tracking App
    Theme: Industrial Utility × Warm Amber Accents
    ────────────────────────────────────────────── */
 
@@ -567,8 +567,8 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
       </div>
-      <h1 class="splash-title">FieldPulse</h1>
-      <p class="splash-sub">Sales Activity Tracker</p>
+      <h1 class="splash-title">SAS Sales</h1>
+      <p class="splash-sub">Sales Tracking App</p>
       <div class="splash-bar"><div class="splash-fill"></div></div>
     </div>
   </div>
@@ -584,7 +584,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
-        <span>FieldPulse</span>
+        <span>SAS Sales</span>
       </div>
 
       <ul class="nav-links">
@@ -650,7 +650,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
       <button id="menuToggle" class="menu-toggle">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <span class="mobile-brand">FieldPulse</span>
+      <span class="mobile-brand">SAS Sales</span>
       <div class="avatar sm" id="mobileAvatar">?</div>
     </header>
 
@@ -662,7 +662,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="page-header">
           <div>
             <h2 class="page-title">Dashboard</h2>
-            <p class="page-sub">Your sales pulse at a glance</p>
+            <p class="page-sub">Your sales performance at a glance</p>
           </div>
           <span class="date-chip" id="todayDate">—</span>
         </div>
@@ -757,34 +757,17 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 
             <form id="logForm" novalidate>
               <div class="form-group">
-                <label for="clientName">Client / Account Name <span class="req">*</span></label>
-                <input type="text" id="clientName" placeholder="e.g. Acme Corp" required />
+                <label for="clientName">Merchant / Prospect Name <span class="req">*</span></label>
+                <input type="text" id="clientName" placeholder="e.g. Warung ABC, Mr. Ahmad" required />
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label for="activityType">Activity Type <span class="req">*</span></label>
-                  <select id="activityType" required>
-                    <option value="">Select…</option>
-                    <option>Cold Call</option>
-                    <option>Follow-up Visit</option>
-                    <option>Demo</option>
-                    <option>Contract Signing</option>
-                    <option>Site Survey</option>
-                    <option>Relationship Building</option>
-                    <option>Other</option>
-                  </select>
+                  <select id="activityType" required><option value="">Select…</option></select>
                 </div>
                 <div class="form-group">
                   <label for="outcome">Outcome</label>
-                  <select id="outcome">
-                    <option value="">Select…</option>
-                    <option>Interested</option>
-                    <option>Not Interested</option>
-                    <option>Follow-up Required</option>
-                    <option>Closed Won</option>
-                    <option>Closed Lost</option>
-                    <option>No Decision</option>
-                  </select>
+                  <select id="outcome"><option value="">Select…</option></select>
                 </div>
               </div>
               <div id="dynamicFields"></div>
@@ -813,12 +796,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
           <div class="header-actions">
             <input type="search" id="histSearch" placeholder="Search…" class="search-input" />
-            <select id="histFilter" class="filter-select">
-              <option value="">All Types</option>
-              <option>Cold Call</option><option>Follow-up Visit</option><option>Demo</option>
-              <option>Contract Signing</option><option>Site Survey</option>
-              <option>Relationship Building</option><option>Other</option>
-            </select>
+            <select id="histFilter" class="filter-select"><option value="">All Types</option></select>
           </div>
         </div>
         <div class="card">
@@ -826,7 +804,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <table class="data-table" id="histTable">
               <thead>
                 <tr>
-                  <th>Date & Time</th><th>Client</th><th>Type</th>
+                  <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
                   <th>Outcome</th><th>Location</th><th>Actions</th>
                 </tr>
               </thead>
@@ -1068,7 +1046,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="page-header">
           <div>
             <h2 class="page-title">Settings</h2>
-            <p class="page-sub">Configure your FieldPulse workspace</p>
+            <p class="page-sub">Configure your SAS workspace</p>
           </div>
         </div>
 
@@ -1136,6 +1114,34 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
 
           <div class="card">
+            <h3 class="card-section-title">Activity Types</h3>
+            <p class="helper-text">Customise the activity type options shown in the Log Activity form. One per line.</p>
+            <form id="activityTypesForm" novalidate>
+              <div class="form-group">
+                <textarea id="activityTypesInput" rows="7" placeholder="Cold Call&#10;Follow-up Visit&#10;Demo"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetActivityTypesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Activity Types</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Outcomes</h3>
+            <p class="helper-text">Customise the outcome options shown in the Log Activity form. One per line.</p>
+            <form id="outcomesForm" novalidate>
+              <div class="form-group">
+                <textarea id="outcomesInput" rows="7" placeholder="Interested&#10;Not Interested&#10;Follow-up Required"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetOutcomesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Outcomes</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
             <h3 class="card-section-title">Data Management</h3>
             <p class="helper-text">Danger zone — these actions cannot be undone.</p>
             <div class="danger-actions">
@@ -1164,9 +1170,9 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
-        <h1>FieldPulse</h1>
+        <h1>SAS Sales</h1>
       </div>
-      <p class="auth-tagline">Sales Activity Tracker</p>
+      <p class="auth-tagline">Sales Tracking App</p>
       <div id="authTabs" class="auth-tabs">
         <button class="auth-tab active" data-tab="login">Sign In</button>
         <button class="auth-tab" data-tab="register">Register</button>
@@ -1545,8 +1551,49 @@ class DB {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
   }
   _localSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+  // ── App Config (activity types, outcomes) ──
+  getConfig() {
+    const defaults = {
+      activityTypes: ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'],
+      outcomes:      ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'],
+    };
+    const saved = this._localGet('fp_app_config', null);
+    return saved ? { ...defaults, ...saved } : defaults;
+  }
+  saveConfig(cfg) { this._localSet('fp_app_config', cfg); }
 }
 
+
+// ── Config helpers ────────────────────────────────
+// Populate activityType, outcome selects and histFilter from db config
+function loadSelectOptions() {
+  const cfg = db.getConfig();
+
+  // Activity Type select (log form)
+  const atSel = document.getElementById('activityType');
+  if (atSel) {
+    const cur = atSel.value;
+    atSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+
+  // Outcome select (log form)
+  const outSel = document.getElementById('outcome');
+  if (outSel) {
+    const cur = outSel.value;
+    outSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.outcomes.map(o => `<option${o===cur?' selected':''}>${esc(o)}</option>`).join('');
+  }
+
+  // History filter
+  const histSel = document.getElementById('histFilter');
+  if (histSel) {
+    const cur = histSel.value;
+    histSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+}
 
 // ── Auth ──
 
@@ -2558,7 +2605,7 @@ function showToast(msg, type = 'ok') {
 // ── App ──
 
 // ────────────────────────────────────────────────
-//  FieldPulse — app.js  (role-aware)
+//  SAS Sales — app.js  (role-aware)
 // ────────────────────────────────────────────────
 
 
@@ -2611,6 +2658,7 @@ function showApp() {
   initUserManagement();
   initDashboard();
   initMobileSidebar();
+  loadSelectOptions();  // populate dynamic selects on load
 }
 
 
@@ -2659,8 +2707,8 @@ function navigateTo(page) {
   document.getElementById(`page-${page}`)?.classList.add('active');
 
   if (page === 'dashboard')     refreshDashboard();
-  if (page === 'history')       history.render();
-  if (page === 'log')           initLogMap();
+  if (page === 'history')       { loadSelectOptions(); history.render(); }
+  if (page === 'log')           { loadSelectOptions(); initLogMap(); }
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
 
@@ -2671,6 +2719,36 @@ function initMobileSidebar() {
   document.getElementById('menuToggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
+}
+
+// ── Config helpers ────────────────────────────────
+// Populate activityType, outcome selects and histFilter from db config
+function loadSelectOptions() {
+  const cfg = db.getConfig();
+
+  // Activity Type select (log form)
+  const atSel = document.getElementById('activityType');
+  if (atSel) {
+    const cur = atSel.value;
+    atSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+
+  // Outcome select (log form)
+  const outSel = document.getElementById('outcome');
+  if (outSel) {
+    const cur = outSel.value;
+    outSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.outcomes.map(o => `<option${o===cur?' selected':''}>${esc(o)}</option>`).join('');
+  }
+
+  // History filter
+  const histSel = document.getElementById('histFilter');
+  if (histSel) {
+    const cur = histSel.value;
+    histSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
 }
 
 // ── Auth ──────────────────────────────────────────
@@ -3086,12 +3164,61 @@ function initSettings() {
     toast('All data cleared');
     refreshDashboard();
   });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Client','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
     a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
@@ -3110,7 +3237,7 @@ function esc(str) {
 
 document.addEventListener('DOMContentLoaded', function() {
   boot().catch(function(err) {
-    console.error('FieldPulse boot error:', err);
+    console.error('SAS boot error:', err);
     var splash = document.getElementById('splash');
     if (splash) splash.remove();
     var authWall = document.getElementById('authWall');
@@ -3356,12 +3483,61 @@ function initSettings() {
     toast('All data cleared');
     refreshDashboard();
   });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Client','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
     a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
@@ -3382,7 +3558,7 @@ function escHtml2(str) { return esc(str); }
 
 document.addEventListener('DOMContentLoaded', function() {
   boot().catch(function(err) {
-    console.error('FieldPulse boot error:', err);
+    console.error('SAS boot error:', err);
     var splash = document.getElementById('splash');
     if (splash) splash.remove();
     var authWall = document.getElementById('authWall');
