@@ -822,17 +822,15 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
       </div>
     </nav>
     <!-- Sidebar overlay -->
-    <div id="sidebarOverlay" onclick="document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('active')"></div>
+    <div id="sidebarOverlay" onclick="fpCloseSidebar()"></div>
 
     <!-- Mobile header -->
     <header id="mobileHeader">
-      <button id="menuToggle" class="menu-toggle" aria-label="Open menu">
+      <button class="menu-toggle" aria-label="Open menu" onclick="fpToggleSidebar()">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span class="mobile-brand">SAS Sales</span>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <div class="avatar sm" id="mobileAvatar" style="cursor:pointer" title="Signed in"></div>
-      </div>
+      <div class="avatar sm" id="mobileAvatar"></div>
     </header>
 
     <!-- Main Content -->
@@ -1393,7 +1391,35 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script>// Simple consistent password hash (replaces btoa which can differ across environments)
+  <script>// ── Global sidebar controls (inline-onclick safe) ────
+function fpOpenSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.add('open');
+  if (o) o.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function fpCloseSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('active');
+  document.body.style.overflow = '';
+}
+function fpToggleSidebar() {
+  var s = document.getElementById('sidebar');
+  if (s && s.classList.contains('open')) {
+    fpCloseSidebar();
+  } else {
+    fpOpenSidebar();
+  }
+}
+
+// Simple consistent password hash (replaces btoa which can differ across environments)
+function hashPwd(pwd) {
+  // Simple djb2-style hash, returns a fixed hex string
+  var h = 5381;
+  for (var i = 0; i < pwd.length; // Simple consistent password hash (replaces btoa which can differ across environments)
 function hashPwd(pwd) {
   // Simple djb2-style hash, returns a fixed hex string
   var h = 5381;
@@ -2893,29 +2919,15 @@ function navigateTo(page) {
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
 
-  document.getElementById('sidebar').classList.remove('open');
+  fpCloseSidebar();
 }
 
 function initMobileSidebar() {
-  function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebarOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-  }
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    const isOpen = document.getElementById('sidebar').classList.contains('open');
-    isOpen ? closeSidebar() : openSidebar();
-  });
-  document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-  // Close sidebar on nav item click (mobile)
+  // Toggle button uses inline onclick="fpToggleSidebar()" — no binding needed here
+  // Just wire nav items to close the sidebar when tapped on mobile
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      if (window.innerWidth <= 768) closeSidebar();
+      if (window.innerWidth <= 768) fpCloseSidebar();
     });
   });
 }
@@ -3767,6 +3779,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-  </script>
-</body>
-</html>
+  
