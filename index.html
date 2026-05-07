@@ -1637,8 +1637,8 @@ class DB {
 
   // init() is now instant — no network calls, no dynamic imports
   // Firebase connects lazily via connectFirestore() called from Settings
-  async init() {
-    // Nothing blocking — app boots immediately from localStorage
+  init() {
+    // Synchronous — nothing to do, localStorage is always ready
   }
 
   // ── Firestore lazy connect (called from Settings page only) ──
@@ -1804,22 +1804,22 @@ class Auth {
   }
 
   // ── Init ──────────────────────────────────────
-  async init() {
+  init() {
     this._ensureSuperAdmin();
 
     // Skip session restore if coming from a sign-out redirect
-    if (window.location.search.includes('signout=')) {
+    if (window.location.search && window.location.search.includes('signout=')) {
       this._user = null;
-      window.history.replaceState({}, '', window.location.pathname);
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(_) {}
       return;
     }
 
     // Restore from localStorage — validate account still exists and is active
-    const stored = this._safeGet('fp_user');
+    var stored = this._safeGet('fp_user');
     if (stored && stored.uid) {
-      const acc = this._getAccount(stored.uid);
+      var acc = this._getAccount(stored.uid);
       if (acc && acc.active !== false) {
-        this._user = { ...stored, role: acc.role, active: true };
+        this._user = Object.assign({}, stored, { role: acc.role, active: true });
         return;
       }
     }
@@ -2801,27 +2801,31 @@ const userMgr = new UserManager(auth, db);
 let logMap = null, dashMap = null;
 
 // ── Boot ─────────────────────────────────────────
-async function boot() {
-  const splash = document.getElementById('splash');
-  await new Promise(r => setTimeout(r, 400));
-  splash.classList.add('out');
-  setTimeout(() => { try { if(splash && splash.parentNode) splash.remove(); } catch(_){} }, 400);
+function boot() {
+  // Remove splash immediately — no waiting, no async
+  var splash = document.getElementById('splash');
+  if (splash) {
+    splash.classList.add('out');
+    setTimeout(function() { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
+  }
 
-  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-  });
-
-  // db.init() is now instant — no network calls
-  await db.init();
-
+  // Set date
   try {
-    await auth.init();
-  } catch(e) { console.warn('auth.init failed (non-fatal):', e.message); }
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+  } catch(_) {}
 
+  // db and auth init are synchronous (localStorage only)
+  try { db.init(); } catch(e) { console.warn('db.init:', e.message); }
+  try { auth.init(); } catch(e) { console.warn('auth.init:', e.message); }
+
+  // Show app or auth wall
   if (auth.isAuthenticated()) {
     showApp();
   } else {
-    document.getElementById('authWall').classList.remove('hidden');
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
     initAuthForm();
   }
 }
@@ -3422,16 +3426,17 @@ function esc(str) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  boot().catch(function(err) {
+  try {
+    boot();
+  } catch(err) {
     console.error('SAS boot error:', err);
     var splash = document.getElementById('splash');
-    if (splash) splash.remove();
-    var authWall = document.getElementById('authWall');
-    if (authWall) authWall.classList.remove('hidden');
-    var errEl = document.getElementById('authError');
-    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
-  });
+    if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
+  }
 });
+;
 
  function initLogForm() {
   // ── Form submit ──
