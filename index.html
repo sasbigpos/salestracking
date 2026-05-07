@@ -1638,7 +1638,15 @@ class DB {
   async init() {
     const cfg = this.getLocalConfig();
     if (cfg?.apiKey) {
-      try { await this.connectFirestore(cfg); } catch (_) {}
+      try {
+        // Hard 5s timeout so a bad/slow Firebase config never hangs the app
+        await Promise.race([
+          this.connectFirestore(cfg),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('Firebase timeout')), 5000))
+        ]);
+      } catch (e) {
+        console.warn('[DB] Firebase init skipped:', e.message);
+      }
     }
   }
 
@@ -1653,8 +1661,7 @@ class DB {
     this._app       = existing || initializeApp(config, 'fieldpulse');
     this._firestore = getFirestore(this._app);
     this._fs        = { collection, addDoc, getDocs, deleteDoc, query, where, orderBy, doc, setDoc, getDoc, updateDoc };
-    const testQ = query(collection(this._firestore, 'activities'), where('_test','==',true));
-    await getDocs(testQ);
+    // No blocking test query — just mark as connected
     console.log('[DB] Firestore connected');
   }
 
@@ -2823,9 +2830,9 @@ let logMap = null, dashMap = null;
 // ── Boot ─────────────────────────────────────────
 async function boot() {
   const splash = document.getElementById('splash');
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, 400));
   splash.classList.add('out');
-  setTimeout(() => splash.remove(), 600);
+  setTimeout(() => { try { if(splash && splash.parentNode) splash.remove(); } catch(_){} }, 400);
 
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
