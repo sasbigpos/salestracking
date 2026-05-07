@@ -1419,10 +1419,6 @@ function fpToggleSidebar() {
 function hashPwd(pwd) {
   // Simple djb2-style hash, returns a fixed hex string
   var h = 5381;
-  for (var i = 0; i < pwd.length; // Simple consistent password hash (replaces btoa which can differ across environments)
-function hashPwd(pwd) {
-  // Simple djb2-style hash, returns a fixed hex string
-  var h = 5381;
   for (var i = 0; i < pwd.length; i++) {
     h = ((h << 5) + h) ^ pwd.charCodeAt(i);
     h = h & 0xffffffff;
