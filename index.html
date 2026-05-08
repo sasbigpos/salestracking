@@ -898,46 +898,18 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="log-layout">
           <div class="card log-form-card">
 
-            <!-- ── Location Picker ── -->
-            <div class="loc-picker">
-              <div class="loc-picker-header">
-                <span class="loc-picker-label">📍 Location</span>
-                <div class="loc-picker-actions">
-                  <button type="button" class="btn-loc gps-btn" id="gpsBtn" title="Use my current GPS location">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
-                    Use GPS
-                  </button>
-                  <button type="button" class="btn-loc clear-loc-btn" id="clearLocBtn" title="Clear location">
-                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    Clear
-                  </button>
-                </div>
-              </div>
-
-              <!-- Search box -->
-              <div class="loc-search-wrap">
-                <svg class="loc-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="locSearch" class="loc-search-input" placeholder="Search address or place name…" autocomplete="off" />
-                <div id="locSuggestions" class="loc-suggestions hidden"></div>
-              </div>
-
-              <!-- Map — click or drag pin to set location -->
-              <div id="logMap" class="map-container loc-map"></div>
-              <p class="loc-hint">🖱 Click anywhere on the map to drop a pin &nbsp;·&nbsp; Drag the pin to adjust</p>
-
-              <!-- Selected location display -->
-              <div class="loc-result" id="locResult">
-                <div class="loc-result-inner">
-                  <span class="loc-result-addr" id="locAddr">No location selected</span>
-                  <span class="loc-result-coords" id="locCoordsDisplay">—</span>
-                </div>
-              </div>
-            </div>
+            <!-- GPS runs silently in background — hidden from user -->
+            <div id="logMap" style="display:none"></div>
+            <div id="gpsStatusHidden" style="display:none"></div>
 
             <form id="logForm" novalidate>
               <div class="form-group">
                 <label for="clientName">Merchant / Prospect Name <span class="req">*</span></label>
                 <input type="text" id="clientName" placeholder="e.g. Warung ABC, Mr. Ahmad" required />
+              </div>
+              <div class="form-group">
+                <label for="businessAddress">Business Address</label>
+                <input type="text" id="businessAddress" placeholder="e.g. No 12, Jalan Utama, Ipoh" />
               </div>
               <div class="form-row">
                 <div class="form-group">
@@ -984,7 +956,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
               <thead>
                 <tr>
                   <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
-                  <th>Outcome</th><th>Location</th><th>Actions</th>
+                  <th>Outcome</th><th>Location / Address</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="histBody">
@@ -1391,7 +1363,8 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script>// ── Global sidebar controls (inline-onclick safe) ────
+  <script>
+// ── Global sidebar controls (inline-onclick safe) ────
 function fpOpenSidebar() {
   var s = document.getElementById('sidebar');
   var o = document.getElementById('sidebarOverlay');
@@ -2419,7 +2392,9 @@ class HistoryManager {
         <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
         ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
         <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
-          ${a.lat ? (a.address ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc(a.address.split(',').slice(0,2).join(','))}</span>` : `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}`) : '<span style="color:var(--text3)">No location</span>'}
+          ${(isAdmin
+          ? (a.lat ? `<span title='GPS: ${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc((a.gpsAddress || a.address || '').split(',').slice(0,2).join(',') || 'GPS captured')}</span>` : '<span style="color:var(--text3)">No GPS</span>')
+          : esc(a.businessAddress || '—'))}
         </td>
         <td>
           <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
@@ -2460,6 +2435,7 @@ class HistoryManager {
   }
 
   async openDetail(id) {
+    const isAdm = this.auth?.isAdmin() || false;
     let activity = null;
     try {
       const all = await this.db.getActivities();
@@ -2487,52 +2463,29 @@ class HistoryManager {
       return `<div class="detail-row"><span class="detail-label">${esc(q.label)}</span><span class="detail-val">${esc(Array.isArray(val) ? val.join(', ') : val)}</span></div>`;
     }).join('');
 
-    document.getElementById('modalBody').innerHTML = `
-      <div class="detail-grid">
-        <div class="detail-row"><span class="detail-label">Date & Time</span><span class="detail-val">${formatDateTime(activity.timestamp)}</span></div>
-        <div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">${esc(activity.activityType)}</span></div>
-        <div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ${outcomeClass(activity.outcome)}">${esc(activity.outcome)||'—'}</span></span></div>
-        ${activity.userName ? `<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">${esc(activity.userName)}</span></div>` : ''}
-        ${activity.lat ? `<div class="detail-row"><span class="detail-label">Location</span><div><div class="detail-val">${activity.address ? escHtml2(activity.address) : ''}</div><div style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);margin-top:.15rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</div></div></div>` : ''}
-        ${activity.notes ? `<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">${esc(activity.notes)}</p></div>` : ''}
-        ${customHtml}
-      </div>
-      <style>
-        .detail-grid{display:flex;flex-direction:column;gap:.6rem}
-        .detail-row{display:flex;gap:.75rem;align-items:baseline}
-        .detail-row.full{flex-direction:column;gap:.3rem}
-        .detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}
-        .detail-val{font-size:.88rem}
-        .detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}
-      
-/* ── Dependent Dropdown Builder ── */
-.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
-.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
-.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
-.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
-.btn-dep-add:hover { background:rgba(245,166,35,.22); }
-.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
-.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
-.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
-.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
-.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
-.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
-.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
-.dep-remove-btn:hover { color:var(--red); }
-.dep-children-area { padding:.6rem .75rem; }
-.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
-.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
-.dep-children-input:focus { border-color:var(--accent); }
+    // Build modal HTML using string concat to avoid nested backtick issues
+    var mHtml = '<div class="detail-grid">';
+    mHtml += '<div class="detail-row"><span class="detail-label">Date &amp; Time</span><span class="detail-val">' + formatDateTime(activity.timestamp) + '</span></div>';
+    mHtml += '<div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">' + esc(activity.activityType) + '</span></div>';
+    mHtml += '<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ' + outcomeClass(activity.outcome) + '">' + (esc(activity.outcome)||'—') + '</span></span></div>';
+    if (activity.userName) mHtml += '<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">' + esc(activity.userName) + '</span></div>';
+    if (activity.businessAddress) mHtml += '<div class="detail-row"><span class="detail-label">Business Address</span><span class="detail-val">' + escHtml2(activity.businessAddress) + '</span></div>';
+    if (isAdm && activity.lat) {
+      var gpsAddr = (activity.gpsAddress || activity.address || '').split(',').slice(0,3).join(',');
+      var gpsCoords = activity.lat.toFixed(6) + ', ' + activity.lng.toFixed(6);
+      var gpsAcc   = activity.accuracy ? ' ±' + Math.round(activity.accuracy) + 'm' : '';
+      mHtml += '<div class="detail-row"><span class="detail-label" style="color:var(--accent)">GPS Location</span><div>';
+      if (gpsAddr) mHtml += '<div class="detail-val" style="font-size:.8rem">' + escHtml2(gpsAddr) + '</div>';
+      mHtml += '<div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3);margin-top:.15rem">' + gpsCoords + gpsAcc + '</div>';
+      mHtml += '</div></div>';
+    }
+    if (activity.notes) mHtml += '<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">' + esc(activity.notes) + '</p></div>';
+    mHtml += customHtml;
+    mHtml += '</div>';
+    mHtml += '<style>.detail-grid{display:flex;flex-direction:column;gap:.6rem}.detail-row{display:flex;gap:.75rem;align-items:baseline}.detail-row.full{flex-direction:column;gap:.3rem}.detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}.detail-val{font-size:.88rem}.detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}</style>';
+    document.getElementById('modalBody').innerHTML = mHtml;
 
-/* Log form — dependent select pair */
-.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
-.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
-.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
-
-  </style>
-    `;
-
-    try {
+        try {
       document.getElementById('detailModal').classList.remove('hidden');
     } catch(modalErr) {
       console.error('Modal open error:', modalErr);
@@ -3042,7 +2995,7 @@ async function refreshDashboard() {
       <div class="feed-dot"></div>
       <div class="feed-body">
         <div class="feed-client">${esc(a.clientName)}</div>
-        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.address ? '<br><span style="font-size:.7rem;color:var(--text3);">📍 ' + esc(a.address.split(',').slice(0,2).join(',')) + '</span>' : ''}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.businessAddress ? '<br><span style="font-size:.7rem;color:var(--text3);">🏢 ' + esc(a.businessAddress) + '</span>' : ''}</div>
       </div>
       <div class="feed-time">${formatDate(a.timestamp)}</div>
     </div>
@@ -3070,132 +3023,37 @@ async function refreshDashboard() {
 // ── Log Activity ──────────────────────────────────
 let currentGeo = null;
 
-// ── Location Picker ──────────────────────────────
-// Self-contained — all state lives here, safe across page re-visits
+// ── Location (silent background GPS) ────────────────
+// GPS fires automatically when Log Activity page opens.
+// No UI shown to users. Coordinates stored invisibly.
+// Only admins see location data in reports.
+
 const LocPicker = {
   map:    null,
   marker: null,
-  searchTimer: null,
-  geocoding: false,
 
-  // ── Init map (called each time Log page is shown) ──
+  // init — just trigger silent GPS, no map UI needed
   async init() {
-    await MapService.loadLeaflet();
-
-    const el = document.getElementById('logMap');
-    if (!el) return;
-
-    // Build map once; invalidate size on subsequent visits
-    if (!this.map) {
-      this.map = L.map('logMap', { zoomControl: true }).setView([3.139, 101.686], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(this.map);
-
-      // ── Click anywhere to drop / move pin ──
-      this.map.on('click', async e => {
-        await this.setPin(e.latlng.lat, e.latlng.lng);
-      });
-    } else {
-      // Already created — just fix size if container was hidden
-      setTimeout(() => this.map.invalidateSize(), 120);
-    }
-
-    // Restore pin if we already have one
-    if (currentGeo?.lat) {
-      this._renderPin(currentGeo.lat, currentGeo.lng);
-      this.map.setView([currentGeo.lat, currentGeo.lng], 15);
-    }
+    // Map element is hidden — no Leaflet init needed
+    // GPS fires silently via silentGPS() called from initLogForm
   },
 
-  // ── Place or move the draggable pin ──
+  // setPin — stores coords silently (no UI update for users)
   async setPin(lat, lng, knownAddress) {
     currentGeo = { lat, lng, accuracy: null, address: knownAddress || null };
-
-    this._renderPin(lat, lng);
-    this.map.setView([lat, lng], 16);
-    this._showResult('📍 Fetching address…', `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-
     if (!knownAddress) {
-      const addr = await this._reverseGeocode(lat, lng);
-      currentGeo.address = addr;
-      this._showResult(addr, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-    } else {
-      this._showResult(knownAddress, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      // Reverse geocode silently in background
+      this._reverseGeocode(lat, lng).then(addr => {
+        if (currentGeo) currentGeo.address = addr;
+      }).catch(() => {});
     }
   },
 
-  // ── Create or move the Leaflet marker ──
-  _renderPin(lat, lng) {
-    const pinHtml = `
-      <div style="
-        position:relative;
-        width:32px; height:42px;
-        filter: drop-shadow(0 3px 6px rgba(0,0,0,.45));
-      ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="32" height="42">
-          <path d="M16 0C9.4 0 4 5.4 4 12c0 9 12 30 12 30S28 21 28 12C28 5.4 22.6 0 16 0z"
-                fill="#f5a623" stroke="#fff" stroke-width="2"/>
-          <circle cx="16" cy="12" r="5" fill="#fff"/>
-        </svg>
-      </div>`;
-
-    const icon = L.divIcon({
-      className: '',
-      html: pinHtml,
-      iconSize:   [32, 42],
-      iconAnchor: [16, 42],   // tip of the pin
-      popupAnchor:[0, -44],
-    });
-
-    if (this.marker) {
-      // Move existing marker
-      this.marker.setLatLng([lat, lng]);
-    } else {
-      // Create new draggable marker
-      this.marker = L.marker([lat, lng], { icon, draggable: true, autoPan: true })
-        .addTo(this.map);
-
-      // Drag handlers
-      this.marker.on('drag', () => {
-        const p = this.marker.getLatLng();
-        document.getElementById('locCoordsDisplay').textContent =
-          `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
-      });
-
-      this.marker.on('dragend', async () => {
-        const p = this.marker.getLatLng();
-        document.getElementById('locAddr').textContent = '📍 Fetching address…';
-        const addr = await this._reverseGeocode(p.lat, p.lng);
-        currentGeo = { lat: p.lat, lng: p.lng, accuracy: null, address: addr };
-        this._showResult(addr, `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`);
-      });
-    }
-  },
-
-  // ── Clear pin & state ──
   clear() {
-    if (this.marker && this.map) {
-      this.map.removeLayer(this.marker);
-      this.marker = null;
-    }
     currentGeo = null;
-    document.getElementById('locAddr').textContent = 'No location selected';
-    document.getElementById('locCoordsDisplay').textContent = '—';
-    document.getElementById('locResult').classList.remove('has-loc');
-    document.getElementById('locSearch').value = '';
-    document.getElementById('locSuggestions').classList.add('hidden');
   },
 
-  // ── Update the result strip ──
-  _showResult(addr, coords) {
-    document.getElementById('locAddr').textContent = addr;
-    document.getElementById('locCoordsDisplay').textContent = coords;
-    document.getElementById('locResult').classList.add('has-loc');
-  },
-
-  // ── Nominatim reverse geocode ──
+  // Reverse geocode via Nominatim (silent)
   async _reverseGeocode(lat, lng) {
     try {
       const r = await fetch(
@@ -3209,32 +3067,54 @@ const LocPicker = {
     }
   },
 
-  // ── Nominatim forward search ──
-  async search(query) {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en' } }
-    );
-    return r.json();
-  },
-
-  // ── GPS locate ──
+  // GPS locate (non-draggable — fixed position from device)
   async gps() {
     const pos = await new Promise((resolve, reject) => {
       if (!navigator.geolocation) { reject(new Error('Geolocation not supported')); return; }
-      navigator.geolocation.getCurrentPosition(resolve, e => {
+      navigator.geolocation.getCurrentPosition(resolve, err => {
         const msgs = { 1:'Permission denied', 2:'Position unavailable', 3:'Timeout' };
-        reject(new Error(msgs[e.code] || 'GPS error'));
-      }, { enableHighAccuracy: true, timeout: 12000 });
+        reject(new Error(msgs[err.code] || 'GPS error'));
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
     });
     await this.setPin(pos.coords.latitude, pos.coords.longitude, null);
     return pos;
   },
 };
 
+// Silent GPS — called automatically when Log page loads
+// Runs in background, user sees nothing
+function silentGPS() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // Store silently — no toast, no UI
+      currentGeo = {
+        lat:      pos.coords.latitude,
+        lng:      pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        address:  null,
+      };
+      // Reverse geocode quietly in background
+      fetch(
+        'https://nominatim.openstreetmap.org/reverse?lat=' + pos.coords.latitude +
+        '&lon=' + pos.coords.longitude + '&format=json',
+        { headers: { 'Accept-Language': 'en' } }
+      ).then(r => r.json()).then(d => {
+        if (currentGeo) currentGeo.address = d.display_name || null;
+      }).catch(() => {});
+    },
+    function() {
+      // Silent fail — user doesn't need to know
+      currentGeo = null;
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
+}
+
 // ── Wrappers used by initLogMap and initLogForm ───
 async function initLogMap() {
-  await LocPicker.init();
+  // Map is hidden — just trigger silent GPS on page visit
+  silentGPS();
 }
 
 function clearLogLocation() {
@@ -3408,10 +3288,10 @@ function initSettings() {
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Outcome','Rep','Latitude','Longitude','GPS Address','Notes'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
-    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType, a.outcome,
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -3447,18 +3327,19 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.textContent = 'Saving…';
     try {
       const activity = {
-        clientName:    document.getElementById('clientName').value.trim(),
-        activityType:  document.getElementById('activityType').value,
-        outcome:       document.getElementById('outcome').value,
-        notes:         document.getElementById('notes').value.trim(),
-        lat:           currentGeo?.lat     ?? null,
-        lng:           currentGeo?.lng     ?? null,
-        accuracy:      currentGeo?.accuracy ?? null,
-        address:       currentGeo?.address  ?? null,
-        timestamp:     Date.now(),
-        userId:        auth.currentUser()?.uid  || 'local',
-        userName:      auth.currentUser()?.name || 'Unknown',
-        customAnswers: q.collectAnswers(),
+        clientName:      document.getElementById('clientName').value.trim(),
+        businessAddress: document.getElementById('businessAddress').value.trim(),
+        activityType:    document.getElementById('activityType').value,
+        outcome:         document.getElementById('outcome').value,
+        notes:           document.getElementById('notes').value.trim(),
+        lat:             currentGeo?.lat      ?? null,
+        lng:             currentGeo?.lng      ?? null,
+        accuracy:        currentGeo?.accuracy ?? null,
+        gpsAddress:      currentGeo?.address  ?? null,
+        timestamp:       Date.now(),
+        userId:          auth.currentUser()?.uid  || 'local',
+        userName:        auth.currentUser()?.name || 'Unknown',
+        customAnswers:   q.collectAnswers(),
       };
       if (!activity.clientName || !activity.activityType) {
         toast('Please fill in required fields', 'error'); return;
@@ -3468,6 +3349,8 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('logForm').reset();
       q.renderDynamicFields();
       LocPicker.clear();
+      // Re-acquire GPS silently for next entry
+      silentGPS();
     } catch (err) {
       toast('Error saving: ' + err.message, 'error');
     } finally {
@@ -3481,79 +3364,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('logForm').reset();
     q.renderDynamicFields();
     LocPicker.clear();
+    // Re-acquire GPS silently after form clear
+    silentGPS();
   });
 
-  // ── GPS button ──
-  document.getElementById('gpsBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('gpsBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Locating…';
-    try {
-      await LocPicker.gps();
-      toast('📍 GPS location set');
-    } catch (err) {
-      toast('GPS: ' + err.message, 'error');
-    } finally {
-      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Use GPS';
-      btn.disabled = false;
-    }
-  });
-
-  // ── Clear location ──
-  document.getElementById('clearLocBtn').addEventListener('click', () => LocPicker.clear());
-
-  // ── Search box ──
-  const searchInput   = document.getElementById('locSearch');
-  const suggestionsEl = document.getElementById('locSuggestions');
-  let   _searchTimer  = null;
-  let   _lastResults  = [];
-
-  searchInput.addEventListener('input', () => {
-    clearTimeout(_searchTimer);
-    const q2 = searchInput.value.trim();
-    if (q2.length < 3) { suggestionsEl.classList.add('hidden'); return; }
-    suggestionsEl.innerHTML = '<div class="loc-search-loading">🔍 Searching…</div>';
-    suggestionsEl.classList.remove('hidden');
-    _searchTimer = setTimeout(async () => {
-      try {
-        _lastResults = await LocPicker.search(q2);
-        if (!_lastResults.length) {
-          suggestionsEl.innerHTML = '<div class="loc-search-loading">No results found</div>';
-          return;
-        }
-        suggestionsEl.innerHTML = _lastResults.map((r, idx) => {
-          const parts = r.display_name.split(',');
-          const main  = parts[0].trim();
-          const sub   = parts.slice(1, 3).join(',').trim();
-          return `<div class="loc-suggestion" data-idx="${idx}">
-            <span class="loc-suggestion-icon">📍</span>
-            <div class="loc-suggestion-text">
-              <div class="loc-suggestion-main">${escHtml2(main)}</div>
-              <div class="loc-suggestion-sub">${escHtml2(sub)}</div>
-            </div>
-          </div>`;
-        }).join('');
-
-        suggestionsEl.querySelectorAll('.loc-suggestion').forEach(el => {
-          el.addEventListener('click', async () => {
-            const res = _lastResults[+el.dataset.idx];
-            searchInput.value = res.display_name.split(',').slice(0, 2).join(', ');
-            suggestionsEl.classList.add('hidden');
-            await LocPicker.setPin(+res.lat, +res.lon, res.display_name);
-          });
-        });
-      } catch (err) {
-        suggestionsEl.innerHTML = '<div class="loc-search-loading">Search failed — check connection</div>';
-      }
-    }, 500);
-  });
-
-  // Close suggestions on outside click
-  document.addEventListener('click', e => {
-    if (!e.target.closest('#locSearch') && !e.target.closest('#locSuggestions')) {
-      suggestionsEl.classList.add('hidden');
-    }
-  }, true);
+  // ── Silent background GPS — fires automatically, no UI ──
+  // Non-blocking: runs in background, does not affect form flow
+  silentGPS();
 }
 
 
@@ -3728,10 +3545,10 @@ function initSettings() {
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Outcome','Rep','Latitude','Longitude','GPS Address','Notes'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
-    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType, a.outcome,
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
