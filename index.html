@@ -2,15 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FieldPulse — Sales Activity Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f0f10" />
+  <title>SAS Sales Tracking App</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
 /* ──────────────────────────────────────────────
-   FieldPulse — Sales Activity Tracker
+   SAS Sales Tracking App
    Theme: Industrial Utility × Warm Amber Accents
    ────────────────────────────────────────────── */
 
@@ -39,7 +43,10 @@
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 15px; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html { font-size: 15px; -webkit-text-size-adjust: 100%; }
+
 body {
   font-family: var(--font-body);
   background: var(--bg);
@@ -411,29 +418,199 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 .leaflet-control-attribution a { color: var(--accent) !important; }
 
 /* ── Mobile ── */
+/* ═══════════════════════════════════════════════
+   MOBILE — full responsive overhaul
+   ═══════════════════════════════════════════════ */
+
+/* ── Sidebar overlay backdrop ── */
+#sidebarOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 199;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#sidebarOverlay.active { display: block; }
+
 @media (max-width: 768px) {
-  #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  /* ── Mobile header ── */
   #mobileHeader {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
   }
-  .mobile-brand { font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; color: var(--accent); }
-  .menu-toggle { background: none; border: none; cursor: pointer; color: var(--text); display: flex; }
-  .menu-toggle svg { width: 22px; height: 22px; }
+  .mobile-brand {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: -.01em;
+  }
+  .menu-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+  .menu-toggle svg { width: 20px; height: 20px; }
+
+  /* ── Sidebar drawer ── */
   #sidebar {
-    position: fixed; inset: 0 0 0 0; z-index: 200;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    width: min(280px, 82vw);
     transform: translateX(-100%);
-    transition: transform var(--transition);
-    width: var(--sidebar-w);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  #sidebar.open { transform: none; }
-  .page { padding: 1.25rem; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+  #sidebar.open { transform: translateX(0); }
+
+  /* ── Main content ── */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+  }
+
+  /* ── Pages ── */
+  .page { padding: .9rem; }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+  }
+  .page-title { font-size: 1.35rem; }
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .header-actions .search-input,
+  .header-actions .filter-select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card { padding: 1rem; }
+  .stat-value { font-size: 1.75rem; }
+
+  /* ── Dash grid ── */
+  .dash-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+  /* ── Cards ── */
+  .card { padding: 1rem; margin-bottom: 1rem; }
+  .card-header { margin-bottom: .75rem; }
+
+  /* ── Forms ── */
+  .form-row { grid-template-columns: 1fr; gap: .75rem; }
   .log-layout { max-width: 100%; }
+  input, select, textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+    padding: .65rem .85rem;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: .65rem;
+  }
+  .form-actions .btn { width: 100%; justify-content: center; padding: .75rem; }
+
+  /* ── Location picker ── */
+  .loc-map { height: 220px; }
+  .loc-picker-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .loc-picker-actions { width: 100%; display: flex; gap: .5rem; }
+  .btn-loc { flex: 1; justify-content: center; padding: .5rem .75rem; }
+
+  /* ── Map ── */
+  .map-container { height: 200px; }
+
+  /* ── Activity feed ── */
+  .activity-feed { max-height: 240px; }
+
+  /* ── Table — horizontal scroll ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 580px; font-size: .8rem; }
+  .data-table th, .data-table td { padding: .6rem .75rem; }
+
+  /* ── Modals ── */
+  .modal { padding: .5rem; align-items: flex-end; }
+  .modal-panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90dvh;
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  /* ── Settings ── */
   .settings-grid { grid-template-columns: 1fr; }
+  .danger-actions { flex-direction: column; }
+  .danger-actions .btn { width: 100%; justify-content: center; }
+
+  /* ── Role legend ── */
+  .role-legend-grid { grid-template-columns: 1fr; }
+
+  /* ── User table ── */
+  .user-table-wrap { overflow-x: auto; }
+
+  /* ── Auth card ── */
+  .auth-card { padding: 1.5rem 1.1rem; }
+
+  /* ── Questionnaire ── */
+  .q-item { flex-wrap: wrap; gap: .5rem; }
+  .q-body { min-width: 0; width: 100%; }
+  .q-actions { margin-left: auto; }
+  #addUserPanel .form-row { grid-template-columns: 1fr; }
+
+  /* ── Splash ── */
+  .splash-title { font-size: 1.8rem; }
+
+  /* ── Buttons ── */
+  .btn { min-height: 42px; }
+  .page-header .btn { width: 100%; justify-content: center; }
+
+  /* ── Nav footer ── */
+  .nav-footer { padding: .75rem; }
+  .sign-out-btn { padding: .55rem; font-size: .8rem; }
+}
+
+/* ── Small phones ── */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .page { padding: .75rem; }
+  .stat-value { font-size: 1.5rem; }
+  .mobile-brand { font-size: .85rem; }
 }
 
 /* ── Scrollbar ── */
@@ -567,8 +744,8 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
       </div>
-      <h1 class="splash-title">FieldPulse</h1>
-      <p class="splash-sub">Sales Activity Tracker</p>
+      <h1 class="splash-title">SAS Sales</h1>
+      <p class="splash-sub">Sales Tracking App</p>
       <div class="splash-bar"><div class="splash-fill"></div></div>
     </div>
   </div>
@@ -584,7 +761,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
-        <span>FieldPulse</span>
+        <span>SAS Sales</span>
       </div>
 
       <ul class="nav-links">
@@ -644,14 +821,16 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         ">Sign out</button>
       </div>
     </nav>
+    <!-- Sidebar overlay -->
+    <div id="sidebarOverlay" onclick="fpCloseSidebar()"></div>
 
     <!-- Mobile header -->
     <header id="mobileHeader">
-      <button id="menuToggle" class="menu-toggle">
+      <button class="menu-toggle" aria-label="Open menu" onclick="fpToggleSidebar()">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <span class="mobile-brand">FieldPulse</span>
-      <div class="avatar sm" id="mobileAvatar">?</div>
+      <span class="mobile-brand">SAS Sales</span>
+      <div class="avatar sm" id="mobileAvatar"></div>
     </header>
 
     <!-- Main Content -->
@@ -662,7 +841,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="page-header">
           <div>
             <h2 class="page-title">Dashboard</h2>
-            <p class="page-sub">Your sales pulse at a glance</p>
+            <p class="page-sub">Your sales performance at a glance</p>
           </div>
           <span class="date-chip" id="todayDate">—</span>
         </div>
@@ -757,34 +936,17 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 
             <form id="logForm" novalidate>
               <div class="form-group">
-                <label for="clientName">Client / Account Name <span class="req">*</span></label>
-                <input type="text" id="clientName" placeholder="e.g. Acme Corp" required />
+                <label for="clientName">Merchant / Prospect Name <span class="req">*</span></label>
+                <input type="text" id="clientName" placeholder="e.g. Warung ABC, Mr. Ahmad" required />
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label for="activityType">Activity Type <span class="req">*</span></label>
-                  <select id="activityType" required>
-                    <option value="">Select…</option>
-                    <option>Cold Call</option>
-                    <option>Follow-up Visit</option>
-                    <option>Demo</option>
-                    <option>Contract Signing</option>
-                    <option>Site Survey</option>
-                    <option>Relationship Building</option>
-                    <option>Other</option>
-                  </select>
+                  <select id="activityType" required><option value="">Select…</option></select>
                 </div>
                 <div class="form-group">
                   <label for="outcome">Outcome</label>
-                  <select id="outcome">
-                    <option value="">Select…</option>
-                    <option>Interested</option>
-                    <option>Not Interested</option>
-                    <option>Follow-up Required</option>
-                    <option>Closed Won</option>
-                    <option>Closed Lost</option>
-                    <option>No Decision</option>
-                  </select>
+                  <select id="outcome"><option value="">Select…</option></select>
                 </div>
               </div>
               <div id="dynamicFields"></div>
@@ -813,12 +975,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
           <div class="header-actions">
             <input type="search" id="histSearch" placeholder="Search…" class="search-input" />
-            <select id="histFilter" class="filter-select">
-              <option value="">All Types</option>
-              <option>Cold Call</option><option>Follow-up Visit</option><option>Demo</option>
-              <option>Contract Signing</option><option>Site Survey</option>
-              <option>Relationship Building</option><option>Other</option>
-            </select>
+            <select id="histFilter" class="filter-select"><option value="">All Types</option></select>
           </div>
         </div>
         <div class="card">
@@ -826,7 +983,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <table class="data-table" id="histTable">
               <thead>
                 <tr>
-                  <th>Date & Time</th><th>Client</th><th>Type</th>
+                  <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
                   <th>Outcome</th><th>Location</th><th>Actions</th>
                 </tr>
               </thead>
@@ -1068,7 +1225,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="page-header">
           <div>
             <h2 class="page-title">Settings</h2>
-            <p class="page-sub">Configure your FieldPulse workspace</p>
+            <p class="page-sub">Configure your SAS workspace</p>
           </div>
         </div>
 
@@ -1136,6 +1293,34 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
 
           <div class="card">
+            <h3 class="card-section-title">Activity Types</h3>
+            <p class="helper-text">Customise the activity type options shown in the Log Activity form. One per line.</p>
+            <form id="activityTypesForm" novalidate>
+              <div class="form-group">
+                <textarea id="activityTypesInput" rows="7" placeholder="Cold Call&#10;Follow-up Visit&#10;Demo"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetActivityTypesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Activity Types</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Outcomes</h3>
+            <p class="helper-text">Customise the outcome options shown in the Log Activity form. One per line.</p>
+            <form id="outcomesForm" novalidate>
+              <div class="form-group">
+                <textarea id="outcomesInput" rows="7" placeholder="Interested&#10;Not Interested&#10;Follow-up Required"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetOutcomesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Outcomes</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
             <h3 class="card-section-title">Data Management</h3>
             <p class="helper-text">Danger zone — these actions cannot be undone.</p>
             <div class="danger-actions">
@@ -1164,9 +1349,9 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
           <circle cx="24" cy="20" r="4" fill="currentColor"/>
         </svg>
-        <h1>FieldPulse</h1>
+        <h1>SAS Sales</h1>
       </div>
-      <p class="auth-tagline">Sales Activity Tracker</p>
+      <p class="auth-tagline">Sales Tracking App</p>
       <div id="authTabs" class="auth-tabs">
         <button class="auth-tab active" data-tab="login">Sign In</button>
         <button class="auth-tab" data-tab="register">Register</button>
@@ -1206,7 +1391,31 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script>// Simple consistent password hash (replaces btoa which can differ across environments)
+  <script>// ── Global sidebar controls (inline-onclick safe) ────
+function fpOpenSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.add('open');
+  if (o) o.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function fpCloseSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('active');
+  document.body.style.overflow = '';
+}
+function fpToggleSidebar() {
+  var s = document.getElementById('sidebar');
+  if (s && s.classList.contains('open')) {
+    fpCloseSidebar();
+  } else {
+    fpOpenSidebar();
+  }
+}
+
+// Simple consistent password hash (replaces btoa which can differ across environments)
 function hashPwd(pwd) {
   // Simple djb2-style hash, returns a fixed hex string
   var h = 5381;
@@ -1409,7 +1618,7 @@ function loadScript(src) {
 
 // ── DB ──
 
-// db.js — Database abstraction (LocalStorage + Firestore)
+// db.js — Local-first database (localStorage primary, Firestore optional background sync)
 
 const KEYS = {
   activities: 'fp_activities',
@@ -1422,63 +1631,67 @@ const KEYS = {
 class DB {
   constructor() {
     this._firestore = null;
-    this._app = null;
-    this._fs  = null;
+    this._app       = null;
+    this._fs        = null;
   }
 
-  async init() {
-    const cfg = this.getLocalConfig();
-    if (cfg?.apiKey) {
-      try { await this.connectFirestore(cfg); } catch (_) {}
-    }
+  // init() is now instant — no network calls, no dynamic imports
+  // Firebase connects lazily via connectFirestore() called from Settings
+  init() {
+    // Synchronous — nothing to do, localStorage is always ready
   }
 
-  // ── Firestore Connection ──────────────────────
+  // ── Firestore lazy connect (called from Settings page only) ──
   async connectFirestore(config) {
-    const { initializeApp, getApps }
-      = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    // Dynamic imports wrapped in try/catch with hard timeout
+    const importWithTimeout = (url) => {
+      return Promise.race([
+        import(url),
+        new Promise((_, rej) =>
+          setTimeout(() => rej(new Error('Import timeout: ' + url)), 8000)
+        )
+      ]);
+    };
+
+    const { initializeApp, getApps } =
+      await importWithTimeout('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
     const { getFirestore, collection, addDoc, getDocs, deleteDoc, query,
-            where, orderBy, doc, setDoc, getDoc, updateDoc }
-      = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const existing = getApps().find(a => a.name === 'fieldpulse');
-    this._app       = existing || initializeApp(config, 'fieldpulse');
-    this._firestore = getFirestore(this._app);
-    this._fs        = { collection, addDoc, getDocs, deleteDoc, query, where, orderBy, doc, setDoc, getDoc, updateDoc };
-    const testQ = query(collection(this._firestore, 'activities'), where('_test','==',true));
-    await getDocs(testQ);
+            where, orderBy, doc, setDoc, getDoc, updateDoc } =
+      await importWithTimeout('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+    const existing   = getApps().find(a => a.name === 'sas-sales');
+    this._app        = existing || initializeApp(config, 'sas-sales');
+    this._firestore  = getFirestore(this._app);
+    this._fs         = { collection, addDoc, getDocs, deleteDoc, query,
+                         where, orderBy, doc, setDoc, getDoc, updateDoc };
     console.log('[DB] Firestore connected');
   }
 
   get isOnline() { return !!this._firestore; }
 
-  // ── Activities ────────────────────────────────
+  // ── Activities ──────────────────────────────────
   async addActivity(activity) {
-    activity.id = activity.id || `local_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    if (this.isOnline) {
-      const ref = await this._fs.addDoc(this._fs.collection(this._firestore, 'activities'), activity);
-      activity.firestoreId = ref.id;
-    }
+    activity.id = activity.id || ('a_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+    // Save locally first (always works)
     const all = this._localGet(KEYS.activities);
     all.push(activity);
     this._localSet(KEYS.activities, all);
+    // Background Firestore sync (non-blocking)
+    if (this.isOnline) {
+      this._fs.addDoc(this._fs.collection(this._firestore, 'activities'), activity)
+        .then(ref => {
+          activity.firestoreId = ref.id;
+          const updated = this._localGet(KEYS.activities);
+          const idx = updated.findIndex(a => a.id === activity.id);
+          if (idx !== -1) { updated[idx].firestoreId = ref.id; this._localSet(KEYS.activities, updated); }
+        })
+        .catch(e => console.warn('[DB] Firestore addActivity failed:', e.message));
+    }
     return activity;
   }
 
-  async getActivities(userId = null) {
-    if (this.isOnline) {
-      try {
-        const { collection, getDocs, orderBy, query } = this._fs;
-        const col = collection(this._firestore, 'activities');
-        const q   = query(col, orderBy('timestamp', 'desc'));
-        const snap = await getDocs(q);
-        const remote = snap.docs.map(d => ({ ...d.data(), firestoreId: d.id }));
-        const fids = new Set(remote.map(a => a.firestoreId));
-        const local = this._localGet(KEYS.activities).filter(a => !a.firestoreId || !fids.has(a.firestoreId));
-        let all = [...remote, ...local].sort((a,b) => b.timestamp - a.timestamp);
-        if (userId) all = all.filter(a => a.userId === userId);
-        return all;
-      } catch (_) {}
-    }
+  async getActivities(userId) {
+    // Always return local data immediately
     let all = [...this._localGet(KEYS.activities)].sort((a,b) => b.timestamp - a.timestamp);
     if (userId) all = all.filter(a => a.userId === userId);
     return all;
@@ -1490,7 +1703,8 @@ class DB {
     this._localSet(KEYS.activities, all.filter(a => a.id !== id));
     if (this.isOnline && item?.firestoreId) {
       const { doc, deleteDoc } = this._fs;
-      await deleteDoc(doc(this._firestore, 'activities', item.firestoreId));
+      deleteDoc(doc(this._firestore, 'activities', item.firestoreId))
+        .catch(e => console.warn('[DB] Firestore delete failed:', e.message));
     }
   }
 
@@ -1498,12 +1712,13 @@ class DB {
     this._localSet(KEYS.activities, []);
     if (this.isOnline) {
       const { collection, getDocs, deleteDoc, doc } = this._fs;
-      const snap = await getDocs(collection(this._firestore, 'activities'));
-      await Promise.all(snap.docs.map(d => deleteDoc(doc(this._firestore, 'activities', d.id))));
+      getDocs(collection(this._firestore, 'activities'))
+        .then(snap => Promise.all(snap.docs.map(d => deleteDoc(doc(this._firestore, 'activities', d.id)))))
+        .catch(e => console.warn('[DB] Firestore clearActivities failed:', e.message));
     }
   }
 
-  // ── User roles (Firestore) ─────────────────────
+  // ── User roles ──────────────────────────────────
   async getUserRole(uid) {
     if (!this.isOnline) return null;
     try {
@@ -1516,36 +1731,51 @@ class DB {
   async saveUserRole(uid, role) {
     if (!this.isOnline) return;
     const { doc, setDoc } = this._fs;
-    await setDoc(doc(this._firestore, 'userRoles', uid), { role, updatedAt: Date.now() });
+    setDoc(doc(this._firestore, 'userRoles', uid), { role, updatedAt: Date.now() })
+      .catch(() => {});
   }
 
-  // ── Questions ─────────────────────────────────
+  // ── Questions ───────────────────────────────────
   getQuestions() { return this._localGet(KEYS.questions); }
-  saveQuestions(questions) {
-    this._localSet(KEYS.questions, questions);
+  saveQuestions(q) {
+    this._localSet(KEYS.questions, q);
     if (this.isOnline) {
       const { doc, setDoc } = this._fs;
-      setDoc(doc(this._firestore, 'config', 'questions'), { questions }).catch(() => {});
+      setDoc(doc(this._firestore, 'config', 'questions'), { questions: q }).catch(() => {});
     }
   }
 
-  // ── Config / Profile ──────────────────────────
+  // ── App Config (activity types, outcomes) ───────
+  getConfig() {
+    const defaults = {
+      activityTypes: ['Cold Call','Follow-up Visit','Demo','Contract Signing',
+                      'Site Survey','Relationship Building','Other'],
+      outcomes:      ['Interested','Not Interested','Follow-up Required',
+                      'Closed Won','Closed Lost','No Decision'],
+    };
+    const saved = this._localGet('fp_app_config', null);
+    return saved ? { ...defaults, ...saved } : defaults;
+  }
+  saveConfig(cfg) { this._localSet('fp_app_config', cfg); }
+
+  // ── Config / Profile ────────────────────────────
   getLocalConfig()      { return this._localGet(KEYS.config, null); }
   saveLocalConfig(cfg)  { localStorage.setItem(KEYS.config, JSON.stringify(cfg)); }
   getProfile()          { return this._localGet(KEYS.profile, null); }
   saveProfile(p)        { localStorage.setItem(KEYS.profile, JSON.stringify(p)); }
 
-  // ── Auth data ─────────────────────────────────
-  getUser()       { return this._localGet(KEYS.user, null); }
-  saveUser(u)     { localStorage.setItem(KEYS.user, JSON.stringify(u)); }
-  clearUser()     { localStorage.removeItem(KEYS.user); }
+  // ── Auth session ────────────────────────────────
+  getUser()   { return this._localGet(KEYS.user, null); }
+  saveUser(u) { localStorage.setItem(KEYS.user, JSON.stringify(u)); }
+  clearUser() { localStorage.removeItem(KEYS.user); }
 
-  // ── Helpers ───────────────────────────────────
+  // ── Helpers ─────────────────────────────────────
   _localGet(key, def = []) {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
   }
   _localSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 }
+
 
 
 // ── Auth ──
@@ -1574,22 +1804,22 @@ class Auth {
   }
 
   // ── Init ──────────────────────────────────────
-  async init() {
+  init() {
     this._ensureSuperAdmin();
 
     // Skip session restore if coming from a sign-out redirect
-    if (window.location.search.includes('signout=')) {
+    if (window.location.search && window.location.search.includes('signout=')) {
       this._user = null;
-      window.history.replaceState({}, '', window.location.pathname);
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(_) {}
       return;
     }
 
     // Restore from localStorage — validate account still exists and is active
-    const stored = this._safeGet('fp_user');
+    var stored = this._safeGet('fp_user');
     if (stored && stored.uid) {
-      const acc = this._getAccount(stored.uid);
+      var acc = this._getAccount(stored.uid);
       if (acc && acc.active !== false) {
-        this._user = { ...stored, role: acc.role, active: true };
+        this._user = Object.assign({}, stored, { role: acc.role, active: true });
         return;
       }
     }
@@ -2558,7 +2788,7 @@ function showToast(msg, type = 'ok') {
 // ── App ──
 
 // ────────────────────────────────────────────────
-//  FieldPulse — app.js  (role-aware)
+//  SAS Sales — app.js  (role-aware)
 // ────────────────────────────────────────────────
 
 
@@ -2571,28 +2801,31 @@ const userMgr = new UserManager(auth, db);
 let logMap = null, dashMap = null;
 
 // ── Boot ─────────────────────────────────────────
-async function boot() {
-  const splash = document.getElementById('splash');
-  await new Promise(r => setTimeout(r, 1800));
-  splash.classList.add('out');
-  setTimeout(() => splash.remove(), 600);
+function boot() {
+  // Remove splash immediately — no waiting, no async
+  var splash = document.getElementById('splash');
+  if (splash) {
+    splash.classList.add('out');
+    setTimeout(function() { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
+  }
 
-  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-  });
-
+  // Set date
   try {
-    await db.init();
-  } catch(e) { console.warn('db.init failed (non-fatal):', e.message); }
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+  } catch(_) {}
 
-  try {
-    await auth.init();
-  } catch(e) { console.warn('auth.init failed (non-fatal):', e.message); }
+  // db and auth init are synchronous (localStorage only)
+  try { db.init(); } catch(e) { console.warn('db.init:', e.message); }
+  try { auth.init(); } catch(e) { console.warn('auth.init:', e.message); }
 
+  // Show app or auth wall
   if (auth.isAuthenticated()) {
     showApp();
   } else {
-    document.getElementById('authWall').classList.remove('hidden');
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
     initAuthForm();
   }
 }
@@ -2611,6 +2844,7 @@ function showApp() {
   initUserManagement();
   initDashboard();
   initMobileSidebar();
+  loadSelectOptions();  // populate dynamic selects on load
 }
 
 
@@ -2659,18 +2893,52 @@ function navigateTo(page) {
   document.getElementById(`page-${page}`)?.classList.add('active');
 
   if (page === 'dashboard')     refreshDashboard();
-  if (page === 'history')       history.render();
-  if (page === 'log')           initLogMap();
+  if (page === 'history')       { loadSelectOptions(); history.render(); }
+  if (page === 'log')           { loadSelectOptions(); initLogMap(); }
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
 
-  document.getElementById('sidebar').classList.remove('open');
+  fpCloseSidebar();
 }
 
 function initMobileSidebar() {
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
+  // Toggle button uses inline onclick="fpToggleSidebar()" — no binding needed here
+  // Just wire nav items to close the sidebar when tapped on mobile
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) fpCloseSidebar();
+    });
   });
+}
+
+// ── Config helpers ────────────────────────────────
+// Populate activityType, outcome selects and histFilter from db config
+function loadSelectOptions() {
+  const cfg = db.getConfig();
+
+  // Activity Type select (log form)
+  const atSel = document.getElementById('activityType');
+  if (atSel) {
+    const cur = atSel.value;
+    atSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+
+  // Outcome select (log form)
+  const outSel = document.getElementById('outcome');
+  if (outSel) {
+    const cur = outSel.value;
+    outSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.outcomes.map(o => `<option${o===cur?' selected':''}>${esc(o)}</option>`).join('');
+  }
+
+  // History filter
+  const histSel = document.getElementById('histFilter');
+  if (histSel) {
+    const cur = histSel.value;
+    histSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
 }
 
 // ── Auth ──────────────────────────────────────────
@@ -3086,12 +3354,61 @@ function initSettings() {
     toast('All data cleared');
     refreshDashboard();
   });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Client','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
     a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
@@ -3109,16 +3426,17 @@ function esc(str) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  boot().catch(function(err) {
-    console.error('FieldPulse boot error:', err);
+  try {
+    boot();
+  } catch(err) {
+    console.error('SAS boot error:', err);
     var splash = document.getElementById('splash');
-    if (splash) splash.remove();
-    var authWall = document.getElementById('authWall');
-    if (authWall) authWall.classList.remove('hidden');
-    var errEl = document.getElementById('authError');
-    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
-  });
+    if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
+  }
 });
+;
 
  function initLogForm() {
   // ── Form submit ──
@@ -3356,12 +3674,61 @@ function initSettings() {
     toast('All data cleared');
     refreshDashboard();
   });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Client','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
     a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
@@ -3382,7 +3749,7 @@ function escHtml2(str) { return esc(str); }
 
 document.addEventListener('DOMContentLoaded', function() {
   boot().catch(function(err) {
-    console.error('FieldPulse boot error:', err);
+    console.error('SAS boot error:', err);
     var splash = document.getElementById('splash');
     if (splash) splash.remove();
     var authWall = document.getElementById('authWall');
@@ -3392,6 +3759,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-  </script>
-</body>
-</html>
+  
