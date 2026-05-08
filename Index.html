@@ -1,0 +1,3762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f0f10" />
+  <title>SAS Sales Tracking App</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+/* ──────────────────────────────────────────────
+   SAS Sales Tracking App
+   Theme: Industrial Utility × Warm Amber Accents
+   ────────────────────────────────────────────── */
+
+:root {
+  --bg:        #0f0f10;
+  --surface:   #1a1a1e;
+  --surface2:  #222228;
+  --border:    #2e2e38;
+  --accent:    #f5a623;
+  --accent2:   #ff6b35;
+  --text:      #e8e6e3;
+  --text2:     #8a8898;
+  --text3:     #55535f;
+  --green:     #3ecf8e;
+  --red:       #f04444;
+  --blue:      #4f8ef7;
+  --radius:    10px;
+  --radius-lg: 16px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+  --sidebar-w: 240px;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+  --transition: 200ms cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html { font-size: 15px; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: none; }
+svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+input, select, textarea, button { font-family: inherit; font-size: 0.9rem; }
+input, select, textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: .6rem .85rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(245,166,35,.12);
+}
+select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8898' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .75rem center; background-size: 14px; padding-right: 2.5rem; }
+textarea { resize: vertical; }
+.hidden { display: none !important; }
+
+/* ── Utility ── */
+.req { color: var(--accent); }
+.helper-text { color: var(--text2); font-size: .85rem; margin-bottom: 1.25rem; line-height: 1.5; }
+.link-btn { color: var(--accent); font-size: .82rem; font-family: var(--font-mono); letter-spacing: .02em; }
+.badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: .2rem .65rem; font-size: .75rem; font-family: var(--font-mono); color: var(--text2); }
+
+/* ── Splash ── */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .5s, transform .5s;
+}
+#splash.out { opacity: 0; pointer-events: none; transform: scale(1.03); }
+.splash-inner { text-align: center; }
+.logo-mark { width: 64px; height: 64px; color: var(--accent); margin: 0 auto 1rem; }
+.logo-mark svg { width: 100%; height: 100%; }
+.splash-title { font-family: var(--font-head); font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; }
+.splash-sub { color: var(--text2); font-family: var(--font-mono); font-size: .85rem; margin-top: .25rem; }
+.splash-bar { width: 160px; height: 3px; background: var(--border); border-radius: 99px; margin: 1.5rem auto 0; overflow: hidden; }
+.splash-fill { height: 100%; width: 0; background: linear-gradient(90deg,var(--accent),var(--accent2)); border-radius: 99px; animation: fillBar 1.6s ease forwards; }
+@keyframes fillBar { to { width: 100%; } }
+
+/* ── Auth Wall ── */
+#authWall {
+  position: fixed; inset: 0; z-index: 900;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  width: 100%; max-width: 420px;
+  box-shadow: var(--shadow);
+}
+.auth-logo {
+  display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem;
+  color: var(--accent);
+}
+.auth-logo svg { width: 36px; height: 36px; }
+.auth-logo h1 { font-family: var(--font-head); font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em; }
+.auth-tagline { color: var(--text2); font-family: var(--font-mono); font-size: .8rem; margin-bottom: 1.5rem; }
+.auth-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: .75rem; }
+.auth-tab { background: none; border: none; cursor: pointer; color: var(--text2); padding: .35rem .75rem; border-radius: 6px; font-size: .88rem; font-weight: 500; transition: color var(--transition), background var(--transition); }
+.auth-tab.active { color: var(--accent); background: rgba(245,166,35,.1); }
+.auth-error { background: rgba(240,68,68,.12); border: 1px solid rgba(240,68,68,.3); color: var(--red); border-radius: 8px; padding: .6rem .85rem; font-size: .83rem; margin-bottom: 1rem; }
+.auth-note { font-size: .75rem; color: var(--text3); margin-top: 1rem; line-height: 1.5; }
+
+/* ── App Shell ── */
+#app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 1fr;
+  min-height: 100dvh;
+}
+#mobileHeader { display: none; }
+
+/* ── Sidebar ── */
+#sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100dvh;
+  overflow-y: auto;
+}
+.brand {
+  display: flex; align-items: center; gap: .6rem;
+  padding: 1.5rem 1.25rem 1rem;
+  color: var(--accent);
+  font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; letter-spacing: -.01em;
+}
+.brand-icon { width: 28px; height: 28px; }
+.brand-icon svg { width: 100%; height: 100%; }
+.nav-links { list-style: none; padding: .5rem .75rem; flex: 1; }
+.nav-links li + li { margin-top: .15rem; }
+.nav-item {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .6rem .75rem;
+  border-radius: 8px;
+  color: var(--text2);
+  font-size: .88rem; font-weight: 500;
+  transition: color var(--transition), background var(--transition);
+}
+.nav-item svg { width: 16px; height: 16px; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent); background: rgba(245,166,35,.1); }
+.nav-footer { padding: 1rem .75rem; border-top: 1px solid var(--border); }
+.user-badge { display: flex; align-items: center; gap: .65rem; margin-bottom: .75rem; }
+.avatar {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .85rem; color: #000; flex-shrink: 0;
+}
+.avatar.sm { width: 28px; height: 28px; font-size: .75rem; }
+.user-info { display: flex; flex-direction: column; min-width: 0; }
+.user-name { font-size: .85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: .72rem; color: var(--text3); font-family: var(--font-mono); }
+.sign-out-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: .4rem .75rem; color: var(--text2); cursor: pointer; font-size: .78rem; width: 100%; transition: all var(--transition); }
+.sign-out-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Main ── */
+#main { overflow-y: auto; }
+.page { display: none; padding: 2rem 2.25rem; animation: fadeUp .3s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+.page-title { font-family: var(--font-head); font-weight: 800; font-size: 1.65rem; letter-spacing: -.02em; }
+.page-sub { color: var(--text2); font-size: .87rem; margin-top: .15rem; }
+.header-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.date-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; padding: .3rem .85rem; font-size: .78rem; font-family: var(--font-mono); color: var(--text2); }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.card-header h3 { font-family: var(--font-head); font-weight: 700; font-size: 1rem; }
+.card-section-title { font-family: var(--font-head); font-weight: 700; font-size: .95rem; margin-bottom: .85rem; color: var(--text); }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.25rem;
+  position: relative; overflow: hidden;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.stat-card.accent { border-color: rgba(245,166,35,.35); background: linear-gradient(135deg, rgba(245,166,35,.07), transparent); }
+.stat-label { font-size: .75rem; color: var(--text2); font-family: var(--font-mono); letter-spacing: .03em; margin-bottom: .35rem; }
+.stat-value { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; line-height: 1; }
+.stat-card.accent .stat-value { color: var(--accent); }
+.stat-icon { position: absolute; right: 1rem; top: 1rem; font-size: 1.4rem; opacity: .35; }
+
+/* ── Dash grid ── */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
+/* ── Activity Feed ── */
+.activity-feed { display: flex; flex-direction: column; gap: .65rem; max-height: 320px; overflow-y: auto; }
+.feed-item {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  transition: border-color var(--transition);
+  cursor: pointer;
+}
+.feed-item:hover { border-color: var(--accent); }
+.feed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: .4rem; flex-shrink: 0; }
+.feed-body { flex: 1; min-width: 0; }
+.feed-client { font-weight: 600; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-meta { font-size: .75rem; color: var(--text2); font-family: var(--font-mono); margin-top: .1rem; }
+.feed-time { font-size: .72rem; color: var(--text3); font-family: var(--font-mono); white-space: nowrap; }
+.empty-state { color: var(--text3); font-size: .87rem; text-align: center; padding: 2rem 1rem; }
+.empty-state a { color: var(--accent); }
+
+/* ── Map ── */
+.map-container { height: 240px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); overflow: hidden; }
+.map-container.sm { height: 180px; }
+
+/* ── Location Picker ── */
+.loc-picker { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.25rem; }
+.loc-picker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .85rem; flex-wrap: wrap; gap: .5rem; }
+.loc-picker-label { font-size: .8rem; font-weight: 700; color: var(--text2); letter-spacing: .05em; text-transform: uppercase; }
+.loc-picker-actions { display: flex; gap: .5rem; }
+.btn-loc { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .75rem; border-radius: 7px; font-size: .78rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all var(--transition); }
+.btn-loc svg { width: 13px; height: 13px; }
+.btn-loc.gps-btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-loc.clear-loc-btn:hover { border-color: var(--red); color: var(--red); }
+.loc-search-wrap { position: relative; margin-bottom: .75rem; }
+.loc-search-icon { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text3); pointer-events: none; }
+.loc-search-input { width: 100%; padding: .55rem .85rem .55rem 2.2rem; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: .88rem; outline: none; transition: border-color var(--transition); }
+.loc-search-input:focus { border-color: var(--accent); }
+.loc-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); z-index: 500; max-height: 220px; overflow-y: auto; box-shadow: var(--shadow); }
+.loc-suggestion { padding: .65rem .9rem; cursor: pointer; font-size: .85rem; border-bottom: 1px solid var(--border); transition: background var(--transition); display: flex; align-items: flex-start; gap: .5rem; }
+.loc-suggestion:last-child { border-bottom: none; }
+.loc-suggestion:hover { background: var(--surface2); }
+.loc-suggestion-icon { color: var(--accent); font-size: .9rem; flex-shrink: 0; margin-top: .1rem; }
+.loc-suggestion-text { flex: 1; min-width: 0; }
+.loc-suggestion-main { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-suggestion-sub { font-size: .75rem; color: var(--text2); margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-map { height: 280px; cursor: crosshair; border-radius: var(--radius); overflow: hidden; margin-bottom: .6rem; }
+.loc-hint { font-size: .72rem; color: var(--text3); text-align: center; margin-bottom: .75rem; font-family: var(--font-mono); }
+.loc-result { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .9rem; }
+.loc-result.has-loc { border-color: rgba(62,207,142,.3); background: rgba(62,207,142,.05); }
+.loc-result-inner { display: flex; flex-direction: column; gap: .15rem; }
+.loc-result-addr { font-size: .85rem; font-weight: 500; color: var(--text); }
+.loc-result-coords { font-size: .72rem; font-family: var(--font-mono); color: var(--text3); }
+.loc-search-loading { padding: .75rem .9rem; font-size: .83rem; color: var(--text2); text-align: center; }
+
+/* ── Log Form ── */
+.log-layout { max-width: 700px; }
+.log-form-card { }
+.geo-strip {
+  display: flex; align-items: center; gap: .85rem;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: .75rem 1rem;
+  margin-bottom: 1rem;
+}
+.geo-icon { font-size: 1.2rem; }
+.geo-text { flex: 1; min-width: 0; }
+.geo-text strong { display: block; font-size: .85rem; }
+.geo-text span { font-size: .75rem; font-family: var(--font-mono); color: var(--text2); }
+.geo-strip.ok { border-color: rgba(62,207,142,.3); }
+.geo-strip.error { border-color: rgba(240,68,68,.3); }
+.geo-refresh { background: none; border: none; cursor: pointer; color: var(--text2); padding: .35rem; border-radius: 6px; display: flex; align-items: center; transition: color var(--transition); }
+.geo-refresh:hover { color: var(--accent); }
+.geo-refresh svg { width: 16px; height: 16px; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: .8rem; font-weight: 600; color: var(--text2); letter-spacing: .03em; text-transform: uppercase; margin-bottom: .4rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+.form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
+input[type="checkbox"] { width: auto; margin-right: .45rem; }
+.check-label { display: flex; align-items: center; font-size: .88rem; color: var(--text); font-weight: 400; }
+.radio-group, .check-group { display: flex; flex-direction: column; gap: .4rem; }
+.radio-label { display: flex; align-items: center; gap: .5rem; font-size: .88rem; }
+.radio-label input[type="radio"] { width: auto; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .6rem 1.15rem;
+  border-radius: 8px;
+  font-size: .87rem; font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn svg { width: 15px; height: 15px; }
+.btn.primary { background: var(--accent); color: #000; }
+.btn.primary:hover { background: #f5b83a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(245,166,35,.3); }
+.btn.secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+.btn.secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn.danger { background: rgba(240,68,68,.1); border: 1px solid rgba(240,68,68,.25); color: var(--red); }
+.btn.danger:hover { background: rgba(240,68,68,.2); }
+.btn.full { width: 100%; justify-content: center; padding: .75rem; font-size: .95rem; }
+.btn:disabled { opacity: .5; pointer-events: none; }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.data-table th { text-align: left; padding: .65rem 1rem; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.data-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+.empty-td { text-align: center; color: var(--text3); padding: 2.5rem; }
+.outcome-pill { display: inline-block; padding: .2rem .65rem; border-radius: 99px; font-size: .72rem; font-weight: 600; }
+.outcome-pill.won { background: rgba(62,207,142,.15); color: var(--green); }
+.outcome-pill.lost { background: rgba(240,68,68,.12); color: var(--red); }
+.outcome-pill.follow { background: rgba(79,142,247,.12); color: var(--blue); }
+.outcome-pill.neutral { background: var(--surface2); color: var(--text2); }
+.icon-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: .3rem .5rem; cursor: pointer; color: var(--text2); transition: all var(--transition); display: inline-flex; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn svg { width: 13px; height: 13px; }
+
+/* ── Search / Filter ── */
+.search-input { width: 180px; padding: .45rem .8rem; font-size: .83rem; }
+.filter-select { width: 150px; padding: .45rem .8rem; font-size: .83rem; }
+
+/* ── Modal ── */
+.modal { position: fixed; inset: 0; z-index: 800; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); }
+.modal-panel {
+  position: relative; z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%; max-width: 520px;
+  max-height: 90dvh; overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+.modal-panel h3 { font-family: var(--font-head); font-weight: 700; margin-bottom: 1.25rem; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; color: var(--text2); font-size: .9rem; display: flex; align-items: center; justify-content: center; transition: all var(--transition); }
+.modal-close:hover { color: var(--text); border-color: var(--text2); }
+
+/* ── Questionnaire Builder ── */
+.question-list { display: flex; flex-direction: column; gap: .75rem; margin-top: 1rem; }
+.q-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .9rem 1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color var(--transition);
+}
+.q-item:hover { border-color: var(--accent); }
+.q-drag { cursor: grab; color: var(--text3); }
+.q-body { flex: 1; min-width: 0; }
+.q-label { font-weight: 600; font-size: .9rem; }
+.q-meta { font-size: .75rem; font-family: var(--font-mono); color: var(--text2); margin-top: .15rem; }
+.q-actions { display: flex; gap: .4rem; }
+
+/* ── Settings ── */
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; align-items: start; }
+.status-chip { border-radius: 8px; padding: .5rem .85rem; font-size: .82rem; margin-top: .75rem; }
+.status-chip.ok { background: rgba(62,207,142,.12); border: 1px solid rgba(62,207,142,.25); color: var(--green); }
+.status-chip.error { background: rgba(240,68,68,.12); border: 1px solid rgba(240,68,68,.25); color: var(--red); }
+.danger-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+/* ── Toast ── */
+#toastContainer { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000; display: flex; flex-direction: column; gap: .5rem; }
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .75rem 1.1rem;
+  font-size: .86rem;
+  box-shadow: var(--shadow);
+  animation: toastIn .25s ease, toastOut .3s ease 2.7s forwards;
+  max-width: 320px;
+}
+.toast.ok { border-color: rgba(62,207,142,.3); }
+.toast.error { border-color: rgba(240,68,68,.3); color: var(--red); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+/* ── Leaflet overrides ── */
+.leaflet-container { background: #1a1a1e; }
+.leaflet-tile { filter: brightness(.8) saturate(.7); }
+.leaflet-control-attribution { background: rgba(15,15,16,.85) !important; color: #55535f !important; }
+.leaflet-control-attribution a { color: var(--accent) !important; }
+
+/* ── Mobile ── */
+/* ═══════════════════════════════════════════════
+   MOBILE — full responsive overhaul
+   ═══════════════════════════════════════════════ */
+
+/* ── Sidebar overlay backdrop ── */
+#sidebarOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 199;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#sidebarOverlay.active { display: block; }
+
+@media (max-width: 768px) {
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  /* ── Mobile header ── */
+  #mobileHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+  .mobile-brand {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: -.01em;
+  }
+  .menu-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+  .menu-toggle svg { width: 20px; height: 20px; }
+
+  /* ── Sidebar drawer ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    width: min(280px, 82vw);
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #sidebar.open { transform: translateX(0); }
+
+  /* ── Main content ── */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+  }
+
+  /* ── Pages ── */
+  .page { padding: .9rem; }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+  }
+  .page-title { font-size: 1.35rem; }
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .header-actions .search-input,
+  .header-actions .filter-select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card { padding: 1rem; }
+  .stat-value { font-size: 1.75rem; }
+
+  /* ── Dash grid ── */
+  .dash-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+  /* ── Cards ── */
+  .card { padding: 1rem; margin-bottom: 1rem; }
+  .card-header { margin-bottom: .75rem; }
+
+  /* ── Forms ── */
+  .form-row { grid-template-columns: 1fr; gap: .75rem; }
+  .log-layout { max-width: 100%; }
+  input, select, textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+    padding: .65rem .85rem;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: .65rem;
+  }
+  .form-actions .btn { width: 100%; justify-content: center; padding: .75rem; }
+
+  /* ── Location picker ── */
+  .loc-map { height: 220px; }
+  .loc-picker-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .loc-picker-actions { width: 100%; display: flex; gap: .5rem; }
+  .btn-loc { flex: 1; justify-content: center; padding: .5rem .75rem; }
+
+  /* ── Map ── */
+  .map-container { height: 200px; }
+
+  /* ── Activity feed ── */
+  .activity-feed { max-height: 240px; }
+
+  /* ── Table — horizontal scroll ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 580px; font-size: .8rem; }
+  .data-table th, .data-table td { padding: .6rem .75rem; }
+
+  /* ── Modals ── */
+  .modal { padding: .5rem; align-items: flex-end; }
+  .modal-panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90dvh;
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  /* ── Settings ── */
+  .settings-grid { grid-template-columns: 1fr; }
+  .danger-actions { flex-direction: column; }
+  .danger-actions .btn { width: 100%; justify-content: center; }
+
+  /* ── Role legend ── */
+  .role-legend-grid { grid-template-columns: 1fr; }
+
+  /* ── User table ── */
+  .user-table-wrap { overflow-x: auto; }
+
+  /* ── Auth card ── */
+  .auth-card { padding: 1.5rem 1.1rem; }
+
+  /* ── Questionnaire ── */
+  .q-item { flex-wrap: wrap; gap: .5rem; }
+  .q-body { min-width: 0; width: 100%; }
+  .q-actions { margin-left: auto; }
+  #addUserPanel .form-row { grid-template-columns: 1fr; }
+
+  /* ── Splash ── */
+  .splash-title { font-size: 1.8rem; }
+
+  /* ── Buttons ── */
+  .btn { min-height: 42px; }
+  .page-header .btn { width: 100%; justify-content: center; }
+
+  /* ── Nav footer ── */
+  .nav-footer { padding: .75rem; }
+  .sign-out-btn { padding: .55rem; font-size: .8rem; }
+}
+
+/* ── Small phones ── */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .page { padding: .75rem; }
+  .stat-value { font-size: 1.5rem; }
+  .mobile-brand { font-size: .85rem; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Role Pills ── */
+.role-pill {
+  display: inline-block;
+  padding: .22rem .7rem;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.role-pill.superadmin { background: rgba(245,166,35,.18); color: #f5a623; border: 1px solid rgba(245,166,35,.35); }
+.role-pill.admin      { background: rgba(79,142,247,.15);  color: #4f8ef7; border: 1px solid rgba(79,142,247,.3); }
+.role-pill.user       { background: var(--surface2);        color: var(--text2); border: 1px solid var(--border); }
+
+/* ── Status dots ── */
+.status-dot { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 600; }
+.status-dot::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; }
+.status-dot.active::before   { background: var(--green); box-shadow: 0 0 6px rgba(62,207,142,.5); }
+.status-dot.inactive::before { background: var(--text3); }
+.status-dot.active   { color: var(--green); }
+.status-dot.inactive { color: var(--text3); }
+
+/* ── Role legend ── */
+.role-legend { margin-bottom: 1.25rem; }
+.role-legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: .75rem; }
+.role-legend-item { display: flex; flex-direction: column; gap: .4rem; }
+.role-legend-item p { font-size: .8rem; color: var(--text2); line-height: 1.5; }
+
+/* ── Info banner ── */
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  background: rgba(245,166,35,.07);
+  border: 1px solid rgba(245,166,35,.25);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+  font-size: .85rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.info-banner svg { color: var(--accent); margin-top: .15rem; }
+.info-banner code {
+  background: rgba(245,166,35,.15);
+  border: 1px solid rgba(245,166,35,.2);
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--accent);
+}
+.info-banner small { color: var(--text3); font-size: .77rem; }
+
+/* ── Auth hint box ── */
+.auth-hint-box {
+  margin-top: 1.1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: .75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+.auth-hint-label { font-size: .7rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--text3); }
+.auth-hint-box code {
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--accent);
+  background: rgba(245,166,35,.1);
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* ── User table ── */
+.user-table-wrap { overflow-x: auto; }
+.user-table-wrap .data-table td { padding: .7rem 1rem; }
+
+/* ── Add user panel ── */
+#addUserPanel { margin-bottom: 1.25rem; border-color: rgba(245,166,35,.25); }
+
+/* ── Nav footer role label ── */
+.user-role { font-size: .72rem; color: var(--accent); font-family: var(--font-mono); }
+
+  
+/* ── Dependent Dropdown Builder ── */
+.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
+.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
+.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
+.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
+.btn-dep-add:hover { background:rgba(245,166,35,.22); }
+.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
+.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
+.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
+.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
+.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
+.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
+.dep-remove-btn:hover { color:var(--red); }
+.dep-children-area { padding:.6rem .75rem; }
+.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
+.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
+.dep-children-input:focus { border-color:var(--accent); }
+
+/* Log form — dependent select pair */
+.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
+.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
+.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── SPLASH ── -->
+  <div id="splash">
+    <div class="splash-inner">
+      <div class="logo-mark">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.3"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+      </div>
+      <h1 class="splash-title">SAS Sales</h1>
+      <p class="splash-sub">Sales Tracking App</p>
+      <div class="splash-bar"><div class="splash-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ── APP SHELL ── -->
+  <div id="app" class="hidden">
+
+    <!-- Sidebar Nav -->
+    <nav id="sidebar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+        <span>SAS Sales</span>
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="#" class="nav-item active" data-page="dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Dashboard
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="log">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+          Log Activity
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="history">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          History
+        </a></li>
+        <li><a href="#" class="nav-item" data-page="questionnaire" id="navQuestionnaire">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Questionnaire
+        </a></li>
+        <!-- Admin-only nav items (shown dynamically) -->
+        <li id="navUsers" class="hidden"><a href="#" class="nav-item" data-page="users">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          User Management
+        </a></li>
+        <li id="navSettings" class="hidden"><a href="#" class="nav-item" data-page="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a></li>
+      </ul>
+
+      <div class="nav-footer">
+        <div class="user-badge" id="userBadge">
+          <div class="avatar" id="userAvatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">Guest</span>
+            <span class="user-role" id="userRoleLabel">—</span>
+          </div>
+        </div>
+        <button class="sign-out-btn" id="signOutBtn" onclick="
+          (async function() {
+            try {
+              // 1. Clear all localStorage keys for this app
+              // Only clear session — NEVER wipe fp_accounts (that holds all users!)
+              localStorage.removeItem('fp_user');
+              localStorage.removeItem('fp_profile');
+              // 2. Nuke all IndexedDB databases (where Firebase stores its session)
+              if (window.indexedDB && indexedDB.databases) {
+                var dbs = await indexedDB.databases();
+                dbs.forEach(function(db) { indexedDB.deleteDatabase(db.name); });
+              }
+              // 3. Clear sessionStorage too
+              sessionStorage.clear();
+            } catch(e) { console.warn(e); }
+            // 4. Hard navigate — clears all JS state
+            window.location.href = window.location.pathname + '?signout=' + Date.now();
+          })();
+        ">Sign out</button>
+      </div>
+    </nav>
+    <!-- Sidebar overlay -->
+    <div id="sidebarOverlay" onclick="fpCloseSidebar()"></div>
+
+    <!-- Mobile header -->
+    <header id="mobileHeader">
+      <button class="menu-toggle" aria-label="Open menu" onclick="fpToggleSidebar()">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="mobile-brand">SAS Sales</span>
+      <div class="avatar sm" id="mobileAvatar"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main">
+
+      <!-- ── DASHBOARD ── -->
+      <section id="page-dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Dashboard</h2>
+            <p class="page-sub">Your sales performance at a glance</p>
+          </div>
+          <span class="date-chip" id="todayDate">—</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card accent">
+            <div class="stat-label">Today's Activities</div>
+            <div class="stat-value" id="statToday">0</div>
+            <div class="stat-icon">📍</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Week</div>
+            <div class="stat-value" id="statWeek">0</div>
+            <div class="stat-icon">📅</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Logged</div>
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-icon">📊</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Locations Visited</div>
+            <div class="stat-value" id="statLocations">0</div>
+            <div class="stat-icon">🗺️</div>
+          </div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Recent Activity</h3>
+              <a href="#" class="link-btn" data-page="history">See all →</a>
+            </div>
+            <div class="activity-feed" id="recentFeed">
+              <div class="empty-state">No activities yet. <a href="#" data-page="log">Log one →</a></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Activity Map</h3>
+              <span class="badge" id="mapBadge">0 pins</span>
+            </div>
+            <div id="dashMap" class="map-container"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── LOG ACTIVITY ── -->
+      <section id="page-log" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Log Activity</h2>
+            <p class="page-sub">Record a new sales touchpoint</p>
+          </div>
+        </div>
+        <div class="log-layout">
+          <div class="card log-form-card">
+
+            <!-- ── Location Picker ── -->
+            <div class="loc-picker">
+              <div class="loc-picker-header">
+                <span class="loc-picker-label">📍 Location</span>
+                <div class="loc-picker-actions">
+                  <button type="button" class="btn-loc gps-btn" id="gpsBtn" title="Use my current GPS location">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+                    Use GPS
+                  </button>
+                  <button type="button" class="btn-loc clear-loc-btn" id="clearLocBtn" title="Clear location">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <!-- Search box -->
+              <div class="loc-search-wrap">
+                <svg class="loc-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="locSearch" class="loc-search-input" placeholder="Search address or place name…" autocomplete="off" />
+                <div id="locSuggestions" class="loc-suggestions hidden"></div>
+              </div>
+
+              <!-- Map — click or drag pin to set location -->
+              <div id="logMap" class="map-container loc-map"></div>
+              <p class="loc-hint">🖱 Click anywhere on the map to drop a pin &nbsp;·&nbsp; Drag the pin to adjust</p>
+
+              <!-- Selected location display -->
+              <div class="loc-result" id="locResult">
+                <div class="loc-result-inner">
+                  <span class="loc-result-addr" id="locAddr">No location selected</span>
+                  <span class="loc-result-coords" id="locCoordsDisplay">—</span>
+                </div>
+              </div>
+            </div>
+
+            <form id="logForm" novalidate>
+              <div class="form-group">
+                <label for="clientName">Merchant / Prospect Name <span class="req">*</span></label>
+                <input type="text" id="clientName" placeholder="e.g. Warung ABC, Mr. Ahmad" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="activityType">Activity Type <span class="req">*</span></label>
+                  <select id="activityType" required><option value="">Select…</option></select>
+                </div>
+                <div class="form-group">
+                  <label for="outcome">Outcome</label>
+                  <select id="outcome"><option value="">Select…</option></select>
+                </div>
+              </div>
+              <div id="dynamicFields"></div>
+              <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" rows="4" placeholder="Key talking points, next steps…"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="clearFormBtn">Clear</button>
+                <button type="submit" class="btn primary" id="submitBtn">
+                  <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  Save Activity
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── HISTORY ── -->
+      <section id="page-history" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Activity History</h2>
+            <p class="page-sub">All logged field activities</p>
+          </div>
+          <div class="header-actions">
+            <input type="search" id="histSearch" placeholder="Search…" class="search-input" />
+            <select id="histFilter" class="filter-select"><option value="">All Types</option></select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="histTable">
+              <thead>
+                <tr>
+                  <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
+                  <th>Outcome</th><th>Location</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="histBody">
+                <tr><td colspan="6" class="empty-td">No activities logged yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Detail modal -->
+        <div id="detailModal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel">
+            <button class="modal-close" id="modalClose">✕</button>
+            <h3 id="modalTitle">Activity Detail</h3>
+            <div id="modalBody"></div>
+            <div id="modalMap" class="map-container sm" style="margin-top:1rem"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── QUESTIONNAIRE ── -->
+      <section id="page-questionnaire" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Questionnaire Builder</h2>
+            <p class="page-sub">Design custom questions for activity logs</p>
+          </div>
+          <button class="btn primary" id="addQuestionBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Question
+          </button>
+        </div>
+        <div class="card">
+          <p class="helper-text">Questions appear in the <strong>Log Activity</strong> form for structured data collection.</p>
+          <div id="questionList" class="question-list">
+            <div class="empty-state">No custom questions yet. Click <strong>Add Question</strong> to start.</div>
+          </div>
+        </div>
+        <div id="qModal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel" style="max-width:600px">
+            <button class="modal-close" id="qModalClose">✕</button>
+            <h3 id="qModalTitle">New Question</h3>
+            <form id="qForm" novalidate>
+              <div class="form-group">
+                <label>Question Label <span class="req">*</span></label>
+                <input type="text" id="qLabel" placeholder="e.g. Product Category" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Field Type <span class="req">*</span></label>
+                  <select id="qType" required>
+                    <option value="text">Short Text</option>
+                    <option value="textarea">Long Text</option>
+                    <option value="select">Dropdown</option>
+                    <option value="dependent_select">Dependent Dropdown</option>
+                    <option value="radio">Multiple Choice</option>
+                    <option value="checkbox">Checkboxes</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Required?</label>
+                  <select id="qRequired">
+                    <option value="false">Optional</option>
+                    <option value="true">Required</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Standard options (for select/radio/checkbox) -->
+              <div class="form-group" id="optionsGroup" style="display:none">
+                <label>Options <span class="req">*</span> <small>(one per line)</small></label>
+                <textarea id="qOptions" rows="4" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+              </div>
+
+              <!-- Dependent Dropdown builder -->
+              <div id="depGroup" style="display:none">
+                <div class="dep-info-box">
+                  <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Define parent options, then add child options for each parent. In the Log form, selecting a parent automatically filters its children.</span>
+                </div>
+                <div class="dep-parent-section">
+                  <div class="dep-section-title">
+                    <span>Parent Options</span>
+                    <button type="button" class="btn-dep-add" id="addParentBtn">+ Add Parent</button>
+                  </div>
+                  <div id="depParentList" class="dep-parent-list"></div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="qModalCancel">Cancel</button>
+                <button type="submit" class="btn primary">Save Question</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── USER MANAGEMENT (admin/superadmin only) ── -->
+      <section id="page-users" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">User Management</h2>
+            <p class="page-sub">Manage accounts and assign access roles</p>
+          </div>
+          <button class="btn primary" id="addUserToggleBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add User
+          </button>
+        </div>
+
+        <!-- Role legend -->
+        <div class="role-legend card">
+          <h3 class="card-section-title">Role Permissions</h3>
+          <div class="role-legend-grid">
+            <div class="role-legend-item">
+              <span class="role-pill superadmin">Super Admin</span>
+              <p>Full access: manage users, assign roles, settings, Firebase config, all data</p>
+            </div>
+            <div class="role-legend-item">
+              <span class="role-pill admin">Admin</span>
+              <p>Can manage questionnaires, settings, view all history, export data</p>
+            </div>
+            <div class="role-legend-item">
+              <span class="role-pill user">User</span>
+              <p>Log activities, view own history, view dashboard</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add user form (collapsible) -->
+        <div id="addUserPanel" class="card hidden">
+          <h3 class="card-section-title">Create New User</h3>
+          <form id="addUserForm" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="newUserName" placeholder="Full name" />
+              </div>
+              <div class="form-group">
+                <label>Email <span class="req">*</span></label>
+                <input type="email" id="newUserEmail" placeholder="user@company.com" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Password <span class="req">*</span></label>
+                <input type="password" id="newUserPassword" placeholder="Min 6 characters" required />
+              </div>
+              <div class="form-group">
+                <label>Team / Region</label>
+                <input type="text" id="newUserTeam" placeholder="e.g. East Coast" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Role <span class="req">*</span></label>
+                <select id="newUserRole" required>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                  <option value="superadmin" id="newUserSuperAdminOption">Super Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn secondary" id="cancelAddUserBtn">Cancel</button>
+              <button type="submit" class="btn primary">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create User
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- User list -->
+        <div class="card">
+          <div id="userListContainer">
+            <div class="empty-state">Loading users…</div>
+          </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div id="editUserModal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel">
+            <button class="modal-close" id="editUserModalClose">✕</button>
+            <h3 id="editUserTitle">Edit User</h3>
+            <form id="editUserForm" novalidate>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="editUserName" placeholder="Full name" />
+                </div>
+                <div class="form-group">
+                  <label>Team / Region</label>
+                  <input type="text" id="editUserTeam" placeholder="e.g. East Coast" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="editUserEmail" disabled style="opacity:.5" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Role</label>
+                  <select id="editUserRole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Super Admin</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Account Status</label>
+                  <select id="editUserActive">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive (Deactivated)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>New Password <small style="color:var(--text3);font-weight:400">(leave blank to keep current)</small></label>
+                <input type="password" id="editUserPassword" placeholder="New password…" />
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="editUserCancel">Cancel</button>
+                <button type="submit" class="btn primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS (admin/superadmin only) ── -->
+      <section id="page-settings" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Settings</h2>
+            <p class="page-sub">Configure your SAS workspace</p>
+          </div>
+        </div>
+
+        <!-- Superadmin credentials info box -->
+        <div class="info-banner" id="superAdminBanner">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <strong>Default Super Admin credentials:</strong>
+            Email: <code>allan.koay@bigpos.com</code> &nbsp;|&nbsp; Password: <code>demo1234</code>
+            <br><small>Change this password immediately in User Management after first login.</small>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <div class="card">
+            <h3 class="card-section-title">Firebase Configuration</h3>
+            <p class="helper-text">Enter your Firebase project credentials. Stored locally in your browser.</p>
+            <form id="firebaseForm" novalidate>
+              <div class="form-group">
+                <label>API Key <span class="req">*</span></label>
+                <input type="text" id="fbApiKey" placeholder="AIza…" />
+              </div>
+              <div class="form-group">
+                <label>Auth Domain <span class="req">*</span></label>
+                <input type="text" id="fbAuthDomain" placeholder="your-app.firebaseapp.com" />
+              </div>
+              <div class="form-group">
+                <label>Project ID <span class="req">*</span></label>
+                <input type="text" id="fbProjectId" placeholder="your-project-id" />
+              </div>
+              <div class="form-group">
+                <label>Storage Bucket</label>
+                <input type="text" id="fbStorageBucket" placeholder="your-app.appspot.com" />
+              </div>
+              <div class="form-group">
+                <label>Messaging Sender ID</label>
+                <input type="text" id="fbMessagingSenderId" placeholder="123456789" />
+              </div>
+              <div class="form-group">
+                <label>App ID <span class="req">*</span></label>
+                <input type="text" id="fbAppId" placeholder="1:…:web:…" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Save & Connect</button>
+              </div>
+              <div id="fbStatus" class="status-chip hidden"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">My Profile</h3>
+            <form id="profileForm" novalidate>
+              <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="profileName" placeholder="Your name" />
+              </div>
+              <div class="form-group">
+                <label>Team / Region</label>
+                <input type="text" id="profileTeam" placeholder="e.g. West Coast" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Update Profile</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Activity Types</h3>
+            <p class="helper-text">Customise the activity type options shown in the Log Activity form. One per line.</p>
+            <form id="activityTypesForm" novalidate>
+              <div class="form-group">
+                <textarea id="activityTypesInput" rows="7" placeholder="Cold Call&#10;Follow-up Visit&#10;Demo"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetActivityTypesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Activity Types</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Outcomes</h3>
+            <p class="helper-text">Customise the outcome options shown in the Log Activity form. One per line.</p>
+            <form id="outcomesForm" novalidate>
+              <div class="form-group">
+                <textarea id="outcomesInput" rows="7" placeholder="Interested&#10;Not Interested&#10;Follow-up Required"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="resetOutcomesBtn">Reset Defaults</button>
+                <button type="submit" class="btn primary">Save Outcomes</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 class="card-section-title">Data Management</h3>
+            <p class="helper-text">Danger zone — these actions cannot be undone.</p>
+            <div class="danger-actions">
+              <button class="btn danger" id="exportBtn">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+              </button>
+              <button class="btn danger" id="clearDataBtn">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                Clear All Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── AUTH WALL ── -->
+  <div id="authWall" class="hidden">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="20" r="10" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M24 30 C24 30 10 42 24 46 C38 42 24 30 24 30Z" fill="currentColor" opacity="0.5"/>
+          <circle cx="24" cy="20" r="4" fill="currentColor"/>
+        </svg>
+        <h1>SAS Sales</h1>
+      </div>
+      <p class="auth-tagline">Sales Tracking App</p>
+      <div id="authTabs" class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Sign In</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+      <form id="authForm" novalidate>
+        <div id="regOnlyFields" style="display:none">
+          <div class="form-group">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="authName" placeholder="Your full name" />
+          </div>
+          <div class="form-group">
+            <label>Team / Region</label>
+            <input type="text" id="authTeam" placeholder="e.g. East Coast" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" id="authEmail" placeholder="you@company.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password <span class="req">*</span></label>
+          <input type="password" id="authPassword" placeholder="Min 6 characters" required minlength="6" />
+        </div>
+        <div class="form-group" id="confirmPwdGroup" style="display:none">
+          <label>Confirm Password <span class="req">*</span></label>
+          <input type="password" id="authPasswordConfirm" placeholder="Re-enter password" />
+        </div>
+        <div id="authError" class="auth-error hidden"></div>
+        <button type="submit" class="btn primary full" id="authSubmitBtn">Sign In</button>
+      </form>
+      <div class="auth-hint-box">
+        <span class="auth-hint-label">Default Super Admin</span>
+        <code>allan.koay@bigpos.com</code>
+        <code>demo1234</code>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+  <script>// ── Global sidebar controls (inline-onclick safe) ────
+function fpOpenSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.add('open');
+  if (o) o.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function fpCloseSidebar() {
+  var s = document.getElementById('sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('active');
+  document.body.style.overflow = '';
+}
+function fpToggleSidebar() {
+  var s = document.getElementById('sidebar');
+  if (s && s.classList.contains('open')) {
+    fpCloseSidebar();
+  } else {
+    fpOpenSidebar();
+  }
+}
+
+// Simple consistent password hash (replaces btoa which can differ across environments)
+function hashPwd(pwd) {
+  // Simple djb2-style hash, returns a fixed hex string
+  var h = 5381;
+  for (var i = 0; i < pwd.length; i++) {
+    h = ((h << 5) + h) ^ pwd.charCodeAt(i);
+    h = h & 0xffffffff;
+  }
+  return 'h_' + (h >>> 0).toString(16) + '_' + pwd.length;
+}
+
+
+// ── Utils ──
+
+// utils.js — Shared helpers
+
+function toast(message, type = 'ok') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diffDays = Math.floor((now - d) / 86400000);
+  if (diffDays === 0) return 'Today ' + d.toLocaleTimeString('en-MY', { hour:'2-digit', minute:'2-digit' });
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return d.toLocaleDateString('en-MY', { weekday: 'short' });
+  return d.toLocaleDateString('en-MY', { day:'numeric', month:'short' });
+}
+
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleString('en-MY', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function outcomeClass(outcome) {
+  if (!outcome) return 'neutral';
+  const o = outcome.toLowerCase();
+  if (o.includes('won') || o.includes('closed w')) return 'won';
+  if (o.includes('lost') || o.includes('not interested')) return 'lost';
+  if (o.includes('follow')) return 'follow';
+  return 'neutral';
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── Geo ──
+
+// geo.js — Geolocation service
+
+class GeoService {
+  getCurrentPosition(options = {}) {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported by this browser'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, err => {
+        const msgs = {
+          1: 'Location permission denied. Please allow in browser settings.',
+          2: 'Position unavailable. Check GPS/network.',
+          3: 'Location request timed out.',
+        };
+        reject(new Error(msgs[err.code] || 'Unknown geolocation error'));
+      }, {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 30000,
+        ...options
+      });
+    });
+  }
+
+  watchPosition(callback, errorCallback) {
+    if (!navigator.geolocation) return null;
+    return navigator.geolocation.watchPosition(callback, errorCallback, {
+      enableHighAccuracy: true, maximumAge: 15000
+    });
+  }
+
+  clearWatch(id) {
+    if (id) navigator.geolocation.clearWatch(id);
+  }
+
+  // Haversine distance in km
+  distance(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+}
+
+
+// ── Maps ──
+
+// maps.js — Leaflet map helpers
+
+let leafletLoaded = false;
+const markers = new WeakMap();
+
+const MapService = {
+  async loadLeaflet() {
+    if (leafletLoaded || window.L) { leafletLoaded = true; return; }
+    await Promise.all([
+      loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
+      loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
+    ]);
+    leafletLoaded = true;
+  },
+
+  createMap(elementId, lat = 3.139, lng = 101.686, zoom = 11) {
+    const el = document.getElementById(elementId);
+    if (!el) return null;
+    // Destroy existing
+    if (el._leaflet_id) {
+      try { el._map?.remove(); } catch (_) {}
+    }
+    const map = L.map(elementId, { zoomControl: true, attributionControl: true }).setView([lat, lng], zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+    el._map = map;
+    markers.set(map, []);
+    return map;
+  },
+
+  addMarker(map, lat, lng, popupHtml = '') {
+    if (!map || !L) return null;
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:14px;height:14px;background:var(--accent,#f5a623);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    });
+    const m = L.marker([lat, lng], { icon }).addTo(map);
+    if (popupHtml) m.bindPopup(popupHtml);
+    const list = markers.get(map) || [];
+    list.push(m);
+    markers.set(map, list);
+    return m;
+  },
+
+  clearMarkers(map) {
+    if (!map) return;
+    const list = markers.get(map) || [];
+    list.forEach(m => { try { m.remove(); } catch (_) {} });
+    markers.set(map, []);
+  },
+
+  setView(map, lat, lng, zoom = 15) {
+    if (map) map.setView([lat, lng], zoom);
+  },
+
+  fitMarkers(map) {
+    const list = markers.get(map) || [];
+    if (!list.length || !map) return;
+    const group = L.featureGroup(list);
+    map.fitBounds(group.getBounds().pad(0.2));
+  },
+
+  invalidate(map) {
+    if (map) setTimeout(() => map.invalidateSize(), 100);
+  }
+};
+
+function loadCSS(href) {
+  return new Promise(resolve => {
+    if (document.querySelector(`link[href="${href}"]`)) { resolve(); return; }
+    const el = document.createElement('link');
+    el.rel = 'stylesheet'; el.href = href;
+    el.onload = resolve; el.onerror = resolve;
+    document.head.appendChild(el);
+  });
+}
+
+function loadScript(src) {
+  return new Promise(resolve => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = resolve; el.onerror = resolve;
+    document.head.appendChild(el);
+  });
+}
+
+
+// ── DB ──
+
+// db.js — Local-first database (localStorage primary, Firestore optional background sync)
+
+const KEYS = {
+  activities: 'fp_activities',
+  questions:  'fp_questions',
+  config:     'fp_firebase_config',
+  profile:    'fp_profile',
+  user:       'fp_user',
+};
+
+class DB {
+  constructor() {
+    this._firestore = null;
+    this._app       = null;
+    this._fs        = null;
+  }
+
+  // init() is now instant — no network calls, no dynamic imports
+  // Firebase connects lazily via connectFirestore() called from Settings
+  init() {
+    // Synchronous — nothing to do, localStorage is always ready
+  }
+
+  // ── Firestore lazy connect (called from Settings page only) ──
+  async connectFirestore(config) {
+    // Dynamic imports wrapped in try/catch with hard timeout
+    const importWithTimeout = (url) => {
+      return Promise.race([
+        import(url),
+        new Promise((_, rej) =>
+          setTimeout(() => rej(new Error('Import timeout: ' + url)), 8000)
+        )
+      ]);
+    };
+
+    const { initializeApp, getApps } =
+      await importWithTimeout('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getFirestore, collection, addDoc, getDocs, deleteDoc, query,
+            where, orderBy, doc, setDoc, getDoc, updateDoc } =
+      await importWithTimeout('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+    const existing   = getApps().find(a => a.name === 'sas-sales');
+    this._app        = existing || initializeApp(config, 'sas-sales');
+    this._firestore  = getFirestore(this._app);
+    this._fs         = { collection, addDoc, getDocs, deleteDoc, query,
+                         where, orderBy, doc, setDoc, getDoc, updateDoc };
+    console.log('[DB] Firestore connected');
+  }
+
+  get isOnline() { return !!this._firestore; }
+
+  // ── Activities ──────────────────────────────────
+  async addActivity(activity) {
+    activity.id = activity.id || ('a_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+    // Save locally first (always works)
+    const all = this._localGet(KEYS.activities);
+    all.push(activity);
+    this._localSet(KEYS.activities, all);
+    // Background Firestore sync (non-blocking)
+    if (this.isOnline) {
+      this._fs.addDoc(this._fs.collection(this._firestore, 'activities'), activity)
+        .then(ref => {
+          activity.firestoreId = ref.id;
+          const updated = this._localGet(KEYS.activities);
+          const idx = updated.findIndex(a => a.id === activity.id);
+          if (idx !== -1) { updated[idx].firestoreId = ref.id; this._localSet(KEYS.activities, updated); }
+        })
+        .catch(e => console.warn('[DB] Firestore addActivity failed:', e.message));
+    }
+    return activity;
+  }
+
+  async getActivities(userId) {
+    // Always return local data immediately
+    let all = [...this._localGet(KEYS.activities)].sort((a,b) => b.timestamp - a.timestamp);
+    if (userId) all = all.filter(a => a.userId === userId);
+    return all;
+  }
+
+  async deleteActivity(id) {
+    const all  = this._localGet(KEYS.activities);
+    const item = all.find(a => a.id === id);
+    this._localSet(KEYS.activities, all.filter(a => a.id !== id));
+    if (this.isOnline && item?.firestoreId) {
+      const { doc, deleteDoc } = this._fs;
+      deleteDoc(doc(this._firestore, 'activities', item.firestoreId))
+        .catch(e => console.warn('[DB] Firestore delete failed:', e.message));
+    }
+  }
+
+  async clearActivities() {
+    this._localSet(KEYS.activities, []);
+    if (this.isOnline) {
+      const { collection, getDocs, deleteDoc, doc } = this._fs;
+      getDocs(collection(this._firestore, 'activities'))
+        .then(snap => Promise.all(snap.docs.map(d => deleteDoc(doc(this._firestore, 'activities', d.id)))))
+        .catch(e => console.warn('[DB] Firestore clearActivities failed:', e.message));
+    }
+  }
+
+  // ── User roles ──────────────────────────────────
+  async getUserRole(uid) {
+    if (!this.isOnline) return null;
+    try {
+      const { doc, getDoc } = this._fs;
+      const snap = await getDoc(doc(this._firestore, 'userRoles', uid));
+      return snap.exists() ? snap.data().role : null;
+    } catch { return null; }
+  }
+
+  async saveUserRole(uid, role) {
+    if (!this.isOnline) return;
+    const { doc, setDoc } = this._fs;
+    setDoc(doc(this._firestore, 'userRoles', uid), { role, updatedAt: Date.now() })
+      .catch(() => {});
+  }
+
+  // ── Questions ───────────────────────────────────
+  getQuestions() { return this._localGet(KEYS.questions); }
+  saveQuestions(q) {
+    this._localSet(KEYS.questions, q);
+    if (this.isOnline) {
+      const { doc, setDoc } = this._fs;
+      setDoc(doc(this._firestore, 'config', 'questions'), { questions: q }).catch(() => {});
+    }
+  }
+
+  // ── App Config (activity types, outcomes) ───────
+  getConfig() {
+    const defaults = {
+      activityTypes: ['Cold Call','Follow-up Visit','Demo','Contract Signing',
+                      'Site Survey','Relationship Building','Other'],
+      outcomes:      ['Interested','Not Interested','Follow-up Required',
+                      'Closed Won','Closed Lost','No Decision'],
+    };
+    const saved = this._localGet('fp_app_config', null);
+    return saved ? { ...defaults, ...saved } : defaults;
+  }
+  saveConfig(cfg) { this._localSet('fp_app_config', cfg); }
+
+  // ── Config / Profile ────────────────────────────
+  getLocalConfig()      { return this._localGet(KEYS.config, null); }
+  saveLocalConfig(cfg)  { localStorage.setItem(KEYS.config, JSON.stringify(cfg)); }
+  getProfile()          { return this._localGet(KEYS.profile, null); }
+  saveProfile(p)        { localStorage.setItem(KEYS.profile, JSON.stringify(p)); }
+
+  // ── Auth session ────────────────────────────────
+  getUser()   { return this._localGet(KEYS.user, null); }
+  saveUser(u) { localStorage.setItem(KEYS.user, JSON.stringify(u)); }
+  clearUser() { localStorage.removeItem(KEYS.user); }
+
+  // ── Helpers ─────────────────────────────────────
+  _localGet(key, def = []) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+  }
+  _localSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+}
+
+
+
+// ── Auth ──
+
+// auth.js — Auth with roles: superadmin | admin | user
+// KEY FIX: Firebase Auth uses IndexedDB for its own session — we must
+// (1) set persistence to SESSION so it doesn't survive page reload,
+// (2) always await signOut() from Firebase before reloading,
+// (3) on init, use onAuthStateChanged to detect the real Firebase state.
+
+const SUPER_ADMIN = {
+  uid:      'superadmin',
+  email:    'allan.koay@bigpos.com',
+  password: hashPwd('demo1234'),
+  name:     'Super Admin',
+  role:     'superadmin',
+  team:     'Management',
+  active:   true,
+};
+
+class Auth {
+  constructor(db) {
+    this.db    = db;
+    this._user = null;
+    this._fbAuth = null;
+  }
+
+  // ── Init ──────────────────────────────────────
+  init() {
+    this._ensureSuperAdmin();
+
+    // Skip session restore if coming from a sign-out redirect
+    if (window.location.search && window.location.search.includes('signout=')) {
+      this._user = null;
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(_) {}
+      return;
+    }
+
+    // Restore from localStorage — validate account still exists and is active
+    var stored = this._safeGet('fp_user');
+    if (stored && stored.uid) {
+      var acc = this._getAccount(stored.uid);
+      if (acc && acc.active !== false) {
+        this._user = Object.assign({}, stored, { role: acc.role, active: true });
+        return;
+      }
+    }
+    // No valid session
+    localStorage.removeItem('fp_user');
+    this._user = null;
+  }
+
+  _ensureSuperAdmin() {
+    const accounts = this._safeGet('fp_accounts') || [];
+    const idx = accounts.findIndex(a => a.uid === SUPER_ADMIN.uid);
+    if (idx === -1) {
+      accounts.unshift({ ...SUPER_ADMIN });
+    } else {
+      // Always sync superadmin credentials in case of deploy update
+      accounts[idx] = { ...accounts[idx], email: SUPER_ADMIN.email, password: SUPER_ADMIN.password, name: SUPER_ADMIN.name };
+    }
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+  }
+
+  // ── Getters ───────────────────────────────────
+  isAuthenticated()            { return !!this._user; }
+  currentUser()                { return this._user; }
+  isSuperAdmin(u = this._user) { return u?.role === 'superadmin'; }
+  isAdmin(u = this._user)      { return u?.role === 'admin' || u?.role === 'superadmin'; }
+
+  can(action, u = this._user) {
+    const role  = u?.role || 'user';
+    const perms = {
+      superadmin: ['view_dashboard','log_activity','view_history','manage_questionnaire',
+                   'manage_settings','manage_users','assign_roles','delete_any_activity'],
+      admin:      ['view_dashboard','log_activity','view_history','manage_questionnaire','manage_settings'],
+      user:       ['view_dashboard','log_activity','view_history'],
+    };
+    return (perms[role] || perms.user).includes(action);
+  }
+
+  // ── Register ──────────────────────────────────
+  // Always saves to local fp_accounts (source of truth).
+  // Also registers in Firebase Auth if configured, for cloud sync.
+  async register(email, password, name, team = '') {
+    if (!email)           throw new Error('Email is required');
+    if (!password)        throw new Error('Password is required');
+    if (password.length < 6) throw new Error('Password must be at least 6 characters');
+    if (!name)            throw new Error('Full name is required');
+
+    const accounts = this._safeGet('fp_accounts') || [];
+    if (accounts.find(a => a.email.toLowerCase() === email.toLowerCase()))
+      throw new Error('This email is already registered');
+
+    const uid         = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const displayName = name.trim() || email.split('@')[0];
+    const newAccount  = {
+      uid,
+      email:    email.trim(),
+      password: hashPwd(password),
+      name:     displayName,
+      role:     'user',
+      team:     team.trim() || '',
+      active:   true,
+      createdAt: Date.now(),
+    };
+
+    // Save to local accounts — this is the primary store
+    accounts.push(newAccount);
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+
+    // Also try Firebase Auth (non-blocking — failure won't stop registration)
+    if (this.db.isOnline && this.db._app) {
+      try {
+        const { getAuth, createUserWithEmailAndPassword, updateProfile }
+          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const fbAuth = getAuth(this.db._app);
+        const cred   = await createUserWithEmailAndPassword(fbAuth, email, password);
+        if (name) await updateProfile(cred.user, { displayName: name });
+        // Update the local account with the Firebase UID
+        const idx = accounts.findIndex(a => a.uid === uid);
+        if (idx !== -1) { accounts[idx].firebaseUid = cred.user.uid; }
+        localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+        await this.db.saveUserRole(cred.user.uid, 'user');
+      } catch (fbErr) {
+        // Firebase registration failed — that's OK, local registration succeeded
+        console.warn('[Auth] Firebase register failed (non-fatal):', fbErr.message);
+      }
+    }
+
+    const user = { uid, email: email.trim(), name: displayName, role: 'user', team: team.trim() || '', active: true };
+    this._user = user;
+    localStorage.setItem('fp_user', JSON.stringify(user));
+    return user;
+  }
+
+  // ── Login ─────────────────────────────────────
+  // Always validates against local fp_accounts.
+  async login(email, password) {
+    if (!email)    throw new Error('Email is required');
+    if (!password) throw new Error('Password is required');
+
+    const accounts = this._safeGet('fp_accounts') || [];
+    const acc = accounts.find(a => a.email.toLowerCase() === email.trim().toLowerCase());
+
+    if (!acc)                        throw new Error('No account found with this email');
+    if (acc.password !== hashPwd(password)) throw new Error('Incorrect password');
+    if (acc.active === false)        throw new Error('Your account has been deactivated. Contact an administrator.');
+
+    const user = {
+      uid:    acc.uid,
+      email:  acc.email,
+      name:   acc.name,
+      role:   acc.role  || 'user',
+      team:   acc.team  || '',
+      active: true,
+    };
+    this._user = user;
+    localStorage.setItem('fp_user', JSON.stringify(user));
+
+    // Also sign in to Firebase in background (non-blocking)
+    if (this.db.isOnline && this.db._app) {
+      try {
+        const { getAuth, signInWithEmailAndPassword }
+          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signInWithEmailAndPassword(getAuth(this.db._app), email, password);
+      } catch (_) { /* Firebase login failure is non-fatal */ }
+    }
+
+    return user;
+  }
+
+  // ── Sign Out ──────────────────────────────────
+  async signOut() {
+    this._user   = null;
+    this._fbAuth = null;
+    localStorage.removeItem('fp_user');
+    localStorage.removeItem('fp_profile');
+    // Firebase sign out (non-blocking)
+    if (this.db.isOnline && this.db._app) {
+      try {
+        const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signOut(getAuth(this.db._app));
+      } catch (_) {}
+    }
+  }
+
+  // ── User Management ───────────────────────────
+  getAllAccounts() {
+    return (this._safeGet('fp_accounts') || []).map(a => ({
+      uid:    a.uid,
+      email:  a.email,
+      name:   a.name   || '',
+      role:   a.role   || 'user',
+      active: a.active !== false,
+      team:   a.team   || '',
+      createdAt: a.createdAt || 0,
+    }));
+  }
+
+  updateAccount(uid, changes) {
+    if (uid === 'superadmin' && (changes.role !== undefined || changes.active === false))
+      throw new Error('Cannot modify the Super Admin account');
+    const accounts = this._safeGet('fp_accounts') || [];
+    const idx = accounts.findIndex(a => a.uid === uid);
+    if (idx === -1) throw new Error('Account not found');
+    if (changes.password) changes.password = hashPwd(changes.password);
+    accounts[idx] = { ...accounts[idx], ...changes };
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    if (this._user?.uid === uid) {
+      this._user = { ...this._user, ...changes };
+      localStorage.setItem('fp_user', JSON.stringify(this._user));
+    }
+  }
+
+  deleteAccount(uid) {
+    if (uid === 'superadmin')    throw new Error('Cannot delete the Super Admin account');
+    if (uid === this._user?.uid) throw new Error('Cannot delete your own account');
+    const accounts = (this._safeGet('fp_accounts') || []).filter(a => a.uid !== uid);
+    localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+  }
+
+  updateProfile(p) {
+    if (!this._user) return;
+    this._user = { ...this._user, ...p };
+    localStorage.setItem('fp_user', JSON.stringify(this._user));
+    try { this.updateAccount(this._user.uid, p); } catch (_) {}
+  }
+
+  // ── Helpers ───────────────────────────────────
+  _getAccount(uid)          { return (this._safeGet('fp_accounts') || []).find(a => a.uid === uid); }
+  _getAccountByEmail(email) { return (this._safeGet('fp_accounts') || []).find(a => a.email.toLowerCase() === email.toLowerCase()); }
+
+  _safeGet(key) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; }
+  }
+}
+
+// ── Questionnaire ──
+
+// questionnaire.js — Custom question builder
+
+class QuestionnaireManager {
+  constructor(db) {
+    this.db       = db;
+    this.questions= [];
+    this._editId  = null;
+    this._depData = [];   // [{parent:'', children:['','']}]
+  }
+
+  init() {
+    this.questions = this.db.getQuestions();
+    this.render();
+    this.renderDynamicFields();
+    this._bindModal();
+  }
+
+  // ── Render question list ────────────────────────
+  render() {
+    const list = document.getElementById('questionList');
+    if (!list) return;
+    this.questions = this.db.getQuestions();
+    if (!this.questions.length) {
+      list.innerHTML = '<div class="empty-state">No custom questions yet. Click <strong>Add Question</strong> to start.</div>';
+      return;
+    }
+    const isAdmin = typeof auth !== 'undefined' ? auth.isAdmin() : true;
+    list.innerHTML = this.questions.map((q, idx) => {
+      const typeLabels = {
+        text:'Short Text', textarea:'Long Text', select:'Dropdown',
+        dependent_select:'Dependent Dropdown',
+        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date'
+      };
+      const typeLabel = typeLabels[q.type] || q.type;
+      const reqLabel  = q.required === 'true' ? 'Required' : 'Optional';
+      let optSummary  = '';
+      if (q.type === 'dependent_select' && q.depData?.length) {
+        optSummary = ` · ${q.depData.length} parent${q.depData.length>1?'s':''}`;
+      } else if (q.options?.length) {
+        optSummary = ` · ${q.options.length} option${q.options.length>1?'s':''}`;
+      }
+      return `
+        <div class="q-item" data-id="${q.id}">
+          <div class="q-drag" style="cursor:grab;color:var(--text3)">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4;stroke:currentColor;fill:none;stroke-width:1.8">
+              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
+            </svg>
+          </div>
+          <div class="q-body">
+            <div class="q-label">${esc(q.label)}</div>
+            <div class="q-meta">${typeLabel} · ${reqLabel}${optSummary}</div>
+            ${q.type === 'dependent_select' && q.depData?.length ? `
+              <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem">
+                ${q.depData.map(p=>`<span style="font-size:.7rem;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);border-radius:4px;padding:.1rem .45rem;color:var(--accent)">${esc(p.parent)}</span>`).join('')}
+              </div>` : ''}
+          </div>
+          <div class="q-actions">
+            ${isAdmin ? `
+            <button class="icon-btn edit-q" data-id="${q.id}" title="Edit">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="icon-btn del-q" data-id="${q.id}" title="Delete" style="margin-left:.25rem">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.edit-q').forEach(btn =>
+      btn.addEventListener('click', () => this.openModal(btn.dataset.id)));
+    list.querySelectorAll('.del-q').forEach(btn =>
+      btn.addEventListener('click', () => {
+        if (!confirm('Delete this question?')) return;
+        this.questions = this.questions.filter(q => q.id !== btn.dataset.id);
+        this.db.saveQuestions(this.questions);
+        this.render();
+        this.renderDynamicFields();
+      }));
+  }
+
+  // ── Render dynamic fields in Log Activity form ──
+  renderDynamicFields() {
+    const container = document.getElementById('dynamicFields');
+    if (!container) return;
+    const qs = this.db.getQuestions();
+    container.innerHTML = qs.map(q => `
+      <div class="form-group">
+        <label>${esc(q.label)}${q.required==='true'?' <span class="req">*</span>':''}</label>
+        ${this._renderInput(q)}
+      </div>`).join('');
+
+    // Wire up dependent dropdowns
+    qs.filter(q => q.type === 'dependent_select').forEach(q => {
+      this._wireDependentSelect(q);
+    });
+  }
+
+  _renderInput(q) {
+    const id  = `dyn_${q.id}`;
+    const req = q.required === 'true' ? 'required' : '';
+    switch (q.type) {
+      case 'text':     return `<input type="text" id="${id}" ${req} />`;
+      case 'textarea': return `<textarea id="${id}" rows="3" ${req}></textarea>`;
+      case 'number':   return `<input type="number" id="${id}" ${req} />`;
+      case 'date':     return `<input type="date" id="${id}" ${req} />`;
+      case 'select': {
+        const opts = (q.options||[]).map(o=>`<option>${esc(o)}</option>`).join('');
+        return `<select id="${id}" ${req}><option value="">Select…</option>${opts}</select>`;
+      }
+      case 'dependent_select': {
+        // Parent dropdown + child dropdown (shown/hidden based on parent selection)
+        const parents = (q.depData||[]);
+        const parentOpts = parents.map(p=>`<option value="${esc(p.parent)}">${esc(p.parent)}</option>`).join('');
+        return `
+          <div class="dep-select-pair">
+            <select id="${id}_parent" ${req} data-dep-parent="${q.id}">
+              <option value="">Select…</option>${parentOpts}
+            </select>
+            <div class="dep-child-group hidden-dep" id="${id}_child_wrap">
+              <select id="${id}_child" data-dep-child="${q.id}">
+                <option value="">Select…</option>
+              </select>
+            </div>
+          </div>`;
+      }
+      case 'radio': {
+        const opts = (q.options||[]).map(o=>`
+          <label class="radio-label">
+            <input type="radio" name="${id}" value="${esc(o)}" ${req}/> ${esc(o)}
+          </label>`).join('');
+        return `<div class="radio-group">${opts}</div>`;
+      }
+      case 'checkbox': {
+        const opts = (q.options||[]).map(o=>`
+          <label class="check-label">
+            <input type="checkbox" name="${id}" value="${esc(o)}"/> ${esc(o)}
+          </label>`).join('');
+        return `<div class="check-group">${opts}</div>`;
+      }
+      default: return `<input type="text" id="${id}" ${req} />`;
+    }
+  }
+
+  // ── Wire up parent→child filtering ──────────────
+  _wireDependentSelect(q) {
+    const id       = `dyn_${q.id}`;
+    const parentEl = document.getElementById(`${id}_parent`);
+    const childWrap= document.getElementById(`${id}_child_wrap`);
+    const childEl  = document.getElementById(`${id}_child`);
+    if (!parentEl || !childEl) return;
+
+    const depData  = q.depData || [];
+
+    parentEl.addEventListener('change', () => {
+      const selected = parentEl.value;
+      const entry    = depData.find(p => p.parent === selected);
+      const children = entry?.children || [];
+
+      if (selected && children.length) {
+        childEl.innerHTML = '<option value="">Select…</option>' +
+          children.map(c => `<option>${esc(c)}</option>`).join('');
+        childWrap.classList.remove('hidden-dep');
+      } else {
+        childEl.innerHTML = '<option value="">Select…</option>';
+        childWrap.classList.add('hidden-dep');
+      }
+    });
+  }
+
+  // ── Collect answers including dependent selects ──
+  collectAnswers() {
+    const answers = {};
+    const qs = this.db.getQuestions();
+    qs.forEach(q => {
+      const id = `dyn_${q.id}`;
+      if (q.type === 'checkbox') {
+        answers[q.id] = [...document.querySelectorAll(`input[name="${id}"]:checked`)].map(el=>el.value);
+      } else if (q.type === 'radio') {
+        const el = document.querySelector(`input[name="${id}"]:checked`);
+        answers[q.id] = el?.value || '';
+      } else if (q.type === 'dependent_select') {
+        const parent = document.getElementById(`${id}_parent`)?.value || '';
+        const child  = document.getElementById(`${id}_child`)?.value  || '';
+        answers[q.id] = parent ? (child ? `${parent} › ${child}` : parent) : '';
+      } else {
+        answers[q.id] = document.getElementById(id)?.value || '';
+      }
+    });
+    return answers;
+  }
+
+  // ── Modal open ──────────────────────────────────
+  openModal(editId = null) {
+    this._editId = editId;
+    this._depData = [];
+    const modal  = document.getElementById('qModal');
+    const form   = document.getElementById('qForm');
+    form.reset();
+    document.getElementById('optionsGroup').style.display = 'none';
+    document.getElementById('depGroup').style.display     = 'none';
+    document.getElementById('depParentList').innerHTML    = '';
+
+    if (editId) {
+      const q = this.questions.find(x => x.id === editId);
+      if (q) {
+        document.getElementById('qLabel').value    = q.label;
+        document.getElementById('qType').value     = q.type;
+        document.getElementById('qRequired').value = q.required;
+        if (q.type === 'dependent_select' && q.depData) {
+          this._depData = JSON.parse(JSON.stringify(q.depData));
+          document.getElementById('depGroup').style.display = 'block';
+          this._renderDepBuilder();
+        } else if (q.options?.length) {
+          document.getElementById('qOptions').value = q.options.join('\n');
+          document.getElementById('optionsGroup').style.display = 'block';
+        }
+      }
+      document.getElementById('qModalTitle').textContent = 'Edit Question';
+    } else {
+      document.getElementById('qModalTitle').textContent = 'New Question';
+    }
+    modal.classList.remove('hidden');
+  }
+
+  // ── Render the dependent builder rows ────────────
+  _renderDepBuilder() {
+    const list = document.getElementById('depParentList');
+    list.innerHTML = this._depData.map((entry, idx) => `
+      <div class="dep-parent-block" data-dep-idx="${idx}">
+        <div class="dep-parent-header">
+          <input class="dep-parent-input" type="text"
+            placeholder="Parent option name…"
+            value="${esc(entry.parent)}"
+            data-dep-parent-input="${idx}" />
+          <button type="button" class="dep-remove-btn" data-dep-remove="${idx}" title="Remove">✕</button>
+        </div>
+        <div class="dep-children-area">
+          <div class="dep-children-label">Child options (one per line)</div>
+          <textarea class="dep-children-input" rows="3"
+            placeholder="Child A&#10;Child B&#10;Child C"
+            data-dep-children="${idx}">${esc(entry.children.join('\n'))}</textarea>
+        </div>
+      </div>`).join('');
+
+    // Bind events
+    list.querySelectorAll('[data-dep-parent-input]').forEach(el => {
+      el.addEventListener('input', () => {
+        this._depData[+el.dataset.depParentInput].parent = el.value;
+      });
+    });
+    list.querySelectorAll('[data-dep-children]').forEach(el => {
+      el.addEventListener('input', () => {
+        this._depData[+el.dataset.depChildren].children =
+          el.value.split('\n').map(s=>s.trim()).filter(Boolean);
+      });
+    });
+    list.querySelectorAll('[data-dep-remove]').forEach(el => {
+      el.addEventListener('click', () => {
+        this._depData.splice(+el.dataset.depRemove, 1);
+        this._renderDepBuilder();
+      });
+    });
+  }
+
+  // ── Bind modal events ────────────────────────────
+  _bindModal() {
+    const modal = document.getElementById('qModal');
+    const close = () => modal.classList.add('hidden');
+    document.getElementById('qModalClose').addEventListener('click', close);
+    document.getElementById('qModalCancel').addEventListener('click', close);
+    modal.querySelector('.modal-backdrop').addEventListener('click', close);
+
+    // Type change → show/hide option groups
+    document.getElementById('qType').addEventListener('change', e => {
+      const t = e.target.value;
+      const needsOptions = ['select','radio','checkbox'].includes(t);
+      const isDep        = t === 'dependent_select';
+      document.getElementById('optionsGroup').style.display = needsOptions ? 'block' : 'none';
+      document.getElementById('depGroup').style.display     = isDep       ? 'block' : 'none';
+    });
+
+    // Add parent button
+    document.getElementById('addParentBtn').addEventListener('click', () => {
+      this._depData.push({ parent: '', children: [] });
+      this._renderDepBuilder();
+      // Focus the new input
+      const inputs = document.querySelectorAll('[data-dep-parent-input]');
+      if (inputs.length) inputs[inputs.length-1].focus();
+    });
+
+    // Form submit
+    document.getElementById('qForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const label    = document.getElementById('qLabel').value.trim();
+      const type     = document.getElementById('qType').value;
+      const required = document.getElementById('qRequired').value;
+      const optsRaw  = document.getElementById('qOptions').value;
+      const options  = optsRaw ? optsRaw.split('\n').map(s=>s.trim()).filter(Boolean) : [];
+
+      if (!label) return;
+
+      // Validate dependent select
+      if (type === 'dependent_select') {
+        const valid = this._depData.filter(p => p.parent.trim());
+        if (!valid.length) { alert('Add at least one parent option'); return; }
+        const invalid = valid.filter(p => !p.children.length);
+        if (invalid.length) { alert(`"${invalid[0].parent}" has no child options`); return; }
+      }
+
+      const q = {
+        id:       this._editId || `q_${Date.now()}`,
+        label, type, required, options,
+        depData:  type === 'dependent_select'
+          ? this._depData.filter(p => p.parent.trim())
+          : [],
+      };
+
+      if (this._editId) {
+        this.questions = this.questions.map(x => x.id === this._editId ? q : x);
+      } else {
+        this.questions.push(q);
+      }
+      this.db.saveQuestions(this.questions);
+      this.render();
+      this.renderDynamicFields();
+      close();
+    });
+  }
+}
+
+function typeLabel(type) {
+  const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown',
+    dependent_select:'Dependent Dropdown',
+    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
+  return map[type] || type;
+}
+
+
+
+// ── History ──
+
+// history.js — Activity history (role-aware)
+
+
+class HistoryManager {
+  constructor(db, q) {
+    this.db   = db;
+    this.q    = q;
+    this.auth = null;   // set via init(auth)
+    this._all = [];
+    this._modalMap = null;
+  }
+
+  init(auth) {
+    this.auth = auth;
+    document.getElementById('histSearch').addEventListener('input',  () => this._filter());
+    document.getElementById('histFilter').addEventListener('change', () => this._filter());
+    document.getElementById('modalClose').addEventListener('click',  () => this._closeModal());
+    document.querySelector('#detailModal .modal-backdrop').addEventListener('click', () => this._closeModal());
+  }
+
+  async render() {
+    const user = this.auth?.currentUser();
+    // Admins see all activities; normal users see only their own
+    this._all = this.auth?.isAdmin()
+      ? await this.db.getActivities()
+      : await this.db.getActivities(user?.uid);
+    this._filter();
+  }
+
+  _filter() {
+    const search = document.getElementById('histSearch').value.toLowerCase();
+    const type   = document.getElementById('histFilter').value;
+    const filtered = this._all.filter(a => {
+      const matchSearch = !search ||
+        a.clientName?.toLowerCase().includes(search) ||
+        a.activityType?.toLowerCase().includes(search) ||
+        a.notes?.toLowerCase().includes(search) ||
+        a.userName?.toLowerCase().includes(search);
+      const matchType = !type || a.activityType === type;
+      return matchSearch && matchType;
+    });
+    this._renderTable(filtered);
+  }
+
+  _renderTable(activities) {
+    const body      = document.getElementById('histBody');
+    const isAdmin   = this.auth?.isAdmin();
+    const isSuperAdmin = this.auth?.isSuperAdmin();
+
+    if (!activities.length) {
+      body.innerHTML = '<tr><td colspan="7" class="empty-td">No activities found.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = activities.map(a => `
+      <tr>
+        <td style="white-space:nowrap;font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${formatDateTime(a.timestamp)}</td>
+        <td><strong>${esc(a.clientName)}</strong></td>
+        <td>${esc(a.activityType)}</td>
+        <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
+        ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
+        <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
+          ${a.lat ? (a.address ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc(a.address.split(',').slice(0,2).join(','))}</span>` : `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}`) : '<span style="color:var(--text3)">No location</span>'}
+        </td>
+        <td>
+          <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          ${isSuperAdmin || a.userId === this.auth?.currentUser()?.uid ? `
+          <button class="icon-btn del-btn" data-id="${esc(a.id)}" title="Delete" style="margin-left:.25rem">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>` : ''}
+        </td>
+      </tr>
+    `).join('');
+
+    // Update thead to include Rep column for admins
+    const thead = document.querySelector('#histTable thead tr');
+    if (thead) {
+      const hasRepCol = thead.querySelector('.rep-col');
+      if (isAdmin && !hasRepCol) {
+        const th = document.createElement('th');
+        th.className = 'rep-col';
+        th.textContent = 'Rep';
+        thead.children[3].after(th);
+      } else if (!isAdmin && hasRepCol) {
+        hasRepCol.remove();
+      }
+    }
+
+    body.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.openDetail(btn.dataset.id));
+    });
+    body.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this activity?')) return;
+        await this.db.deleteActivity(btn.dataset.id);
+        await this.render();
+      });
+    });
+  }
+
+  async openDetail(id) {
+    let activity = null;
+    try {
+      const all = await this.db.getActivities();
+      activity  = all.find(a => a.id === id);
+      // Also check by stringified id in case of type mismatch
+      if (!activity) activity = all.find(a => String(a.id) === String(id));
+    } catch(e) {
+      console.error('openDetail fetch error:', e);
+      return;
+    }
+    if (!activity) { console.warn('Activity not found for id:', id); return; }
+
+    // Access check: normal users can only see their own
+    if (!this.auth?.isAdmin() && activity.userId !== this.auth?.currentUser()?.uid) {
+      return;
+    }
+
+    document.getElementById('modalTitle').textContent = esc(activity.clientName);
+
+    const questions = this.db.getQuestions();
+    const answers   = activity.customAnswers || {};
+    const customHtml = questions.map(q => {
+      const val = answers[q.id];
+      if (!val || (Array.isArray(val) && !val.length)) return '';
+      return `<div class="detail-row"><span class="detail-label">${esc(q.label)}</span><span class="detail-val">${esc(Array.isArray(val) ? val.join(', ') : val)}</span></div>`;
+    }).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-row"><span class="detail-label">Date & Time</span><span class="detail-val">${formatDateTime(activity.timestamp)}</span></div>
+        <div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">${esc(activity.activityType)}</span></div>
+        <div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ${outcomeClass(activity.outcome)}">${esc(activity.outcome)||'—'}</span></span></div>
+        ${activity.userName ? `<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">${esc(activity.userName)}</span></div>` : ''}
+        ${activity.lat ? `<div class="detail-row"><span class="detail-label">Location</span><div><div class="detail-val">${activity.address ? escHtml2(activity.address) : ''}</div><div style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);margin-top:.15rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</div></div></div>` : ''}
+        ${activity.notes ? `<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">${esc(activity.notes)}</p></div>` : ''}
+        ${customHtml}
+      </div>
+      <style>
+        .detail-grid{display:flex;flex-direction:column;gap:.6rem}
+        .detail-row{display:flex;gap:.75rem;align-items:baseline}
+        .detail-row.full{flex-direction:column;gap:.3rem}
+        .detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}
+        .detail-val{font-size:.88rem}
+        .detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}
+      
+/* ── Dependent Dropdown Builder ── */
+.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
+.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
+.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
+.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
+.btn-dep-add:hover { background:rgba(245,166,35,.22); }
+.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
+.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
+.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
+.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
+.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
+.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
+.dep-remove-btn:hover { color:var(--red); }
+.dep-children-area { padding:.6rem .75rem; }
+.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
+.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
+.dep-children-input:focus { border-color:var(--accent); }
+
+/* Log form — dependent select pair */
+.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
+.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
+.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
+
+  </style>
+    `;
+
+    try {
+      document.getElementById('detailModal').classList.remove('hidden');
+    } catch(modalErr) {
+      console.error('Modal open error:', modalErr);
+    }
+
+    const mapEl = document.getElementById('modalMap');
+    if (activity.lat) {
+      mapEl.style.display = 'block';
+      await MapService.loadLeaflet();
+      if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} }
+      this._modalMap = MapService.createMap('modalMap', activity.lat, activity.lng, 15);
+      MapService.addMarker(this._modalMap, activity.lat, activity.lng, `<strong>${esc(activity.clientName)}</strong>`);
+      setTimeout(() => MapService.invalidate(this._modalMap), 100);
+    } else {
+      mapEl.style.display = 'none';
+    }
+  }
+
+  _closeModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+    if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} this._modalMap = null; }
+  }
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ── UserMgmt ──
+
+// usermgmt.js — User Management (superadmin & admin)
+
+class UserManager {
+  constructor(auth, db) {
+    this.auth = auth;
+    this.db   = db;
+    this._editUid = null;
+  }
+
+  // ── Render user list ──────────────────────────
+  render() {
+    const container = document.getElementById('userListContainer');
+    if (!container) return;
+
+    const accounts = this.auth.getAllAccounts();
+    const me = this.auth.currentUser();
+    const isSuperAdmin = this.auth.isSuperAdmin();
+
+    container.innerHTML = `
+      <div class="user-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Team</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accounts.map(acc => {
+              const isMe = acc.uid === me?.uid;
+              const isSA = acc.uid === 'superadmin';
+              const roleBadge = rolePill(acc.role);
+              const statusBadge = acc.active
+                ? '<span class="status-dot active">Active</span>'
+                : '<span class="status-dot inactive">Inactive</span>';
+              return `
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:.6rem">
+                      <div class="avatar sm" style="background:${avatarColor(acc.role)}">${(acc.name||acc.email).charAt(0).toUpperCase()}</div>
+                      <div>
+                        <div style="font-weight:600;font-size:.88rem">${esc(acc.name||'—')}</div>
+                        ${isMe ? '<div style="font-size:.72rem;color:var(--accent);font-family:var(--font-mono)">You</div>' : ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${esc(acc.email)}</td>
+                  <td>${roleBadge}</td>
+                  <td style="font-size:.82rem;color:var(--text2)">${esc(acc.team||'—')}</td>
+                  <td>${statusBadge}</td>
+                  <td>
+                    ${!isSA || isSuperAdmin ? `
+                      <button class="icon-btn edit-user-btn" data-uid="${acc.uid}" title="Edit"
+                        ${isSA && !isSuperAdmin ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      ${!isSA && !isMe ? `
+                        <button class="icon-btn del-user-btn" data-uid="${acc.uid}" title="Delete" style="margin-left:.25rem">
+                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        </button>
+                      ` : ''}
+                    ` : '<span style="color:var(--text3);font-size:.75rem">Protected</span>'}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.querySelectorAll('.edit-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.openEditModal(btn.dataset.uid));
+    });
+    container.querySelectorAll('.del-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => this._deleteUser(btn.dataset.uid));
+    });
+  }
+
+  // ── Edit Modal ────────────────────────────────
+  openEditModal(uid) {
+    const acc = this.auth.getAllAccounts().find(a => a.uid === uid);
+    if (!acc) return;
+    this._editUid = uid;
+    const me = this.auth.currentUser();
+    const isSuperAdmin = this.auth.isSuperAdmin();
+    const isSA = uid === 'superadmin';
+
+    document.getElementById('editUserTitle').textContent = `Edit: ${acc.name || acc.email}`;
+    document.getElementById('editUserName').value   = acc.name || '';
+    document.getElementById('editUserTeam').value   = acc.team || '';
+    document.getElementById('editUserEmail').value  = acc.email;
+    document.getElementById('editUserRole').value   = acc.role || 'user';
+    document.getElementById('editUserActive').value = acc.active ? 'true' : 'false';
+    document.getElementById('editUserPassword').value = '';
+
+    // Role selector — only superadmin can assign roles; protect SA row
+    const roleSelect  = document.getElementById('editUserRole');
+    const activeSelect= document.getElementById('editUserActive');
+    roleSelect.disabled   = !isSuperAdmin || isSA;
+    activeSelect.disabled = isSA;
+
+    document.getElementById('editUserModal').classList.remove('hidden');
+  }
+
+  bindModal() {
+    const modal = document.getElementById('editUserModal');
+    const close = () => modal.classList.add('hidden');
+    document.getElementById('editUserModalClose').addEventListener('click', close);
+    document.getElementById('editUserCancel').addEventListener('click', close);
+    modal.querySelector('.modal-backdrop').addEventListener('click', close);
+
+    document.getElementById('editUserForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const changes = {
+        name:   document.getElementById('editUserName').value.trim(),
+        team:   document.getElementById('editUserTeam').value.trim(),
+        role:   document.getElementById('editUserRole').value,
+        active: document.getElementById('editUserActive').value === 'true',
+      };
+      const newPwd = document.getElementById('editUserPassword').value;
+      if (newPwd) {
+        if (newPwd.length < 6) { alert('Password must be at least 6 characters'); return; }
+        changes.password = hashPwd(newPwd);
+      }
+      try {
+        this.auth.updateAccount(this._editUid, changes);
+        // Sync to Firestore if online
+        if (this.db.isOnline && changes.role) {
+          this.db.saveUserRole(this._editUid, changes.role).catch(() => {});
+        }
+        close();
+        this.render();
+        showToast('User updated successfully');
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Add new user form
+    document.getElementById('addUserForm')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const name  = document.getElementById('newUserName').value.trim();
+      const email = document.getElementById('newUserEmail').value.trim();
+      const pwd   = document.getElementById('newUserPassword').value;
+      const role  = document.getElementById('newUserRole').value;
+      const team  = document.getElementById('newUserTeam').value.trim();
+
+      if (!email)  { alert('Email is required'); return; }
+      if (!pwd)    { alert('Password is required'); return; }
+      if (pwd.length < 6) { alert('Password must be at least 6 characters'); return; }
+
+      // Use auth's account list as source of truth
+      const accounts = JSON.parse(localStorage.getItem('fp_accounts') || '[]');
+      if (accounts.find(a => a.email.toLowerCase() === email.toLowerCase())) {
+        alert('This email is already registered'); return;
+      }
+      const uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      accounts.push({
+        uid, email: email.trim(),
+        password: hashPwd(pwd),
+        name: name || email.split('@')[0],
+        role: role || 'user',
+        team: team || '',
+        active: true,
+        createdAt: Date.now(),
+      });
+      localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+      document.getElementById('addUserForm').reset();
+      this.render();
+      showToast('User created');
+    });
+  }
+
+  _deleteUser(uid) {
+    const acc = this.auth.getAllAccounts().find(a => a.uid === uid);
+    if (!confirm(`Delete user "${acc?.name || acc?.email}"? This cannot be undone.`)) return;
+    try {
+      this.auth.deleteAccount(uid);
+      this.render();
+      showToast('User deleted');
+    } catch (err) { alert(err.message); }
+  }
+}
+
+// ── Helpers ───────────────────────────────────────
+function rolePill(role) {
+  const styles = {
+    superadmin: 'background:rgba(245,166,35,.18);color:#f5a623;border:1px solid rgba(245,166,35,.3)',
+    admin:      'background:rgba(79,142,247,.15);color:#4f8ef7;border:1px solid rgba(79,142,247,.3)',
+    user:       'background:var(--surface2);color:var(--text2);border:1px solid var(--border)',
+  };
+  const labels = { superadmin:'Super Admin', admin:'Admin', user:'User' };
+  return `<span style="display:inline-block;padding:.2rem .65rem;border-radius:99px;font-size:.72rem;font-weight:600;${styles[role]||styles.user}">${labels[role]||role}</span>`;
+}
+
+function avatarColor(role) {
+  if (role === 'superadmin') return 'linear-gradient(135deg,#f5a623,#ff6b35)';
+  if (role === 'admin')      return 'linear-gradient(135deg,#4f8ef7,#7b5ea7)';
+  return 'linear-gradient(135deg,#3ecf8e,#1ea87e)';
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type = 'ok') {
+  const c = document.getElementById('toastContainer');
+  if (!c) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+
+// ── App ──
+
+// ────────────────────────────────────────────────
+//  SAS Sales — app.js  (role-aware)
+// ────────────────────────────────────────────────
+
+
+const db      = new DB();
+const geo     = new GeoService();
+const auth    = new Auth(db);
+const q       = new QuestionnaireManager(db);
+const history = new HistoryManager(db, q);
+const userMgr = new UserManager(auth, db);
+let logMap = null, dashMap = null;
+
+// ── Boot ─────────────────────────────────────────
+function boot() {
+  // Remove splash immediately — no waiting, no async
+  var splash = document.getElementById('splash');
+  if (splash) {
+    splash.classList.add('out');
+    setTimeout(function() { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
+  }
+
+  // Set date
+  try {
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-MY', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+  } catch(_) {}
+
+  // db and auth init are synchronous (localStorage only)
+  try { db.init(); } catch(e) { console.warn('db.init:', e.message); }
+  try { auth.init(); } catch(e) { console.warn('auth.init:', e.message); }
+
+  // Show app or auth wall
+  if (auth.isAuthenticated()) {
+    showApp();
+  } else {
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
+    initAuthForm();
+  }
+}
+
+// ── Show App ──────────────────────────────────────
+function showApp() {
+  document.getElementById('authWall').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  applyRoleUI();
+  updateUserBadge();
+  initNavigation();
+  initLogForm();
+  initQuestionnaire();
+  initHistory();
+  initSettings();
+  initUserManagement();
+  initDashboard();
+  initMobileSidebar();
+  loadSelectOptions();  // populate dynamic selects on load
+}
+
+
+// ── Role-based UI gating ──────────────────────────
+function applyRoleUI() {
+  const user = auth.currentUser();
+  const isAdmin = auth.isAdmin();
+  const isSuperAdmin = auth.isSuperAdmin();
+
+  // Show/hide nav items
+  document.getElementById('navUsers').classList.toggle('hidden', !isAdmin);
+  document.getElementById('navSettings').classList.toggle('hidden', !isAdmin);
+
+  // Super admin info banner only for superadmin
+  const banner = document.getElementById('superAdminBanner');
+  if (banner) banner.classList.toggle('hidden', !isSuperAdmin);
+
+  // Hide "Super Admin" option in add-user form for non-superadmins
+  const saOpt = document.getElementById('newUserSuperAdminOption');
+  if (saOpt) saOpt.style.display = isSuperAdmin ? '' : 'none';
+
+  // Questionnaire — allow admin+ only to add/edit questions
+  const addQBtn = document.getElementById('addQuestionBtn');
+  if (addQBtn) addQBtn.classList.toggle('hidden', !isAdmin);
+}
+
+// ── Navigation ────────────────────────────────────
+function initNavigation() {
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      const page = el.dataset.page;
+      // Guard: non-admins cannot access settings or users pages
+      if ((page === 'settings' || page === 'users') && !auth.isAdmin()) {
+        toast('Access denied — admin only', 'error');
+        return;
+      }
+      navigateTo(page);
+    });
+  });
+}
+
+function navigateTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${page}`)?.classList.add('active');
+
+  if (page === 'dashboard')     refreshDashboard();
+  if (page === 'history')       { loadSelectOptions(); history.render(); }
+  if (page === 'log')           { loadSelectOptions(); initLogMap(); }
+  if (page === 'questionnaire') q.render();
+  if (page === 'users')         userMgr.render();
+
+  fpCloseSidebar();
+}
+
+function initMobileSidebar() {
+  // Toggle button uses inline onclick="fpToggleSidebar()" — no binding needed here
+  // Just wire nav items to close the sidebar when tapped on mobile
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) fpCloseSidebar();
+    });
+  });
+}
+
+// ── Config helpers ────────────────────────────────
+// Populate activityType, outcome selects and histFilter from db config
+function loadSelectOptions() {
+  const cfg = db.getConfig();
+
+  // Activity Type select (log form)
+  const atSel = document.getElementById('activityType');
+  if (atSel) {
+    const cur = atSel.value;
+    atSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+
+  // Outcome select (log form)
+  const outSel = document.getElementById('outcome');
+  if (outSel) {
+    const cur = outSel.value;
+    outSel.innerHTML = '<option value="">Select…</option>' +
+      cfg.outcomes.map(o => `<option${o===cur?' selected':''}>${esc(o)}</option>`).join('');
+  }
+
+  // History filter
+  const histSel = document.getElementById('histFilter');
+  if (histSel) {
+    const cur = histSel.value;
+    histSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => `<option${t===cur?' selected':''}>${esc(t)}</option>`).join('');
+  }
+}
+
+// ── Auth ──────────────────────────────────────────
+function initAuthForm() {
+  let mode = 'login';
+
+  function toggleRegFields() {
+    const isReg = mode === 'register';
+    const regOnly = document.getElementById('regOnlyFields');
+    const confirmGrp = document.getElementById('confirmPwdGroup');
+    if (regOnly)    regOnly.style.display    = isReg ? 'block' : 'none';
+    if (confirmGrp) confirmGrp.style.display = isReg ? 'block' : 'none';
+    document.getElementById('authSubmitBtn').textContent = isReg ? 'Create Account' : 'Sign In';
+    document.getElementById('authError').classList.add('hidden');
+  }
+
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      mode = tab.dataset.tab;
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t === tab));
+      toggleRegFields();
+    });
+  });
+
+  document.getElementById('authForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const name     = document.getElementById('authName')?.value.trim() || '';
+    const team     = document.getElementById('authTeam')?.value.trim() || '';
+    const confirm  = document.getElementById('authPasswordConfirm')?.value || '';
+    const errEl    = document.getElementById('authError');
+    errEl.classList.add('hidden');
+
+    if (mode === 'register') {
+      if (!name)  { errEl.textContent = 'Full name is required'; errEl.classList.remove('hidden'); return; }
+      if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.classList.remove('hidden'); return; }
+      if (password !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.classList.remove('hidden'); return; }
+    }
+
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = mode === 'register' ? 'Creating…' : 'Signing in…';
+    try {
+      if (mode === 'register') await auth.register(email, password, name, team);
+      else                     await auth.login(email, password);
+      showApp();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = mode === 'register' ? 'Create Account' : 'Sign In';
+    }
+  });
+
+}
+
+function updateUserBadge() {
+  const user = auth.currentUser();
+  if (!user) return;
+  const name = user.name || user.email || 'User';
+  const roleLabels = { superadmin: '⭐ Super Admin', admin: '🔑 Admin', user: 'Sales Rep' };
+  document.getElementById('userName').textContent      = name;
+  document.getElementById('userRoleLabel').textContent = roleLabels[user.role] || 'Sales Rep';
+  document.getElementById('userAvatar').textContent    = name.charAt(0).toUpperCase();
+  document.getElementById('mobileAvatar').textContent  = name.charAt(0).toUpperCase();
+
+  // Colour avatar by role
+  const avatarColors = {
+    superadmin: 'linear-gradient(135deg,#f5a623,#ff6b35)',
+    admin:      'linear-gradient(135deg,#4f8ef7,#7b5ea7)',
+    user:       'linear-gradient(135deg,#3ecf8e,#1ea87e)',
+  };
+  const av = document.getElementById('userAvatar');
+  av.style.background = avatarColors[user.role] || avatarColors.user;
+}
+
+// ── Dashboard ─────────────────────────────────────
+async function initDashboard() { await refreshDashboard(); }
+
+async function refreshDashboard() {
+  const user        = auth.currentUser();
+  // Admins see all; normal users see only their own
+  const activities  = auth.isAdmin()
+    ? await db.getActivities()
+    : await db.getActivities(user?.uid);
+
+  const today   = new Date().toDateString();
+  const weekAgo = Date.now() - 7 * 86400000;
+
+  document.getElementById('statToday').textContent     = activities.filter(a => new Date(a.timestamp).toDateString() === today).length;
+  document.getElementById('statWeek').textContent      = activities.filter(a => a.timestamp >= weekAgo).length;
+  document.getElementById('statTotal').textContent     = activities.length;
+  document.getElementById('statLocations').textContent = new Set(activities.filter(a => a.lat).map(a => `${a.lat?.toFixed(3)},${a.lng?.toFixed(3)}`)).size;
+
+  const feed   = document.getElementById('recentFeed');
+  const recent = [...activities].sort((a,b) => b.timestamp - a.timestamp).slice(0, 6);
+  feed.innerHTML = recent.length ? recent.map(a => `
+    <div class="feed-item" data-id="${a.id}">
+      <div class="feed-dot"></div>
+      <div class="feed-body">
+        <div class="feed-client">${esc(a.clientName)}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.address ? '<br><span style="font-size:.7rem;color:var(--text3);">📍 ' + esc(a.address.split(',').slice(0,2).join(',')) + '</span>' : ''}</div>
+      </div>
+      <div class="feed-time">${formatDate(a.timestamp)}</div>
+    </div>
+  `).join('') : '<div class="empty-state">No activities yet. <a href="#" data-page="log">Log one →</a></div>';
+
+  feed.querySelectorAll('.feed-item').forEach(el => {
+    el.addEventListener('click', () => { navigateTo('history'); setTimeout(() => history.openDetail(el.dataset.id), 200); });
+  });
+  feed.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); navigateTo(el.dataset.page); });
+  });
+
+  const pinned = activities.filter(a => a.lat).length;
+  document.getElementById('mapBadge').textContent = `${pinned} pin${pinned !== 1 ? 's' : ''}`;
+
+  await MapService.loadLeaflet();
+  if (!dashMap) dashMap = MapService.createMap('dashMap');
+  MapService.clearMarkers(dashMap);
+  activities.filter(a => a.lat).forEach(a => {
+    MapService.addMarker(dashMap, a.lat, a.lng, `<strong>${esc(a.clientName)}</strong><br>${esc(a.activityType)}`);
+  });
+  if (activities.some(a => a.lat)) MapService.fitMarkers(dashMap);
+}
+
+// ── Log Activity ──────────────────────────────────
+let currentGeo = null;
+
+// ── Location Picker ──────────────────────────────
+// Self-contained — all state lives here, safe across page re-visits
+const LocPicker = {
+  map:    null,
+  marker: null,
+  searchTimer: null,
+  geocoding: false,
+
+  // ── Init map (called each time Log page is shown) ──
+  async init() {
+    await MapService.loadLeaflet();
+
+    const el = document.getElementById('logMap');
+    if (!el) return;
+
+    // Build map once; invalidate size on subsequent visits
+    if (!this.map) {
+      this.map = L.map('logMap', { zoomControl: true }).setView([3.139, 101.686], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(this.map);
+
+      // ── Click anywhere to drop / move pin ──
+      this.map.on('click', async e => {
+        await this.setPin(e.latlng.lat, e.latlng.lng);
+      });
+    } else {
+      // Already created — just fix size if container was hidden
+      setTimeout(() => this.map.invalidateSize(), 120);
+    }
+
+    // Restore pin if we already have one
+    if (currentGeo?.lat) {
+      this._renderPin(currentGeo.lat, currentGeo.lng);
+      this.map.setView([currentGeo.lat, currentGeo.lng], 15);
+    }
+  },
+
+  // ── Place or move the draggable pin ──
+  async setPin(lat, lng, knownAddress) {
+    currentGeo = { lat, lng, accuracy: null, address: knownAddress || null };
+
+    this._renderPin(lat, lng);
+    this.map.setView([lat, lng], 16);
+    this._showResult('📍 Fetching address…', `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+
+    if (!knownAddress) {
+      const addr = await this._reverseGeocode(lat, lng);
+      currentGeo.address = addr;
+      this._showResult(addr, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    } else {
+      this._showResult(knownAddress, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    }
+  },
+
+  // ── Create or move the Leaflet marker ──
+  _renderPin(lat, lng) {
+    const pinHtml = `
+      <div style="
+        position:relative;
+        width:32px; height:42px;
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,.45));
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="32" height="42">
+          <path d="M16 0C9.4 0 4 5.4 4 12c0 9 12 30 12 30S28 21 28 12C28 5.4 22.6 0 16 0z"
+                fill="#f5a623" stroke="#fff" stroke-width="2"/>
+          <circle cx="16" cy="12" r="5" fill="#fff"/>
+        </svg>
+      </div>`;
+
+    const icon = L.divIcon({
+      className: '',
+      html: pinHtml,
+      iconSize:   [32, 42],
+      iconAnchor: [16, 42],   // tip of the pin
+      popupAnchor:[0, -44],
+    });
+
+    if (this.marker) {
+      // Move existing marker
+      this.marker.setLatLng([lat, lng]);
+    } else {
+      // Create new draggable marker
+      this.marker = L.marker([lat, lng], { icon, draggable: true, autoPan: true })
+        .addTo(this.map);
+
+      // Drag handlers
+      this.marker.on('drag', () => {
+        const p = this.marker.getLatLng();
+        document.getElementById('locCoordsDisplay').textContent =
+          `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
+      });
+
+      this.marker.on('dragend', async () => {
+        const p = this.marker.getLatLng();
+        document.getElementById('locAddr').textContent = '📍 Fetching address…';
+        const addr = await this._reverseGeocode(p.lat, p.lng);
+        currentGeo = { lat: p.lat, lng: p.lng, accuracy: null, address: addr };
+        this._showResult(addr, `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`);
+      });
+    }
+  },
+
+  // ── Clear pin & state ──
+  clear() {
+    if (this.marker && this.map) {
+      this.map.removeLayer(this.marker);
+      this.marker = null;
+    }
+    currentGeo = null;
+    document.getElementById('locAddr').textContent = 'No location selected';
+    document.getElementById('locCoordsDisplay').textContent = '—';
+    document.getElementById('locResult').classList.remove('has-loc');
+    document.getElementById('locSearch').value = '';
+    document.getElementById('locSuggestions').classList.add('hidden');
+  },
+
+  // ── Update the result strip ──
+  _showResult(addr, coords) {
+    document.getElementById('locAddr').textContent = addr;
+    document.getElementById('locCoordsDisplay').textContent = coords;
+    document.getElementById('locResult').classList.add('has-loc');
+  },
+
+  // ── Nominatim reverse geocode ──
+  async _reverseGeocode(lat, lng) {
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const d = await r.json();
+      return d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } catch {
+      return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+  },
+
+  // ── Nominatim forward search ──
+  async search(query) {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    return r.json();
+  },
+
+  // ── GPS locate ──
+  async gps() {
+    const pos = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('Geolocation not supported')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, e => {
+        const msgs = { 1:'Permission denied', 2:'Position unavailable', 3:'Timeout' };
+        reject(new Error(msgs[e.code] || 'GPS error'));
+      }, { enableHighAccuracy: true, timeout: 12000 });
+    });
+    await this.setPin(pos.coords.latitude, pos.coords.longitude, null);
+    return pos;
+  },
+};
+
+// ── Wrappers used by initLogMap and initLogForm ───
+async function initLogMap() {
+  await LocPicker.init();
+}
+
+function clearLogLocation() {
+  LocPicker.clear();
+}
+
+
+// ── Questionnaire ─────────────────────────────────
+function initQuestionnaire() {
+  q.init();
+  document.getElementById('addQuestionBtn').addEventListener('click', () => {
+    if (!auth.isAdmin()) { toast('Admin access required', 'error'); return; }
+    q.openModal();
+  });
+}
+
+// ── History ───────────────────────────────────────
+function initHistory() { history.init(auth); }
+
+// ── User Management ───────────────────────────────
+function initUserManagement() {
+  if (!auth.isAdmin()) return;
+  userMgr.bindModal();
+
+  // Add user panel toggle
+  const addBtn    = document.getElementById('addUserToggleBtn');
+  const panel     = document.getElementById('addUserPanel');
+  const cancelBtn = document.getElementById('cancelAddUserBtn');
+
+  addBtn?.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    addBtn.textContent = panel.classList.contains('hidden') ? '+ Add User' : '✕ Cancel';
+  });
+  cancelBtn?.addEventListener('click', () => {
+    panel.classList.add('hidden');
+    addBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add User';
+  });
+
+  // Add user form submit wired inside usermgmt.js via bindModal()
+}
+
+// ── Settings ──────────────────────────────────────
+function initSettings() {
+  if (!auth.isAdmin()) return;
+
+  const cfg = db.getLocalConfig();
+  if (cfg) {
+    document.getElementById('fbApiKey').value          = cfg.apiKey          || '';
+    document.getElementById('fbAuthDomain').value      = cfg.authDomain      || '';
+    document.getElementById('fbProjectId').value       = cfg.projectId       || '';
+    document.getElementById('fbStorageBucket').value   = cfg.storageBucket   || '';
+    document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
+    document.getElementById('fbAppId').value           = cfg.appId           || '';
+  }
+
+  const profile = db.getProfile();
+  if (profile) {
+    document.getElementById('profileName').value = profile.name || '';
+    document.getElementById('profileTeam').value = profile.team || '';
+  }
+
+  // Pre-fill profile from current user too
+  const user = auth.currentUser();
+  if (user) {
+    if (!document.getElementById('profileName').value) document.getElementById('profileName').value = user.name || '';
+    if (!document.getElementById('profileTeam').value) document.getElementById('profileTeam').value = user.team || '';
+  }
+
+  document.getElementById('firebaseForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    const config = {
+      apiKey:            document.getElementById('fbApiKey').value.trim(),
+      authDomain:        document.getElementById('fbAuthDomain').value.trim(),
+      projectId:         document.getElementById('fbProjectId').value.trim(),
+      storageBucket:     document.getElementById('fbStorageBucket').value.trim(),
+      messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
+      appId:             document.getElementById('fbAppId').value.trim(),
+    };
+    const statusEl = document.getElementById('fbStatus');
+    try {
+      await db.connectFirestore(config);
+      db.saveLocalConfig(config);
+      statusEl.textContent = '✓ Connected to Firestore';
+      statusEl.className   = 'status-chip ok';
+      statusEl.classList.remove('hidden');
+      toast('Firebase connected!');
+    } catch (err) {
+      statusEl.textContent = '✗ ' + err.message;
+      statusEl.className   = 'status-chip error';
+      statusEl.classList.remove('hidden');
+      toast('Connection failed', 'error');
+    }
+  });
+
+  document.getElementById('profileForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const profile = {
+      name: document.getElementById('profileName').value.trim(),
+      team: document.getElementById('profileTeam').value.trim(),
+    };
+    db.saveProfile(profile);
+    auth.updateProfile(profile);
+    updateUserBadge();
+    toast('Profile updated');
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const activities = auth.isAdmin() ? await db.getActivities() : await db.getActivities(auth.currentUser()?.uid);
+    exportCSV(activities);
+  });
+
+  document.getElementById('clearDataBtn').addEventListener('click', async () => {
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    if (!confirm('Delete ALL activities? This cannot be undone.')) return;
+    await db.clearActivities();
+    toast('All data cleared');
+    refreshDashboard();
+  });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
+}
+
+// ── CSV Export ────────────────────────────────────
+function exportCSV(activities) {
+  if (!activities.length) { toast('No data to export', 'error'); return; }
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const rows = activities.map(a => [
+    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
+    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+  ]);
+  const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `fieldpulse-export-${Date.now()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    boot();
+  } catch(err) {
+    console.error('SAS boot error:', err);
+    var splash = document.getElementById('splash');
+    if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+    var wall = document.getElementById('authWall');
+    if (wall) wall.classList.remove('hidden');
+  }
+});
+;
+
+ function initLogForm() {
+  // ── Form submit ──
+  document.getElementById('logForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const activity = {
+        clientName:    document.getElementById('clientName').value.trim(),
+        activityType:  document.getElementById('activityType').value,
+        outcome:       document.getElementById('outcome').value,
+        notes:         document.getElementById('notes').value.trim(),
+        lat:           currentGeo?.lat     ?? null,
+        lng:           currentGeo?.lng     ?? null,
+        accuracy:      currentGeo?.accuracy ?? null,
+        address:       currentGeo?.address  ?? null,
+        timestamp:     Date.now(),
+        userId:        auth.currentUser()?.uid  || 'local',
+        userName:      auth.currentUser()?.name || 'Unknown',
+        customAnswers: q.collectAnswers(),
+      };
+      if (!activity.clientName || !activity.activityType) {
+        toast('Please fill in required fields', 'error'); return;
+      }
+      await db.addActivity(activity);
+      toast('✅ Activity saved!');
+      document.getElementById('logForm').reset();
+      q.renderDynamicFields();
+      LocPicker.clear();
+    } catch (err) {
+      toast('Error saving: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Save Activity';
+    }
+  });
+
+  // ── Clear form ──
+  document.getElementById('clearFormBtn').addEventListener('click', () => {
+    document.getElementById('logForm').reset();
+    q.renderDynamicFields();
+    LocPicker.clear();
+  });
+
+  // ── GPS button ──
+  document.getElementById('gpsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('gpsBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Locating…';
+    try {
+      await LocPicker.gps();
+      toast('📍 GPS location set');
+    } catch (err) {
+      toast('GPS: ' + err.message, 'error');
+    } finally {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Use GPS';
+      btn.disabled = false;
+    }
+  });
+
+  // ── Clear location ──
+  document.getElementById('clearLocBtn').addEventListener('click', () => LocPicker.clear());
+
+  // ── Search box ──
+  const searchInput   = document.getElementById('locSearch');
+  const suggestionsEl = document.getElementById('locSuggestions');
+  let   _searchTimer  = null;
+  let   _lastResults  = [];
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(_searchTimer);
+    const q2 = searchInput.value.trim();
+    if (q2.length < 3) { suggestionsEl.classList.add('hidden'); return; }
+    suggestionsEl.innerHTML = '<div class="loc-search-loading">🔍 Searching…</div>';
+    suggestionsEl.classList.remove('hidden');
+    _searchTimer = setTimeout(async () => {
+      try {
+        _lastResults = await LocPicker.search(q2);
+        if (!_lastResults.length) {
+          suggestionsEl.innerHTML = '<div class="loc-search-loading">No results found</div>';
+          return;
+        }
+        suggestionsEl.innerHTML = _lastResults.map((r, idx) => {
+          const parts = r.display_name.split(',');
+          const main  = parts[0].trim();
+          const sub   = parts.slice(1, 3).join(',').trim();
+          return `<div class="loc-suggestion" data-idx="${idx}">
+            <span class="loc-suggestion-icon">📍</span>
+            <div class="loc-suggestion-text">
+              <div class="loc-suggestion-main">${escHtml2(main)}</div>
+              <div class="loc-suggestion-sub">${escHtml2(sub)}</div>
+            </div>
+          </div>`;
+        }).join('');
+
+        suggestionsEl.querySelectorAll('.loc-suggestion').forEach(el => {
+          el.addEventListener('click', async () => {
+            const res = _lastResults[+el.dataset.idx];
+            searchInput.value = res.display_name.split(',').slice(0, 2).join(', ');
+            suggestionsEl.classList.add('hidden');
+            await LocPicker.setPin(+res.lat, +res.lon, res.display_name);
+          });
+        });
+      } catch (err) {
+        suggestionsEl.innerHTML = '<div class="loc-search-loading">Search failed — check connection</div>';
+      }
+    }, 500);
+  });
+
+  // Close suggestions on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#locSearch') && !e.target.closest('#locSuggestions')) {
+      suggestionsEl.classList.add('hidden');
+    }
+  }, true);
+}
+
+
+
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Questionnaire ─────────────────────────────────
+function initQuestionnaire() {
+  q.init();
+  document.getElementById('addQuestionBtn').addEventListener('click', () => {
+    if (!auth.isAdmin()) { toast('Admin access required', 'error'); return; }
+    q.openModal();
+  });
+}
+
+// ── History ───────────────────────────────────────
+function initHistory() { history.init(auth); }
+
+// ── User Management ───────────────────────────────
+function initUserManagement() {
+  if (!auth.isAdmin()) return;
+  userMgr.bindModal();
+
+  // Add user panel toggle
+  const addBtn    = document.getElementById('addUserToggleBtn');
+  const panel     = document.getElementById('addUserPanel');
+  const cancelBtn = document.getElementById('cancelAddUserBtn');
+
+  addBtn?.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    addBtn.textContent = panel.classList.contains('hidden') ? '+ Add User' : '✕ Cancel';
+  });
+  cancelBtn?.addEventListener('click', () => {
+    panel.classList.add('hidden');
+    addBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add User';
+  });
+
+  // Add user form submit wired inside usermgmt.js via bindModal()
+}
+
+// ── Settings ──────────────────────────────────────
+function initSettings() {
+  if (!auth.isAdmin()) return;
+
+  const cfg = db.getLocalConfig();
+  if (cfg) {
+    document.getElementById('fbApiKey').value          = cfg.apiKey          || '';
+    document.getElementById('fbAuthDomain').value      = cfg.authDomain      || '';
+    document.getElementById('fbProjectId').value       = cfg.projectId       || '';
+    document.getElementById('fbStorageBucket').value   = cfg.storageBucket   || '';
+    document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
+    document.getElementById('fbAppId').value           = cfg.appId           || '';
+  }
+
+  const profile = db.getProfile();
+  if (profile) {
+    document.getElementById('profileName').value = profile.name || '';
+    document.getElementById('profileTeam').value = profile.team || '';
+  }
+
+  // Pre-fill profile from current user too
+  const user = auth.currentUser();
+  if (user) {
+    if (!document.getElementById('profileName').value) document.getElementById('profileName').value = user.name || '';
+    if (!document.getElementById('profileTeam').value) document.getElementById('profileTeam').value = user.team || '';
+  }
+
+  document.getElementById('firebaseForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    const config = {
+      apiKey:            document.getElementById('fbApiKey').value.trim(),
+      authDomain:        document.getElementById('fbAuthDomain').value.trim(),
+      projectId:         document.getElementById('fbProjectId').value.trim(),
+      storageBucket:     document.getElementById('fbStorageBucket').value.trim(),
+      messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
+      appId:             document.getElementById('fbAppId').value.trim(),
+    };
+    const statusEl = document.getElementById('fbStatus');
+    try {
+      await db.connectFirestore(config);
+      db.saveLocalConfig(config);
+      statusEl.textContent = '✓ Connected to Firestore';
+      statusEl.className   = 'status-chip ok';
+      statusEl.classList.remove('hidden');
+      toast('Firebase connected!');
+    } catch (err) {
+      statusEl.textContent = '✗ ' + err.message;
+      statusEl.className   = 'status-chip error';
+      statusEl.classList.remove('hidden');
+      toast('Connection failed', 'error');
+    }
+  });
+
+  document.getElementById('profileForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const profile = {
+      name: document.getElementById('profileName').value.trim(),
+      team: document.getElementById('profileTeam').value.trim(),
+    };
+    db.saveProfile(profile);
+    auth.updateProfile(profile);
+    updateUserBadge();
+    toast('Profile updated');
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const activities = auth.isAdmin() ? await db.getActivities() : await db.getActivities(auth.currentUser()?.uid);
+    exportCSV(activities);
+  });
+
+  document.getElementById('clearDataBtn').addEventListener('click', async () => {
+    if (!auth.isSuperAdmin()) { toast('Super Admin only', 'error'); return; }
+    if (!confirm('Delete ALL activities? This cannot be undone.')) return;
+    await db.clearActivities();
+    toast('All data cleared');
+    refreshDashboard();
+  });
+
+  // ── Activity Types config ──────────────────────
+  const DEFAULTS = db.getConfig();
+
+  // Pre-fill current values
+  const atInput  = document.getElementById('activityTypesInput');
+  const outInput = document.getElementById('outcomesInput');
+  if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
+  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
+
+  document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const types = atInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!types.length) { toast('Enter at least one activity type', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.activityTypes = types;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Activity types saved!');
+  });
+
+  document.getElementById('resetActivityTypesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.activityTypes = ['Cold Call','Follow-up Visit','Demo','Contract Signing','Site Survey','Relationship Building','Other'];
+    db.saveConfig(cfg);
+    if (atInput) atInput.value = cfg.activityTypes.join('\n');
+    loadSelectOptions();
+    toast('Activity types reset to defaults');
+  });
+
+  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
+    const cfg = db.getConfig();
+    cfg.outcomes = outcomes;
+    db.saveConfig(cfg);
+    loadSelectOptions();
+    toast('Outcomes saved!');
+  });
+
+  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
+    const cfg = db.getConfig();
+    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
+    db.saveConfig(cfg);
+    if (outInput) outInput.value = cfg.outcomes.join('\n');
+    loadSelectOptions();
+    toast('Outcomes reset to defaults');
+  });
+}
+
+// ── CSV Export ────────────────────────────────────
+function exportCSV(activities) {
+  if (!activities.length) { toast('No data to export', 'error'); return; }
+  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const rows = activities.map(a => [
+    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
+    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+  ]);
+  const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `fieldpulse-export-${Date.now()}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escHtml2(str) { return esc(str); }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  boot().catch(function(err) {
+    console.error('SAS boot error:', err);
+    var splash = document.getElementById('splash');
+    if (splash) splash.remove();
+    var authWall = document.getElementById('authWall');
+    if (authWall) authWall.classList.remove('hidden');
+    var errEl = document.getElementById('authError');
+    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
+  });
+});
+
+  
