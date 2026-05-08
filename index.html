@@ -3747,16 +3747,4 @@ function esc(str) {
 function escHtml2(str) { return esc(str); }
 
 
-document.addEventListener('DOMContentLoaded', function() {
-  boot().catch(function(err) {
-    console.error('SAS boot error:', err);
-    var splash = document.getElementById('splash');
-    if (splash) splash.remove();
-    var authWall = document.getElementById('authWall');
-    if (authWall) authWall.classList.remove('hidden');
-    var errEl = document.getElementById('authError');
-    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
-  });
-});
-
   
