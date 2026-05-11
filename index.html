@@ -956,7 +956,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
               <thead>
                 <tr>
                   <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
-                  <th>Outcome</th><th>Location / Address</th><th>Actions</th>
+                  <th>Outcome</th><th>Business Address</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="histBody">
@@ -972,7 +972,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <button class="modal-close" id="modalClose">✕</button>
             <h3 id="modalTitle">Activity Detail</h3>
             <div id="modalBody"></div>
-            <div id="modalMap" class="map-container sm" style="margin-top:1rem"></div>
+            <div id="modalMap" class="map-container sm" style="margin-top:1rem;display:none"></div>
           </div>
         </div>
       </section>
@@ -2380,7 +2380,8 @@ class HistoryManager {
     const isSuperAdmin = this.auth?.isSuperAdmin();
 
     if (!activities.length) {
-      body.innerHTML = '<tr><td colspan="7" class="empty-td">No activities found.</td></tr>';
+      var colCount = isAdmin ? 8 : 6;
+    body.innerHTML = '<tr><td colspan="' + colCount + '" class="empty-td">No activities found.</td></tr>';
       return;
     }
 
@@ -2391,11 +2392,14 @@ class HistoryManager {
         <td>${esc(a.activityType)}</td>
         <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
         ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
-        <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
-          ${(isAdmin
-          ? (a.lat ? `<span title='GPS: ${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc((a.gpsAddress || a.address || '').split(',').slice(0,2).join(',') || 'GPS captured')}</span>` : '<span style="color:var(--text3)">No GPS</span>')
-          : esc(a.businessAddress || '—'))}
+        <td style="font-size:.8rem;color:var(--text2)">
+          ${esc(a.businessAddress || '—')}
         </td>
+        ${isAdmin ? `<td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
+          ${a.lat ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>
+            📍 ${esc((a.gpsAddress || a.address || '').split(',').slice(0,2).join(',') || 'GPS captured')}
+          </span>` : '<span style="color:var(--text3)">No GPS</span>'}
+        </td>` : ''}
         <td>
           <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -2411,6 +2415,7 @@ class HistoryManager {
     // Update thead to include Rep column for admins
     const thead = document.querySelector('#histTable thead tr');
     if (thead) {
+      // Rep column
       const hasRepCol = thead.querySelector('.rep-col');
       if (isAdmin && !hasRepCol) {
         const th = document.createElement('th');
@@ -2419,6 +2424,17 @@ class HistoryManager {
         thead.children[3].after(th);
       } else if (!isAdmin && hasRepCol) {
         hasRepCol.remove();
+      }
+      // GPS column (admin only)
+      const hasGpsCol = thead.querySelector('.gps-col');
+      if (isAdmin && !hasGpsCol) {
+        const thg = document.createElement('th');
+        thg.className = 'gps-col';
+        thg.textContent = 'GPS Location';
+        thead.appendChild(thg);
+        // Move Actions column to last (it's naturally last already)
+      } else if (!isAdmin && hasGpsCol) {
+        hasGpsCol.remove();
       }
     }
 
@@ -2435,73 +2451,96 @@ class HistoryManager {
   }
 
   async openDetail(id) {
-    const isAdm = this.auth?.isAdmin() || false;
+    // Determine role FIRST — this gates all location data
+    var isAdm = this.auth ? this.auth.isAdmin() : false;
+
     let activity = null;
     try {
       const all = await this.db.getActivities();
-      activity  = all.find(a => a.id === id);
-      // Also check by stringified id in case of type mismatch
-      if (!activity) activity = all.find(a => String(a.id) === String(id));
+      activity = all.find(a => a.id === id) ||
+                 all.find(a => String(a.id) === String(id));
     } catch(e) {
       console.error('openDetail fetch error:', e);
       return;
     }
-    if (!activity) { console.warn('Activity not found for id:', id); return; }
+    if (!activity) { console.warn('Activity not found:', id); return; }
 
-    // Access check: normal users can only see their own
-    if (!this.auth?.isAdmin() && activity.userId !== this.auth?.currentUser()?.uid) {
-      return;
+    // Normal users can only view their own activities
+    if (!isAdm && activity.userId !== this.auth?.currentUser()?.uid) return;
+
+    // Always ensure map is hidden first (stays hidden for non-admins)
+    var mapEl = document.getElementById('modalMap');
+    if (mapEl) mapEl.style.display = 'none';
+
+    // Destroy any previously rendered map
+    if (this._modalMap) {
+      try { this._modalMap.remove(); } catch(_) {}
+      this._modalMap = null;
     }
 
     document.getElementById('modalTitle').textContent = esc(activity.clientName);
 
-    const questions = this.db.getQuestions();
-    const answers   = activity.customAnswers || {};
+    // Build custom answers HTML
+    const questions  = this.db.getQuestions();
+    const answers    = activity.customAnswers || {};
     const customHtml = questions.map(q => {
       const val = answers[q.id];
       if (!val || (Array.isArray(val) && !val.length)) return '';
-      return `<div class="detail-row"><span class="detail-label">${esc(q.label)}</span><span class="detail-val">${esc(Array.isArray(val) ? val.join(', ') : val)}</span></div>`;
+      return '<div class="detail-row"><span class="detail-label">' + esc(q.label) +
+             '</span><span class="detail-val">' +
+             esc(Array.isArray(val) ? val.join(', ') : val) + '</span></div>';
     }).join('');
 
-    // Build modal HTML using string concat to avoid nested backtick issues
+    // Build modal body — GPS/location data strictly gated by isAdm
     var mHtml = '<div class="detail-grid">';
     mHtml += '<div class="detail-row"><span class="detail-label">Date &amp; Time</span><span class="detail-val">' + formatDateTime(activity.timestamp) + '</span></div>';
     mHtml += '<div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">' + esc(activity.activityType) + '</span></div>';
-    mHtml += '<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ' + outcomeClass(activity.outcome) + '">' + (esc(activity.outcome)||'—') + '</span></span></div>';
-    if (activity.userName) mHtml += '<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">' + esc(activity.userName) + '</span></div>';
-    if (activity.businessAddress) mHtml += '<div class="detail-row"><span class="detail-label">Business Address</span><span class="detail-val">' + escHtml2(activity.businessAddress) + '</span></div>';
+    mHtml += '<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ' + outcomeClass(activity.outcome) + '">' + (esc(activity.outcome) || '—') + '</span></span></div>';
+    if (isAdm && activity.userName) {
+      mHtml += '<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">' + esc(activity.userName) + '</span></div>';
+    }
+    if (activity.businessAddress) {
+      mHtml += '<div class="detail-row"><span class="detail-label">Business Address</span><span class="detail-val">' + escHtml2(activity.businessAddress) + '</span></div>';
+    }
+    if (activity.notes) {
+      mHtml += '<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">' + esc(activity.notes) + '</p></div>';
+    }
+    mHtml += customHtml;
+
+    // GPS section — ADMIN & SUPERADMIN ONLY
     if (isAdm && activity.lat) {
-      var gpsAddr = (activity.gpsAddress || activity.address || '').split(',').slice(0,3).join(',');
+      var gpsAddr   = (activity.gpsAddress || activity.address || '').split(',').slice(0,3).join(',');
       var gpsCoords = activity.lat.toFixed(6) + ', ' + activity.lng.toFixed(6);
-      var gpsAcc   = activity.accuracy ? ' ±' + Math.round(activity.accuracy) + 'm' : '';
-      mHtml += '<div class="detail-row"><span class="detail-label" style="color:var(--accent)">GPS Location</span><div>';
-      if (gpsAddr) mHtml += '<div class="detail-val" style="font-size:.8rem">' + escHtml2(gpsAddr) + '</div>';
-      mHtml += '<div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3);margin-top:.15rem">' + gpsCoords + gpsAcc + '</div>';
+      var gpsAcc    = activity.accuracy ? ' ±' + Math.round(activity.accuracy) + 'm' : '';
+      mHtml += '<div class="detail-row" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)">';
+      mHtml += '<span class="detail-label" style="color:var(--accent)">GPS Location</span>';
+      mHtml += '<div>';
+      if (gpsAddr) mHtml += '<div class="detail-val" style="font-size:.82rem">' + escHtml2(gpsAddr) + '</div>';
+      mHtml += '<div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3);margin-top:.2rem">' + gpsCoords + gpsAcc + '</div>';
       mHtml += '</div></div>';
     }
-    if (activity.notes) mHtml += '<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">' + esc(activity.notes) + '</p></div>';
-    mHtml += customHtml;
+
     mHtml += '</div>';
-    mHtml += '<style>.detail-grid{display:flex;flex-direction:column;gap:.6rem}.detail-row{display:flex;gap:.75rem;align-items:baseline}.detail-row.full{flex-direction:column;gap:.3rem}.detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}.detail-val{font-size:.88rem}.detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}</style>';
+    mHtml += '<style>.detail-grid{display:flex;flex-direction:column;gap:.6rem}.detail-row{display:flex;gap:.75rem;align-items:flex-start}.detail-row.full{flex-direction:column;gap:.3rem}.detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0;padding-top:.15rem}.detail-val{font-size:.88rem}.detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}</style>';
+
     document.getElementById('modalBody').innerHTML = mHtml;
 
-        try {
+    try {
       document.getElementById('detailModal').classList.remove('hidden');
-    } catch(modalErr) {
-      console.error('Modal open error:', modalErr);
+    } catch(e) {
+      console.error('Modal open error:', e);
     }
 
-    const mapEl = document.getElementById('modalMap');
-    if (activity.lat) {
+    // Map — ADMIN & SUPERADMIN ONLY
+    if (isAdm && activity.lat && mapEl) {
       mapEl.style.display = 'block';
       await MapService.loadLeaflet();
-      if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} }
       this._modalMap = MapService.createMap('modalMap', activity.lat, activity.lng, 15);
-      MapService.addMarker(this._modalMap, activity.lat, activity.lng, `<strong>${esc(activity.clientName)}</strong>`);
-      setTimeout(() => MapService.invalidate(this._modalMap), 100);
-    } else {
-      mapEl.style.display = 'none';
+      MapService.addMarker(this._modalMap, activity.lat, activity.lng,
+        '<strong>' + esc(activity.clientName) + '</strong>');
+      setTimeout(function() { MapService.invalidate(this._modalMap); }.bind(this), 150);
     }
+    // mapEl already set to display:none above for non-admins
   }
 
   _closeModal() {
