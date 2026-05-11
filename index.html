@@ -1202,13 +1202,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         </div>
 
         <!-- Superadmin credentials info box -->
-        <div class="info-banner" id="superAdminBanner">
-          <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div>
-            <strong>Default Super Admin credentials:</strong>
-            Email: <code>allan.koay@bigpos.com</code> &nbsp;|&nbsp; Password: <code>demo1234</code>
-            <br><small>Change this password immediately in User Management after first login.</small>
-          </div>
         </div>
 
         <div class="settings-grid">
@@ -1354,11 +1347,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div id="authError" class="auth-error hidden"></div>
         <button type="submit" class="btn primary full" id="authSubmitBtn">Sign In</button>
       </form>
-      <div class="auth-hint-box">
-        <span class="auth-hint-label">Default Super Admin</span>
-        <code>allan.koay@bigpos.com</code>
-        <code>demo1234</code>
-      </div>
     </div>
   </div>
 
@@ -2851,9 +2839,6 @@ function applyRoleUI() {
   document.getElementById('navSettings').classList.toggle('hidden', !isAdmin);
 
   // Super admin info banner only for superadmin
-  const banner = document.getElementById('superAdminBanner');
-  if (banner) banner.classList.toggle('hidden', !isSuperAdmin);
-
   // Hide "Super Admin" option in add-user form for non-superadmins
   const saOpt = document.getElementById('newUserSuperAdminOption');
   if (saOpt) saOpt.style.display = isSuperAdmin ? '' : 'none';
