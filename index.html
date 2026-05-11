@@ -18,6 +18,7 @@
    Theme: Industrial Utility × Warm Amber Accents
    ────────────────────────────────────────────── */
 
+/* ── Theme tokens — dark (default) ── */
 :root {
   --bg:        #0f0f10;
   --surface:   #1a1a1e;
@@ -40,6 +41,25 @@
   --font-body: 'DM Sans', sans-serif;
   --transition: 200ms cubic-bezier(.4,0,.2,1);
 }
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg:        #f5f5f7;
+  --surface:   #ffffff;
+  --surface2:  #f0f0f4;
+  --border:    #d8d8e0;
+  --accent:    #d4860a;
+  --accent2:   #e05a1e;
+  --text:      #1a1a22;
+  --text2:     #5a5870;
+  --text3:     #9a98aa;
+  --green:     #1a9e68;
+  --red:       #d93030;
+  --blue:      #2e6fd4;
+  --shadow:    0 4px 24px rgba(0,0,0,.12);
+}
+[data-theme="light"] .leaflet-tile { filter: none; }
+[data-theme="light"] .leaflet-container { background: #e8e8ec; }
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -179,6 +199,15 @@ textarea { resize: vertical; }
 .user-role { font-size: .72rem; color: var(--text3); font-family: var(--font-mono); }
 .sign-out-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: .4rem .75rem; color: var(--text2); cursor: pointer; font-size: .78rem; width: 100%; transition: all var(--transition); }
 .sign-out-btn:hover { border-color: var(--red); color: var(--red); }
+.theme-toggle-btn {
+  display: flex; align-items: center; gap: .5rem;
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px; padding: .4rem .75rem;
+  color: var(--text2); cursor: pointer; font-size: .78rem;
+  width: 100%; margin-bottom: .5rem;
+  transition: all var(--transition);
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Main ── */
 #main { overflow-y: auto; }
@@ -730,6 +759,35 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 .dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
 .dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
 
+/* ── Light mode specific overrides ── */
+[data-theme="light"] body { background: var(--bg); color: var(--text); }
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--text);
+}
+[data-theme="light"] .card { box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+[data-theme="light"] .stat-card { box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+[data-theme="light"] .auth-card { box-shadow: 0 4px 32px rgba(0,0,0,.12); }
+[data-theme="light"] .modal-panel { box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+[data-theme="light"] .nav-item:hover { background: var(--surface2); }
+[data-theme="light"] .nav-item.active { background: rgba(212,134,10,.12); }
+[data-theme="light"] #sidebar { border-right-color: var(--border); }
+[data-theme="light"] #mobileHeader { box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+[data-theme="light"] .splash-title { color: #1a1a22; }
+[data-theme="light"] .feed-item { background: #fff; }
+[data-theme="light"] .q-item { background: #fff; }
+[data-theme="light"] .loc-picker { background: #f8f8fc; }
+[data-theme="light"] .geo-strip { background: #f8f8fc; }
+[data-theme="light"] .info-banner { background: rgba(212,134,10,.06); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--border); }
+[data-theme="light"] .data-table tr:hover td { background: var(--surface2); }
+[data-theme="light"] .outcome-pill.neutral { background: #eeeef4; color: var(--text2); }
+[data-theme="light"] .dep-parent-block { background: #fff; }
+[data-theme="light"] code { background: rgba(212,134,10,.1); color: var(--accent); border-radius: 4px; padding: .1rem .4rem; font-family: var(--font-mono); font-size: .85em; }
+
   </style>
 </head>
 <body>
@@ -800,6 +858,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <span class="user-role" id="userRoleLabel">—</span>
           </div>
         </div>
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="fpToggleTheme()" title="Toggle light/dark mode">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Light Mode</span>
+        </button>
         <button class="sign-out-btn" id="signOutBtn" onclick="
           (async function() {
             try {
@@ -830,7 +892,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span class="mobile-brand">SAS Sales</span>
-      <div class="avatar sm" id="mobileAvatar"></div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button onclick="fpToggleTheme()" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.3rem .5rem;cursor:pointer;font-size:.85rem;color:var(--text2);" title="Toggle theme" id="mobileThemeBtn">☀️</button>
+        <div class="avatar sm" id="mobileAvatar"></div>
+      </div>
     </header>
 
     <!-- Main Content -->
@@ -1375,6 +1440,34 @@ function fpToggleSidebar() {
     fpOpenSidebar();
   }
 }
+
+// ── Theme (light / dark) ────────────────────────
+function fpApplyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('fp_theme', theme);
+  var isLight = theme === 'light';
+  // Sidebar button
+  var icon  = document.getElementById('themeIcon');
+  var label = document.getElementById('themeLabel');
+  if (icon)  icon.textContent  = isLight ? '🌙' : '☀️';
+  if (label) label.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+  // Mobile header button
+  var mBtn = document.getElementById('mobileThemeBtn');
+  if (mBtn) mBtn.textContent = isLight ? '🌙' : '☀️';
+}
+
+function fpToggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme') || 'dark';
+  fpApplyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+function fpInitTheme() {
+  var saved = localStorage.getItem('fp_theme') || 'dark';
+  fpApplyTheme(saved);
+}
+
+// Apply theme immediately on script load (before DOMContentLoaded)
+fpInitTheme();
 
 // Simple consistent password hash (replaces btoa which can differ across environments)
 function hashPwd(pwd) {
