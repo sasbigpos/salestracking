@@ -788,6 +788,127 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 [data-theme="light"] .dep-parent-block { background: #fff; }
 [data-theme="light"] code { background: rgba(212,134,10,.1); color: var(--accent); border-radius: 4px; padding: .1rem .4rem; font-family: var(--font-mono); font-size: .85em; }
 
+/* ── Reports ── */
+.report-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.report-chart {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: .5rem 0;
+}
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .82rem;
+}
+.chart-bar-label {
+  min-width: 130px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+}
+.chart-bar-track {
+  flex: 1;
+  height: 22px;
+  background: var(--surface2);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .4s ease;
+  min-width: 2px;
+}
+.chart-bar-fill.green  { background: linear-gradient(90deg, #3ecf8e, #1ea87e); }
+.chart-bar-fill.blue   { background: linear-gradient(90deg, #4f8ef7, #7b5ea7); }
+.chart-bar-fill.red    { background: linear-gradient(90deg, #f04444, #c93030); }
+.chart-bar-fill.purple { background: linear-gradient(90deg, #9b59b6, #7b5ea7); }
+.chart-bar-count {
+  min-width: 36px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.chart-bar-pct {
+  min-width: 40px;
+  text-align: right;
+  font-size: .72rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+.time-chart-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .5rem;
+}
+.time-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.time-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+  transition: height .4s ease;
+}
+.time-bar-label {
+  font-size: .62rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  text-align: center;
+  white-space: nowrap;
+}
+.time-bar-count {
+  font-size: .68rem;
+  color: var(--text2);
+  font-family: var(--font-mono);
+}
+.report-empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: .87rem;
+  padding: 3rem 1rem;
+}
+.rpt-custom-filter {
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+}
+.rpt-custom-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: .75rem;
+}
+@media (max-width: 768px) {
+  .report-filters-grid { grid-template-columns: 1fr 1fr; }
+  .chart-bar-label { min-width: 80px; max-width: 80px; }
+}
+
   </style>
 </head>
 <body>
@@ -834,6 +955,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <li><a href="#" class="nav-item" data-page="history">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
           History
+        </a></li>
+        <li id="navReports" class="hidden"><a href="#" class="nav-item" data-page="reports">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Reports
         </a></li>
         <li><a href="#" class="nav-item" data-page="questionnaire" id="navQuestionnaire">
           <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -1253,6 +1378,127 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                 <button type="submit" class="btn primary">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── REPORTS (admin/superadmin only) ── -->
+      <section id="page-reports" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Reports</h2>
+            <p class="page-sub">Generate and analyse sales activity data</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="runReportBtn">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Generate Report
+            </button>
+            <button class="btn secondary" id="exportReportBtn">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters panel -->
+        <div class="card report-filters-card">
+          <h3 class="card-section-title">Filter Parameters</h3>
+          <div class="report-filters-grid">
+            <div class="form-group">
+              <label>Date From</label>
+              <input type="date" id="rptDateFrom" />
+            </div>
+            <div class="form-group">
+              <label>Date To</label>
+              <input type="date" id="rptDateTo" />
+            </div>
+            <div class="form-group">
+              <label>Sales Rep</label>
+              <select id="rptRep">
+                <option value="">All Reps</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Type</label>
+              <select id="rptType">
+                <option value="">All Types</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Outcome</label>
+              <select id="rptOutcome">
+                <option value="">All Outcomes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Has GPS</label>
+              <select id="rptGps">
+                <option value="">All</option>
+                <option value="yes">With GPS</option>
+                <option value="no">Without GPS</option>
+              </select>
+            </div>
+          </div>
+          <!-- Dynamic custom question filters appended here -->
+          <div id="rptCustomFilters"></div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="stats-grid" id="rptStats" style="display:none">
+          <div class="stat-card accent">
+            <div class="stat-label">Total Activities</div>
+            <div class="stat-value" id="rptTotal">0</div>
+            <div class="stat-icon">📊</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unique Reps</div>
+            <div class="stat-value" id="rptReps">0</div>
+            <div class="stat-icon">👤</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Closed Won</div>
+            <div class="stat-value" id="rptWon">0</div>
+            <div class="stat-icon">🏆</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">GPS Captured</div>
+            <div class="stat-value" id="rptGpsCount">0</div>
+            <div class="stat-icon">📍</div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="dash-grid" id="rptCharts" style="display:none">
+          <div class="card">
+            <div class="card-header"><h3>By Activity Type</h3></div>
+            <div id="rptTypeChart" class="report-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>By Outcome</h3></div>
+            <div id="rptOutcomeChart" class="report-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>By Sales Rep</h3></div>
+            <div id="rptRepChart" class="report-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Activity Over Time</h3></div>
+            <div id="rptTimeChart" class="report-chart"></div>
+          </div>
+        </div>
+
+        <!-- Results table -->
+        <div class="card" id="rptTableCard" style="display:none">
+          <div class="card-header">
+            <h3>Detailed Results</h3>
+            <span class="badge" id="rptResultCount">0 records</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="rptTable">
+              <thead id="rptThead"></thead>
+              <tbody id="rptTbody"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -2929,6 +3175,7 @@ function applyRoleUI() {
 
   // Show/hide nav items
   document.getElementById('navUsers').classList.toggle('hidden', !isAdmin);
+  document.getElementById('navReports').classList.toggle('hidden', !isAdmin);
   document.getElementById('navSettings').classList.toggle('hidden', !isAdmin);
 
   // Super admin info banner only for superadmin
@@ -2947,8 +3194,8 @@ function initNavigation() {
     el.addEventListener('click', e => {
       e.preventDefault();
       const page = el.dataset.page;
-      // Guard: non-admins cannot access settings or users pages
-      if ((page === 'settings' || page === 'users') && !auth.isAdmin()) {
+      // Guard: non-admins cannot access settings, users or reports pages
+      if ((page === 'settings' || page === 'users' || page === 'reports') && !auth.isAdmin()) {
         toast('Access denied — admin only', 'error');
         return;
       }
@@ -2967,6 +3214,7 @@ function navigateTo(page) {
   if (page === 'log')           { loadSelectOptions(); initLogMap(); }
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
+  if (page === 'reports')       initReportPage();
 
   fpCloseSidebar();
 }
@@ -3679,6 +3927,322 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function escHtml2(str) { return esc(str); }
+
+// ── Reports ──────────────────────────────────────────────────────────
+// Full report generation with filters, charts and export
+
+let _reportData = [];   // filtered results cache
+
+function initReportPage() {
+  _populateReportFilters();
+  _renderCustomQuestionFilters();
+
+  // Wire buttons (guard double-binding)
+  var runBtn    = document.getElementById('runReportBtn');
+  var exportBtn = document.getElementById('exportReportBtn');
+  if (runBtn && !runBtn._rptBound) {
+    runBtn._rptBound = true;
+    runBtn.addEventListener('click', generateReport);
+  }
+  if (exportBtn && !exportBtn._rptBound) {
+    exportBtn._rptBound = true;
+    exportBtn.addEventListener('click', exportReportCSV);
+  }
+
+  // Auto-set date range to current month
+  var now   = new Date();
+  var y     = now.getFullYear();
+  var m     = String(now.getMonth() + 1).padStart(2, '0');
+  var d     = String(now.getDate()).padStart(2, '0');
+  var first = y + '-' + m + '-01';
+  var today = y + '-' + m + '-' + d;
+  var dFrom = document.getElementById('rptDateFrom');
+  var dTo   = document.getElementById('rptDateTo');
+  if (dFrom && !dFrom.value) dFrom.value = first;
+  if (dTo   && !dTo.value)   dTo.value   = today;
+}
+
+async function _populateReportFilters() {
+  var cfg       = db.getConfig();
+  var activities = await db.getActivities();
+
+  // Reps
+  var repSel = document.getElementById('rptRep');
+  if (repSel) {
+    var reps = [...new Set(activities.map(a => a.userName).filter(Boolean))].sort();
+    repSel.innerHTML = '<option value="">All Reps</option>' +
+      reps.map(r => '<option value="' + esc(r) + '">' + esc(r) + '</option>').join('');
+  }
+
+  // Activity Types
+  var typeSel = document.getElementById('rptType');
+  if (typeSel) {
+    typeSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
+  }
+
+  // Outcomes
+  var outSel = document.getElementById('rptOutcome');
+  if (outSel) {
+    outSel.innerHTML = '<option value="">All Outcomes</option>' +
+      cfg.outcomes.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('');
+  }
+}
+
+function _renderCustomQuestionFilters() {
+  var container = document.getElementById('rptCustomFilters');
+  if (!container) return;
+  var questions = db.getQuestions().filter(q =>
+    ['select','radio','dependent_select'].includes(q.type));
+  if (!questions.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = '<div class="rpt-custom-filter">' +
+    '<div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem">Custom Question Filters</div>' +
+    '<div class="rpt-custom-filter-grid">' +
+    questions.map(q => {
+      var opts = (q.options || (q.depData || []).map(d => d.parent));
+      return '<div class="form-group"><label>' + esc(q.label) + '</label>' +
+        '<select id="rptQ_' + q.id + '">' +
+        '<option value="">All</option>' +
+        opts.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('') +
+        '</select></div>';
+    }).join('') +
+    '</div></div>';
+}
+
+async function generateReport() {
+  var btn = document.getElementById('runReportBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+  try {
+    var all = await db.getActivities();
+
+    // ── Apply filters ──
+    var dateFrom = document.getElementById('rptDateFrom')?.value;
+    var dateTo   = document.getElementById('rptDateTo')?.value;
+    var repF     = document.getElementById('rptRep')?.value;
+    var typeF    = document.getElementById('rptType')?.value;
+    var outcomeF = document.getElementById('rptOutcome')?.value;
+    var gpsF     = document.getElementById('rptGps')?.value;
+
+    var tsFrom = dateFrom ? new Date(dateFrom).setHours(0,0,0,0)   : 0;
+    var tsTo   = dateTo   ? new Date(dateTo).setHours(23,59,59,999) : Infinity;
+
+    var filtered = all.filter(a => {
+      if (a.timestamp < tsFrom || a.timestamp > tsTo) return false;
+      if (repF     && a.userName     !== repF)    return false;
+      if (typeF    && a.activityType !== typeF)   return false;
+      if (outcomeF && a.outcome      !== outcomeF)return false;
+      if (gpsF === 'yes' && !a.lat)  return false;
+      if (gpsF === 'no'  &&  a.lat)  return false;
+
+      // Custom question filters
+      var questions = db.getQuestions().filter(q =>
+        ['select','radio','dependent_select'].includes(q.type));
+      for (var q of questions) {
+        var filterEl = document.getElementById('rptQ_' + q.id);
+        var filterVal = filterEl?.value || '';
+        if (!filterVal) continue;
+        var ans = (a.customAnswers || {})[q.id] || '';
+        if (!String(ans).toLowerCase().includes(filterVal.toLowerCase())) return false;
+      }
+      return true;
+    });
+
+    _reportData = filtered;
+    _renderReportSummary(filtered);
+    _renderReportCharts(filtered);
+    _renderReportTable(filtered);
+
+    // Show all sections
+    ['rptStats','rptCharts','rptTableCard'].forEach(id => {
+      var el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+
+    toast('Report generated — ' + filtered.length + ' records');
+  } catch(err) {
+    toast('Report error: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Generate Report'; }
+  }
+}
+
+function _renderReportSummary(data) {
+  var won   = data.filter(a => (a.outcome||'').toLowerCase().includes('won')).length;
+  var gpsN  = data.filter(a => a.lat).length;
+  var repsN = new Set(data.map(a => a.userName).filter(Boolean)).size;
+
+  document.getElementById('rptTotal').textContent    = data.length;
+  document.getElementById('rptReps').textContent     = repsN;
+  document.getElementById('rptWon').textContent      = won;
+  document.getElementById('rptGpsCount').textContent = gpsN;
+}
+
+function _countBy(data, key) {
+  var counts = {};
+  data.forEach(a => {
+    var v = a[key] || 'Unknown';
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  return Object.entries(counts).sort((x,y) => y[1] - x[1]);
+}
+
+function _renderBarChart(containerId, entries, colorClass) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (!entries.length) { el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+  var total = entries.reduce((s,e) => s + e[1], 0);
+  el.innerHTML = entries.slice(0,10).map(([label, count]) => {
+    var pct = total ? Math.round(count / total * 100) : 0;
+    var w   = total ? Math.round(count / entries[0][1] * 100) : 0;
+    return '<div class="chart-bar-row">' +
+      '<div class="chart-bar-label" title="' + esc(label) + '">' + esc(label) + '</div>' +
+      '<div class="chart-bar-track">' +
+        '<div class="chart-bar-fill ' + (colorClass||'') + '" style="width:' + w + '%"></div>' +
+      '</div>' +
+      '<div class="chart-bar-count">' + count + '</div>' +
+      '<div class="chart-bar-pct">' + pct + '%</div>' +
+    '</div>';
+  }).join('');
+}
+
+function _renderReportCharts(data) {
+  _renderBarChart('rptTypeChart',    _countBy(data, 'activityType'), '');
+  _renderBarChart('rptOutcomeChart', _countBy(data, 'outcome'),      'green');
+  _renderBarChart('rptRepChart',     _countBy(data, 'userName'),     'blue');
+  _renderTimeChart('rptTimeChart',   data);
+}
+
+function _renderTimeChart(containerId, data) {
+  var el = document.getElementById(containerId);
+  if (!el || !data.length) { if(el) el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+
+  // Group by day
+  var buckets = {};
+  data.forEach(a => {
+    var d = new Date(a.timestamp).toLocaleDateString('en-MY', { day:'2-digit', month:'short' });
+    buckets[d] = (buckets[d] || 0) + 1;
+  });
+
+  var entries = Object.entries(buckets).sort((a,b) => {
+    return new Date(a[0]) - new Date(b[0]);
+  }).slice(-14); // last 14 days shown
+
+  if (!entries.length) { el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+  var maxCount = Math.max(...entries.map(e => e[1]));
+
+  el.innerHTML = '<div class="time-chart-row">' +
+    entries.map(([label, count]) => {
+      var h = maxCount ? Math.round(count / maxCount * 100) : 0;
+      return '<div class="time-bar-col">' +
+        '<div class="time-bar-count">' + count + '</div>' +
+        '<div class="time-bar-fill" style="height:' + h + 'px"></div>' +
+        '<div class="time-bar-label">' + esc(label) + '</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+function _renderReportTable(data) {
+  var countEl = document.getElementById('rptResultCount');
+  if (countEl) countEl.textContent = data.length + ' record' + (data.length !== 1 ? 's' : '');
+
+  var questions = db.getQuestions();
+  var isAdm     = auth.isAdmin();
+
+  // Build thead
+  var thead = document.getElementById('rptThead');
+  if (thead) {
+    thead.innerHTML = '<tr>' +
+      '<th>Date &amp; Time</th>' +
+      '<th>Rep</th>' +
+      '<th>Merchant / Prospect</th>' +
+      '<th>Business Address</th>' +
+      '<th>Type</th>' +
+      '<th>Outcome</th>' +
+      questions.map(q => '<th>' + esc(q.label) + '</th>').join('') +
+      '<th>Notes</th>' +
+      (isAdm ? '<th>GPS</th>' : '') +
+    '</tr>';
+  }
+
+  // Build tbody
+  var tbody = document.getElementById('rptTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="' + (8 + questions.length + (isAdm?1:0)) + '" class="empty-td">No records match the selected filters.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(a => {
+    var ans = a.customAnswers || {};
+    return '<tr>' +
+      '<td style="white-space:nowrap;font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">' + formatDateTime(a.timestamp) + '</td>' +
+      '<td style="font-size:.82rem">' + esc(a.userName || '—') + '</td>' +
+      '<td><strong>' + esc(a.clientName) + '</strong></td>' +
+      '<td style="font-size:.82rem;color:var(--text2)">' + esc(a.businessAddress || '—') + '</td>' +
+      '<td>' + esc(a.activityType) + '</td>' +
+      '<td><span class="outcome-pill ' + outcomeClass(a.outcome) + '">' + (esc(a.outcome) || '—') + '</span></td>' +
+      questions.map(q => {
+        var v = ans[q.id];
+        return '<td style="font-size:.82rem;color:var(--text2)">' + esc(Array.isArray(v) ? v.join(', ') : (v||'—')) + '</td>';
+      }).join('') +
+      '<td style="font-size:.82rem;color:var(--text2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a.notes || '—') + '</td>' +
+      (isAdm ? '<td style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3)">' + (a.lat ? a.lat.toFixed(4)+','+a.lng.toFixed(4) : '—') + '</td>' : '') +
+    '</tr>';
+  }).join('');
+}
+
+function exportReportCSV() {
+  if (!_reportData.length) { toast('Run a report first', 'error'); return; }
+  var questions = db.getQuestions();
+  var isAdm     = auth.isAdmin();
+
+  var headers = ['Date','Rep','Merchant/Prospect','Business Address','Type','Outcome']
+    .concat(questions.map(q => q.label))
+    .concat(['Notes'])
+    .concat(isAdm ? ['Latitude','Longitude','GPS Address'] : []);
+
+  var rows = _reportData.map(a => {
+    var ans = a.customAnswers || {};
+    var row = [
+      formatDateTime(a.timestamp),
+      a.userName || '',
+      a.clientName,
+      a.businessAddress || '',
+      a.activityType,
+      a.outcome || '',
+    ];
+    questions.forEach(q => {
+      var v = ans[q.id];
+      row.push(Array.isArray(v) ? v.join('; ') : (v || ''));
+    });
+    row.push((a.notes || '').replace(/\n/g,' '));
+    if (isAdm) {
+      row.push(a.lat ?? '');
+      row.push(a.lng ?? '');
+      row.push(a.gpsAddress || a.address || '');
+    }
+    return row;
+  });
+
+  var csv  = [headers, ...rows].map(r =>
+    r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')
+  ).join('\n');
+
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url;
+  a.download = 'sas-report-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Report exported!');
+}
+
+
 </script>
 </body>
 </html>
