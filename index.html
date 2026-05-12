@@ -1106,10 +1106,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                   <label for="activityType">Activity Type <span class="req">*</span></label>
                   <select id="activityType" required><option value="">Select…</option></select>
                 </div>
-                <div class="form-group">
-                  <label for="outcome">Outcome</label>
-                  <select id="outcome"><option value="">Select…</option></select>
-                </div>
+  
               </div>
               <div id="dynamicFields"></div>
               <div class="form-group">
@@ -1146,7 +1143,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
               <thead>
                 <tr>
                   <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
-                  <th>Outcome</th><th>Business Address</th><th>Actions</th>
+                  <th>Business Address</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="histBody">
@@ -1425,12 +1422,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                 <option value="">All Types</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Outcome</label>
-              <select id="rptOutcome">
-                <option value="">All Outcomes</option>
-              </select>
-            </div>
+
             <div class="form-group">
               <label>Has GPS</label>
               <select id="rptGps">
@@ -1457,9 +1449,9 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <div class="stat-icon">👤</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Closed Won</div>
+            <div class="stat-label">Activity Types</div>
             <div class="stat-value" id="rptWon">0</div>
-            <div class="stat-icon">🏆</div>
+            <div class="stat-icon">📋</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">GPS Captured</div>
@@ -1473,10 +1465,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <div class="card">
             <div class="card-header"><h3>By Activity Type</h3></div>
             <div id="rptTypeChart" class="report-chart"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><h3>By Outcome</h3></div>
-            <div id="rptOutcomeChart" class="report-chart"></div>
           </div>
           <div class="card">
             <div class="card-header"><h3>By Sales Rep</h3></div>
@@ -1580,20 +1568,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
 
           <div class="card">
-            <h3 class="card-section-title">Outcomes</h3>
-            <p class="helper-text">Customise the outcome options shown in the Log Activity form. One per line.</p>
-            <form id="outcomesForm" novalidate>
-              <div class="form-group">
-                <textarea id="outcomesInput" rows="7" placeholder="Interested&#10;Not Interested&#10;Follow-up Required"></textarea>
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn secondary" id="resetOutcomesBtn">Reset Defaults</button>
-                <button type="submit" class="btn primary">Save Outcomes</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="card">
             <h3 class="card-section-title">Data Management</h3>
             <p class="helper-text">Danger zone — these actions cannot be undone.</p>
             <div class="danger-actions">
@@ -1659,8 +1633,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   </div>
 
   <div id="toastContainer"></div>
-  <script>
-// ── Global sidebar controls (inline-onclick safe) ────
+  <script>// ── Global sidebar controls (inline-onclick safe) ────
 function fpOpenSidebar() {
   var s = document.getElementById('sidebar');
   var o = document.getElementById('sidebarOverlay');
@@ -2714,7 +2687,7 @@ class HistoryManager {
         <td style="white-space:nowrap;font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${formatDateTime(a.timestamp)}</td>
         <td><strong>${esc(a.clientName)}</strong></td>
         <td>${esc(a.activityType)}</td>
-        <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
+        
         ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
         <td style="font-size:.8rem;color:var(--text2)">
           ${esc(a.businessAddress || '—')}
@@ -3357,7 +3330,7 @@ async function refreshDashboard() {
       <div class="feed-dot"></div>
       <div class="feed-body">
         <div class="feed-client">${esc(a.clientName)}</div>
-        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.businessAddress ? '<br><span style="font-size:.7rem;color:var(--text3);">🏢 ' + esc(a.businessAddress) + '</span>' : ''}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.businessAddress ? '<br><span style="font-size:.7rem;color:var(--text3);">🏢 ' + esc(a.businessAddress) + '</span>' : ''}</div>
       </div>
       <div class="feed-time">${formatDate(a.timestamp)}</div>
     </div>
@@ -3602,9 +3575,7 @@ function initSettings() {
 
   // Pre-fill current values
   const atInput  = document.getElementById('activityTypesInput');
-  const outInput = document.getElementById('outcomesInput');
   if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
-  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
 
   document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -3626,33 +3597,15 @@ function initSettings() {
     toast('Activity types reset to defaults');
   });
 
-  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
-    const cfg = db.getConfig();
-    cfg.outcomes = outcomes;
-    db.saveConfig(cfg);
-    loadSelectOptions();
-    toast('Outcomes saved!');
-  });
-
-  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
-    const cfg = db.getConfig();
-    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
-    db.saveConfig(cfg);
-    if (outInput) outInput.value = cfg.outcomes.join('\n');
-    loadSelectOptions();
-    toast('Outcomes reset to defaults');
-  });
+// Outcomes config removed
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Business Address','Type','Outcome','Rep','Latitude','Longitude','GPS Address','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address','Notes'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType, a.outcome,
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
     a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -3692,7 +3645,6 @@ document.addEventListener('DOMContentLoaded', function() {
         clientName:      document.getElementById('clientName').value.trim(),
         businessAddress: document.getElementById('businessAddress').value.trim(),
         activityType:    document.getElementById('activityType').value,
-        outcome:         document.getElementById('outcome').value,
         notes:           document.getElementById('notes').value.trim(),
         lat:             currentGeo?.lat      ?? null,
         lng:             currentGeo?.lng      ?? null,
@@ -3859,9 +3811,7 @@ function initSettings() {
 
   // Pre-fill current values
   const atInput  = document.getElementById('activityTypesInput');
-  const outInput = document.getElementById('outcomesInput');
   if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
-  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
 
   document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -3883,33 +3833,15 @@ function initSettings() {
     toast('Activity types reset to defaults');
   });
 
-  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
-    const cfg = db.getConfig();
-    cfg.outcomes = outcomes;
-    db.saveConfig(cfg);
-    loadSelectOptions();
-    toast('Outcomes saved!');
-  });
-
-  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
-    const cfg = db.getConfig();
-    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
-    db.saveConfig(cfg);
-    if (outInput) outInput.value = cfg.outcomes.join('\n');
-    loadSelectOptions();
-    toast('Outcomes reset to defaults');
-  });
+// Outcomes config removed
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Business Address','Type','Outcome','Rep','Latitude','Longitude','GPS Address','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address','Notes'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType, a.outcome,
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
     a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -3977,13 +3909,6 @@ async function _populateReportFilters() {
     typeSel.innerHTML = '<option value="">All Types</option>' +
       cfg.activityTypes.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
   }
-
-  // Outcomes
-  var outSel = document.getElementById('rptOutcome');
-  if (outSel) {
-    outSel.innerHTML = '<option value="">All Outcomes</option>' +
-      cfg.outcomes.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('');
-  }
 }
 
 function _renderCustomQuestionFilters() {
@@ -4019,7 +3944,6 @@ async function generateReport() {
     var dateTo   = document.getElementById('rptDateTo')?.value;
     var repF     = document.getElementById('rptRep')?.value;
     var typeF    = document.getElementById('rptType')?.value;
-    var outcomeF = document.getElementById('rptOutcome')?.value;
     var gpsF     = document.getElementById('rptGps')?.value;
 
     var tsFrom = dateFrom ? new Date(dateFrom).setHours(0,0,0,0)   : 0;
@@ -4029,8 +3953,7 @@ async function generateReport() {
       if (a.timestamp < tsFrom || a.timestamp > tsTo) return false;
       if (repF     && a.userName     !== repF)    return false;
       if (typeF    && a.activityType !== typeF)   return false;
-      if (outcomeF && a.outcome      !== outcomeF)return false;
-      if (gpsF === 'yes' && !a.lat)  return false;
+        if (gpsF === 'yes' && !a.lat)  return false;
       if (gpsF === 'no'  &&  a.lat)  return false;
 
       // Custom question filters
@@ -4067,13 +3990,13 @@ async function generateReport() {
 }
 
 function _renderReportSummary(data) {
-  var won   = data.filter(a => (a.outcome||'').toLowerCase().includes('won')).length;
   var gpsN  = data.filter(a => a.lat).length;
   var repsN = new Set(data.map(a => a.userName).filter(Boolean)).size;
+  var types = new Set(data.map(a => a.activityType).filter(Boolean)).size;
 
   document.getElementById('rptTotal').textContent    = data.length;
   document.getElementById('rptReps').textContent     = repsN;
-  document.getElementById('rptWon').textContent      = won;
+  document.getElementById('rptWon').textContent      = types;
   document.getElementById('rptGpsCount').textContent = gpsN;
 }
 
@@ -4107,7 +4030,7 @@ function _renderBarChart(containerId, entries, colorClass) {
 
 function _renderReportCharts(data) {
   _renderBarChart('rptTypeChart',    _countBy(data, 'activityType'), '');
-  _renderBarChart('rptOutcomeChart', _countBy(data, 'outcome'),      'green');
+  // Outcome chart removed
   _renderBarChart('rptRepChart',     _countBy(data, 'userName'),     'blue');
   _renderTimeChart('rptTimeChart',   data);
 }
@@ -4158,7 +4081,6 @@ function _renderReportTable(data) {
       '<th>Merchant / Prospect</th>' +
       '<th>Business Address</th>' +
       '<th>Type</th>' +
-      '<th>Outcome</th>' +
       questions.map(q => '<th>' + esc(q.label) + '</th>').join('') +
       '<th>Notes</th>' +
       (isAdm ? '<th>GPS</th>' : '') +
@@ -4181,7 +4103,6 @@ function _renderReportTable(data) {
       '<td><strong>' + esc(a.clientName) + '</strong></td>' +
       '<td style="font-size:.82rem;color:var(--text2)">' + esc(a.businessAddress || '—') + '</td>' +
       '<td>' + esc(a.activityType) + '</td>' +
-      '<td><span class="outcome-pill ' + outcomeClass(a.outcome) + '">' + (esc(a.outcome) || '—') + '</span></td>' +
       questions.map(q => {
         var v = ans[q.id];
         return '<td style="font-size:.82rem;color:var(--text2)">' + esc(Array.isArray(v) ? v.join(', ') : (v||'—')) + '</td>';
@@ -4197,7 +4118,7 @@ function exportReportCSV() {
   var questions = db.getQuestions();
   var isAdm     = auth.isAdmin();
 
-  var headers = ['Date','Rep','Merchant/Prospect','Business Address','Type','Outcome']
+  var headers = ['Date','Rep','Merchant/Prospect','Business Address','Type']
     .concat(questions.map(q => q.label))
     .concat(['Notes'])
     .concat(isAdm ? ['Latitude','Longitude','GPS Address'] : []);
@@ -4210,7 +4131,6 @@ function exportReportCSV() {
       a.clientName,
       a.businessAddress || '',
       a.activityType,
-      a.outcome || '',
     ];
     questions.forEach(q => {
       var v = ans[q.id];
@@ -4238,8 +4158,6 @@ function exportReportCSV() {
   URL.revokeObjectURL(url);
   toast('Report exported!');
 }
-
-
 </script>
 </body>
 </html>
