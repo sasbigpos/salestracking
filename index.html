@@ -909,6 +909,45 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   .chart-bar-label { min-width: 80px; max-width: 80px; }
 }
 
+/* ── Photo / Image Upload ── */
+.photo-upload-wrap {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  background: var(--surface2);
+}
+.photo-upload-wrap:hover { border-color: var(--accent); background: rgba(245,166,35,.05); }
+.photo-upload-wrap.has-photo { border-style: solid; border-color: var(--accent); }
+.photo-upload-input { display: none; }
+.photo-upload-label {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  cursor: pointer; color: var(--text2); font-size: .85rem;
+}
+.photo-upload-icon { font-size: 2rem; }
+.photo-preview {
+  max-width: 100%; max-height: 200px;
+  border-radius: var(--radius); margin-top: .5rem;
+  object-fit: contain;
+}
+.photo-actions {
+  display: flex; gap: .5rem; justify-content: center; margin-top: .6rem; flex-wrap: wrap;
+}
+.photo-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: .3rem .75rem; font-size: .78rem;
+  cursor: pointer; color: var(--text2); transition: all var(--transition);
+}
+.photo-btn:hover { border-color: var(--accent); color: var(--accent); }
+.photo-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.photo-thumb {
+  width: 80px; height: 80px; object-fit: cover;
+  border-radius: 6px; border: 2px solid var(--accent);
+}
+
   </style>
 </head>
 <body>
@@ -1109,10 +1148,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   
               </div>
               <div id="dynamicFields"></div>
-              <div class="form-group">
-                <label for="notes">Notes</label>
-                <textarea id="notes" rows="4" placeholder="Key talking points, next steps…"></textarea>
-              </div>
               <div class="form-actions">
                 <button type="button" class="btn secondary" id="clearFormBtn">Clear</button>
                 <button type="submit" class="btn primary" id="submitBtn">
@@ -1204,6 +1239,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                     <option value="checkbox">Checkboxes</option>
                     <option value="number">Number</option>
                     <option value="date">Date</option>
+                    <option value="photo">Photo / Image Upload</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -2317,7 +2353,7 @@ class QuestionnaireManager {
       const typeLabels = {
         text:'Short Text', textarea:'Long Text', select:'Dropdown',
         dependent_select:'Dependent Dropdown',
-        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date'
+        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date', photo:'Photo/Image'
       };
       const typeLabel = typeLabels[q.type] || q.type;
       const reqLabel  = q.required === 'true' ? 'Required' : 'Optional';
@@ -2381,6 +2417,10 @@ class QuestionnaireManager {
     qs.filter(q => q.type === 'dependent_select').forEach(q => {
       this._wireDependentSelect(q);
     });
+    // Wire up photo uploads
+    qs.filter(q => q.type === 'photo').forEach(q => {
+      this._wirePhotoUpload(q);
+    });
   }
 
   _renderInput(q) {
@@ -2425,6 +2465,22 @@ class QuestionnaireManager {
           </label>`).join('');
         return `<div class="check-group">${opts}</div>`;
       }
+      case 'photo': {
+        return `<div class="photo-upload-wrap" id="${id}_wrap">
+          <label class="photo-upload-label" for="${id}_input">
+            <span class="photo-upload-icon">📷</span>
+            <span>Tap to take photo or upload image</span>
+            <span style="font-size:.72rem;color:var(--text3)">JPG, PNG, WEBP — max 4MB</span>
+          </label>
+          <input type="file" id="${id}_input" class="photo-upload-input" accept="image/*" capture="environment" />
+          <img id="${id}_preview" class="photo-preview" style="display:none" alt="Preview" />
+          <div class="photo-actions" id="${id}_actions" style="display:none">
+            <button type="button" class="photo-btn" onclick="photoRetake('${id}')">📷 Retake</button>
+            <button type="button" class="photo-btn danger" onclick="photoClear('${id}')">✕ Remove</button>
+          </div>
+          <input type="hidden" id="${id}" />
+        </div>`;
+      }
       default: return `<input type="text" id="${id}" ${req} />`;
     }
   }
@@ -2455,6 +2511,34 @@ class QuestionnaireManager {
     });
   }
 
+  // ── Wire photo upload input ─────────────────────
+  _wirePhotoUpload(q) {
+    const id    = `dyn_${q.id}`;
+    const input = document.getElementById(`${id}_input`);
+    if (!input) return;
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 4 * 1024 * 1024) {
+        toast('Image too large — max 4MB', 'error');
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const base64 = ev.target.result;  // data:image/jpeg;base64,...
+        document.getElementById(id).value = base64;
+        const preview = document.getElementById(`${id}_preview`);
+        const wrap    = document.getElementById(`${id}_wrap`);
+        const actions = document.getElementById(`${id}_actions`);
+        if (preview) { preview.src = base64; preview.style.display = 'block'; }
+        if (wrap)    wrap.classList.add('has-photo');
+        if (actions) actions.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // ── Collect answers including dependent selects ──
   collectAnswers() {
     const answers = {};
@@ -2470,6 +2554,8 @@ class QuestionnaireManager {
         const parent = document.getElementById(`${id}_parent`)?.value || '';
         const child  = document.getElementById(`${id}_child`)?.value  || '';
         answers[q.id] = parent ? (child ? `${parent} › ${child}` : parent) : '';
+      } else if (q.type === 'photo') {
+        answers[q.id] = document.getElementById(id)?.value || '';  // base64 string
       } else {
         answers[q.id] = document.getElementById(id)?.value || '';
       }
@@ -2619,7 +2705,7 @@ class QuestionnaireManager {
 function typeLabel(type) {
   const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown',
     dependent_select:'Dependent Dropdown',
-    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
+    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date', photo:'Photo/Image' };
   return map[type] || type;
 }
 
@@ -2663,7 +2749,6 @@ class HistoryManager {
       const matchSearch = !search ||
         a.clientName?.toLowerCase().includes(search) ||
         a.activityType?.toLowerCase().includes(search) ||
-        a.notes?.toLowerCase().includes(search) ||
         a.userName?.toLowerCase().includes(search);
       const matchType = !type || a.activityType === type;
       return matchSearch && matchType;
@@ -2783,6 +2868,10 @@ class HistoryManager {
     const customHtml = questions.map(q => {
       const val = answers[q.id];
       if (!val || (Array.isArray(val) && !val.length)) return '';
+      if (q.type === 'photo' && typeof val === 'string' && val.startsWith('data:image')) {
+        return '<div class="detail-row full"><span class="detail-label">' + esc(q.label) +
+               '</span><img src="' + val + '" class="photo-preview" style="max-height:180px;border-radius:8px;border:2px solid var(--accent);margin-top:.4rem" alt="' + esc(q.label) + '" /></div>';
+      }
       return '<div class="detail-row"><span class="detail-label">' + esc(q.label) +
              '</span><span class="detail-val">' +
              esc(Array.isArray(val) ? val.join(', ') : val) + '</span></div>';
@@ -2799,9 +2888,7 @@ class HistoryManager {
     if (activity.businessAddress) {
       mHtml += '<div class="detail-row"><span class="detail-label">Business Address</span><span class="detail-val">' + escHtml2(activity.businessAddress) + '</span></div>';
     }
-    if (activity.notes) {
-      mHtml += '<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">' + esc(activity.notes) + '</p></div>';
-    }
+
     mHtml += customHtml;
 
     // GPS section — ADMIN & SUPERADMIN ONLY
@@ -3603,10 +3690,10 @@ function initSettings() {
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
-    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || ''
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -3645,7 +3732,6 @@ document.addEventListener('DOMContentLoaded', function() {
         clientName:      document.getElementById('clientName').value.trim(),
         businessAddress: document.getElementById('businessAddress').value.trim(),
         activityType:    document.getElementById('activityType').value,
-        notes:           document.getElementById('notes').value.trim(),
         lat:             currentGeo?.lat      ?? null,
         lng:             currentGeo?.lng      ?? null,
         accuracy:        currentGeo?.accuracy ?? null,
@@ -3665,6 +3751,8 @@ document.addEventListener('DOMContentLoaded', function() {
       LocPicker.clear();
       // Re-acquire GPS silently for next entry
       silentGPS();
+      // Reset photo fields via photoClear helper
+      db.getQuestions().filter(x => x.type === 'photo').forEach(x => photoClear('dyn_' + x.id));
     } catch (err) {
       toast('Error saving: ' + err.message, 'error');
     } finally {
@@ -3839,10 +3927,10 @@ function initSettings() {
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address'];
   const rows = activities.map(a => [
     formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
-    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || '', (a.notes || '').replace(/\n/g,' ')
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || ''
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -3856,6 +3944,23 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function escHtml2(str) { return esc(str); }
+
+// ── Photo upload helpers (called from inline onclick) ─────────────
+function photoRetake(id) {
+  var input = document.getElementById(id + '_input');
+  if (input) { input.value = ''; input.click(); }
+}
+function photoClear(id) {
+  document.getElementById(id).value = '';
+  var preview = document.getElementById(id + '_preview');
+  var wrap    = document.getElementById(id + '_wrap');
+  var actions = document.getElementById(id + '_actions');
+  var input   = document.getElementById(id + '_input');
+  if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  if (wrap)    wrap.classList.remove('has-photo');
+  if (actions) actions.style.display = 'none';
+  if (input)   input.value = '';
+}
 
 // ── Reports ──────────────────────────────────────────────────────────
 // Full report generation with filters, charts and export
@@ -4082,7 +4187,6 @@ function _renderReportTable(data) {
       '<th>Business Address</th>' +
       '<th>Type</th>' +
       questions.map(q => '<th>' + esc(q.label) + '</th>').join('') +
-      '<th>Notes</th>' +
       (isAdm ? '<th>GPS</th>' : '') +
     '</tr>';
   }
@@ -4105,9 +4209,14 @@ function _renderReportTable(data) {
       '<td>' + esc(a.activityType) + '</td>' +
       questions.map(q => {
         var v = ans[q.id];
-        return '<td style="font-size:.82rem;color:var(--text2)">' + esc(Array.isArray(v) ? v.join(', ') : (v||'—')) + '</td>';
+        var cell;
+        if (q.type === 'photo' && v && v.startsWith && v.startsWith('data:image')) {
+          cell = '<img src="' + v + '" class="photo-thumb" alt="photo" />';
+        } else {
+          cell = esc(Array.isArray(v) ? v.join(', ') : (v||'—'));
+        }
+        return '<td style="font-size:.82rem;color:var(--text2)">' + cell + '</td>';
       }).join('') +
-      '<td style="font-size:.82rem;color:var(--text2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a.notes || '—') + '</td>' +
       (isAdm ? '<td style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3)">' + (a.lat ? a.lat.toFixed(4)+','+a.lng.toFixed(4) : '—') + '</td>' : '') +
     '</tr>';
   }).join('');
@@ -4134,9 +4243,12 @@ function exportReportCSV() {
     ];
     questions.forEach(q => {
       var v = ans[q.id];
-      row.push(Array.isArray(v) ? v.join('; ') : (v || ''));
+      if (q.type === 'photo' && v && v.startsWith && v.startsWith('data:image')) {
+        row.push('[Photo attached]');
+      } else {
+        row.push(Array.isArray(v) ? v.join('; ') : (v || ''));
+      }
     });
-    row.push((a.notes || '').replace(/\n/g,' '));
     if (isAdm) {
       row.push(a.lat ?? '');
       row.push(a.lng ?? '');
