@@ -948,6 +948,31 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
   border-radius: 6px; border: 2px solid var(--accent);
 }
 
+/* ── Questionnaire drag-and-drop ── */
+.q-seq-badge {
+  min-width: 22px; height: 22px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-family: var(--font-mono); font-weight: 700;
+  color: var(--text3); flex-shrink: 0; margin-right: .25rem;
+}
+.q-order-btns {
+  display: flex; flex-direction: column; gap: 2px; margin-right: .25rem;
+}
+.q-order-btn {
+  background: none; border: 1px solid var(--border); border-radius: 5px;
+  width: 24px; height: 22px; cursor: pointer; color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); padding: 0;
+}
+.q-order-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.q-order-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.q-order-btn:disabled { opacity: .25; cursor: not-allowed; }
+.q-item { transition: box-shadow .15s, opacity .15s; }
+.q-item.q-dragging { opacity: .45; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.q-item.q-drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(245,166,35,.3); }
+[data-drag-handle] { user-select: none; -webkit-user-select: none; }
+
   </style>
 </head>
 <body>
@@ -2349,6 +2374,8 @@ class QuestionnaireManager {
       return;
     }
     const isAdmin = typeof auth !== 'undefined' ? auth.isAdmin() : true;
+    const total   = this.questions.length;
+
     list.innerHTML = this.questions.map((q, idx) => {
       const typeLabels = {
         text:'Short Text', textarea:'Long Text', select:'Dropdown',
@@ -2364,12 +2391,14 @@ class QuestionnaireManager {
         optSummary = ` · ${q.options.length} option${q.options.length>1?'s':''}`;
       }
       return `
-        <div class="q-item" data-id="${q.id}">
-          <div class="q-drag" style="cursor:grab;color:var(--text3)">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4;stroke:currentColor;fill:none;stroke-width:1.8">
-              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
+        <div class="q-item" data-id="${q.id}" data-idx="${idx}" draggable="${isAdmin}">
+          <div class="q-drag" data-drag-handle title="Drag to reorder" style="cursor:${isAdmin?'grab':'default'};color:var(--text3)">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.5;stroke:currentColor;fill:none;stroke-width:2">
+              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/>
+              <line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/>
             </svg>
           </div>
+          <div class="q-seq-badge">${idx + 1}</div>
           <div class="q-body">
             <div class="q-label">${esc(q.label)}</div>
             <div class="q-meta">${typeLabel} · ${reqLabel}${optSummary}</div>
@@ -2377,6 +2406,14 @@ class QuestionnaireManager {
               <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem">
                 ${q.depData.map(p=>`<span style="font-size:.7rem;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);border-radius:4px;padding:.1rem .45rem;color:var(--accent)">${esc(p.parent)}</span>`).join('')}
               </div>` : ''}
+          </div>
+          <div class="q-order-btns">
+            <button class="q-order-btn move-up-btn" data-id="${q.id}" title="Move up" ${idx === 0 ? 'disabled' : ''}>
+              <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="q-order-btn move-down-btn" data-id="${q.id}" title="Move down" ${idx === total-1 ? 'disabled' : ''}>
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
           </div>
           <div class="q-actions">
             ${isAdmin ? `
@@ -2390,6 +2427,27 @@ class QuestionnaireManager {
         </div>`;
     }).join('');
 
+    // ── Arrow button listeners ──
+    list.querySelectorAll('.move-up-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = this.questions.findIndex(q => q.id === btn.dataset.id);
+        if (idx <= 0) return;
+        [this.questions[idx-1], this.questions[idx]] = [this.questions[idx], this.questions[idx-1]];
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+      });
+    });
+    list.querySelectorAll('.move-down-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = this.questions.findIndex(q => q.id === btn.dataset.id);
+        if (idx >= this.questions.length - 1) return;
+        [this.questions[idx], this.questions[idx+1]] = [this.questions[idx+1], this.questions[idx]];
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+      });
+    });
+
+    // ── Edit / Delete ──
     list.querySelectorAll('.edit-q').forEach(btn =>
       btn.addEventListener('click', () => this.openModal(btn.dataset.id)));
     list.querySelectorAll('.del-q').forEach(btn =>
@@ -2397,9 +2455,101 @@ class QuestionnaireManager {
         if (!confirm('Delete this question?')) return;
         this.questions = this.questions.filter(q => q.id !== btn.dataset.id);
         this.db.saveQuestions(this.questions);
-        this.render();
-        this.renderDynamicFields();
+        this.render(); this.renderDynamicFields();
       }));
+
+    // ── Drag-and-drop reordering ──
+    if (isAdmin) this._bindDragDrop(list);
+  }
+
+  _bindDragDrop(list) {
+    let dragSrc = null;
+    let dragOver = null;
+
+    const items = () => [...list.querySelectorAll('.q-item')];
+
+    list.querySelectorAll('.q-item').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        dragSrc = item;
+        item.classList.add('q-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.id);
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('q-dragging');
+        list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+        if (dragSrc && dragOver && dragSrc !== dragOver) {
+          // Compute new order from DOM
+          const newOrder = items().map(el => el.dataset.id);
+          this.questions = newOrder.map(id => this.questions.find(q => q.id === id)).filter(Boolean);
+          this.db.saveQuestions(this.questions);
+          this.render(); this.renderDynamicFields();
+        }
+        dragSrc = null; dragOver = null;
+      });
+
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragSrc && item !== dragSrc) {
+          list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+          item.classList.add('q-drag-over');
+          dragOver = item;
+          // Move DOM element for visual feedback
+          const allItems = items();
+          const srcIdx  = allItems.indexOf(dragSrc);
+          const dstIdx  = allItems.indexOf(item);
+          if (srcIdx < dstIdx) item.after(dragSrc);
+          else item.before(dragSrc);
+        }
+      });
+
+      item.addEventListener('drop', e => { e.preventDefault(); });
+    });
+
+    // ── Touch drag (mobile) ──
+    list.querySelectorAll('.q-item').forEach(item => {
+      let touchStartY = 0;
+      let touchItem   = null;
+
+      item.addEventListener('touchstart', e => {
+        if (!e.target.closest('[data-drag-handle]')) return;
+        touchStartY = e.touches[0].clientY;
+        touchItem   = item;
+        item.classList.add('q-dragging');
+      }, { passive: true });
+
+      item.addEventListener('touchmove', e => {
+        if (!touchItem) return;
+        e.preventDefault();
+        const y = e.touches[0].clientY;
+        const allItems = items();
+        const target = allItems.find(el => {
+          const r = el.getBoundingClientRect();
+          return y >= r.top && y <= r.bottom && el !== touchItem;
+        });
+        if (target) {
+          allItems.forEach(i => i.classList.remove('q-drag-over'));
+          target.classList.add('q-drag-over');
+          const srcIdx = allItems.indexOf(touchItem);
+          const dstIdx = allItems.indexOf(target);
+          if (srcIdx < dstIdx) target.after(touchItem);
+          else target.before(touchItem);
+        }
+      }, { passive: false });
+
+      item.addEventListener('touchend', () => {
+        if (!touchItem) return;
+        touchItem.classList.remove('q-dragging');
+        list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+        const newOrder = items().map(el => el.dataset.id);
+        this.questions = newOrder.map(id => this.questions.find(q => q.id === id)).filter(Boolean);
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+        touchItem = null;
+      });
+    });
   }
 
   // ── Render dynamic fields in Log Activity form ──
