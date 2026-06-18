@@ -2502,23 +2502,33 @@ class Auth {
       console.warn('[Auth] register() Firestore sync issue:', syncResult.reason);
     }
 
-    // Also try Firebase Auth (non-blocking — failure won't stop registration)
+    // Also try Firebase Auth in the TRUE background (fire-and-forget).
+    // Deliberately NOT awaited — local registration above is already
+    // complete and must return to the caller immediately. A slow or
+    // failing Firebase Auth call must never block sign-up.
     if (this.db.isOnline && this.db._app) {
-      try {
-        const { getAuth, createUserWithEmailAndPassword, updateProfile }
-          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const fbAuth = getAuth(this.db._app);
-        const cred   = await createUserWithEmailAndPassword(fbAuth, email, password);
-        if (name) await updateProfile(cred.user, { displayName: name });
-        // Update the local account with the Firebase UID
-        const idx = accounts.findIndex(a => a.uid === uid);
-        if (idx !== -1) { accounts[idx].firebaseUid = cred.user.uid; }
-        localStorage.setItem('fp_accounts', JSON.stringify(accounts));
-        await this.db.saveUserRole(cred.user.uid, 'user');
-      } catch (fbErr) {
-        // Firebase registration failed — that's OK, local registration succeeded
-        console.warn('[Auth] Firebase register failed (non-fatal):', fbErr.message);
-      }
+      (async () => {
+        try {
+          const { getAuth, createUserWithEmailAndPassword, updateProfile }
+            = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+          const fbAuth = getAuth(this.db._app);
+          const cred   = await Promise.race([
+            createUserWithEmailAndPassword(fbAuth, email, password),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('fb auth timeout')), 6000))
+          ]);
+          if (name) await updateProfile(cred.user, { displayName: name });
+          // Update the local account with the Firebase UID
+          const accs = this._safeGet('fp_accounts') || [];
+          const idx  = accs.findIndex(a => a.uid === uid);
+          if (idx !== -1) { accs[idx].firebaseUid = cred.user.uid; }
+          localStorage.setItem('fp_accounts', JSON.stringify(accs));
+          await this.db.saveUserRole(cred.user.uid, 'user');
+          console.log('[Auth] Firebase Auth registration succeeded in background');
+        } catch (fbErr) {
+          // Firebase registration failed — that's OK, local registration already succeeded
+          console.warn('[Auth] Firebase register skipped/failed (non-fatal):', fbErr.message);
+        }
+      })();
     }
 
     const user = { uid, email: email.trim(), name: displayName, role: 'user', team: team.trim() || '', active: true };
@@ -2551,30 +2561,47 @@ class Auth {
     this._user = user;
     localStorage.setItem('fp_user', JSON.stringify(user));
 
-    // Also sign in to Firebase in background (non-blocking)
+    // Also sign in to Firebase in the TRUE background (fire-and-forget).
+    // Deliberately NOT awaited — local login above is the source of truth
+    // and must return immediately. A slow/hanging/failing Firebase Auth
+    // call must never block or delay the actual sign-in.
     if (this.db.isOnline && this.db._app) {
-      try {
-        const { getAuth, signInWithEmailAndPassword }
-          = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        await signInWithEmailAndPassword(getAuth(this.db._app), email, password);
-      } catch (_) { /* Firebase login failure is non-fatal */ }
+      (async () => {
+        try {
+          const { getAuth, signInWithEmailAndPassword }
+            = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+          // Hard timeout so even this background attempt can't linger forever
+          await Promise.race([
+            signInWithEmailAndPassword(getAuth(this.db._app), email, password),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('fb auth timeout')), 6000))
+          ]);
+          console.log('[Auth] Firebase Auth sign-in succeeded in background');
+        } catch (e) {
+          console.warn('[Auth] Firebase Auth sign-in skipped/failed (non-fatal):', e.message);
+        }
+      })();
     }
 
     return user;
   }
 
   // ── Sign Out ──────────────────────────────────
-  async signOut() {
+  signOut() {
     this._user   = null;
     this._fbAuth = null;
     localStorage.removeItem('fp_user');
     localStorage.removeItem('fp_profile');
-    // Firebase sign out (non-blocking)
+    // Firebase sign out in the TRUE background — never awaited, never blocks
     if (this.db.isOnline && this.db._app) {
-      try {
-        const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        await signOut(getAuth(this.db._app));
-      } catch (_) {}
+      (async () => {
+        try {
+          const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+          await Promise.race([
+            signOut(getAuth(this.db._app)),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('fb signout timeout')), 5000))
+          ]);
+        } catch (_) { /* non-fatal */ }
+      })();
     }
   }
 
