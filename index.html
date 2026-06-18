@@ -2095,7 +2095,37 @@ class DB {
   // init() is now instant — no network calls, no dynamic imports
   // Firebase connects lazily via connectFirestore() called from Settings
   init() {
-    // Synchronous — nothing to do, localStorage is always ready
+    // Synchronous — app boots instantly from localStorage.
+    // If Firebase credentials were saved previously, reconnect
+    // in the BACKGROUND (non-blocking, with a hard timeout so it
+    // can never hang or delay the UI).
+    var cfg = this.getLocalConfig();
+    if (cfg && cfg.apiKey) {
+      var self = this;
+      Promise.race([
+        self.connectFirestore(cfg),
+        new Promise(function(_, rej) {
+          setTimeout(function() { rej(new Error('Firebase reconnect timeout')); }, 8000);
+        })
+      ]).then(async function() {
+        console.log('[DB] Reconnected to Firestore on boot');
+        // Pull latest questionnaire config from Firestore into local cache
+        try {
+          const { doc, getDoc } = self._fs;
+          const snap = await getDoc(doc(self._firestore, 'config', 'questions'));
+          if (snap.exists() && snap.data().questions) {
+            self._localSet(KEYS.questions, snap.data().questions);
+          }
+        } catch (e) {
+          console.warn('[DB] Could not sync questionnaire from Firestore:', e.message);
+        }
+        // Re-render dashboard/history/questionnaire once Firestore data is synced
+        if (typeof refreshDashboard === 'function') refreshDashboard();
+        if (typeof q !== 'undefined' && q.init) q.init();
+      }).catch(function(err) {
+        console.warn('[DB] Firestore reconnect failed, staying in local mode:', err.message);
+      });
+    }
   }
 
   // ── Firestore lazy connect (called from Settings page only) ──
@@ -2148,7 +2178,23 @@ class DB {
   }
 
   async getActivities(userId) {
-    // Always return local data immediately
+    // If connected to Firestore, fetch from there (source of truth)
+    // and refresh the local cache. Falls back to local cache on any error.
+    if (this.isOnline) {
+      try {
+        const { collection, getDocs } = this._fs;
+        const snap = await getDocs(collection(this._firestore, 'activities'));
+        const remote = snap.docs.map(d => ({ ...d.data(), firestoreId: d.id }));
+        // Refresh local cache so the app still works offline next time
+        this._localSet(KEYS.activities, remote);
+        let all = [...remote].sort((a,b) => b.timestamp - a.timestamp);
+        if (userId) all = all.filter(a => a.userId === userId);
+        return all;
+      } catch (e) {
+        console.warn('[DB] Firestore getActivities failed, using local cache:', e.message);
+      }
+    }
+    // Local-only (or Firestore fetch failed) — return cached data
     let all = [...this._localGet(KEYS.activities)].sort((a,b) => b.timestamp - a.timestamp);
     if (userId) all = all.filter(a => a.userId === userId);
     return all;
