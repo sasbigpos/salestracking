@@ -2279,18 +2279,32 @@ class DB {
   // source of truth for auth (so the app keeps working offline);
   // Firestore is kept in sync as a secondary mirror for visibility
   // across devices/admins.
-  syncAccountToFirestore(account) {
-    if (!this.isOnline || !account || !account.uid) return;
+  async syncAccountToFirestore(account) {
+    if (!account || !account.uid) {
+      console.warn('[DB] syncAccountToFirestore: invalid account, skipped');
+      return { ok: false, reason: 'invalid-account' };
+    }
+    if (!this.isOnline) {
+      console.warn('[DB] syncAccountToFirestore: not connected to Firestore (isOnline=false), skipped for', account.email);
+      if (typeof toast === 'function') {
+        toast('⚠️ User saved locally only — Firestore not connected', 'error');
+      }
+      return { ok: false, reason: 'offline' };
+    }
     try {
       const { doc, setDoc } = this._fs;
       // Never write the hashed password to Firestore
       const safeAccount = { ...account };
       delete safeAccount.password;
-      setDoc(doc(this._firestore, 'accounts', account.uid), safeAccount)
-        .then(() => console.log('[DB] Account synced to Firestore:', account.email))
-        .catch(e => console.warn('[DB] Account sync failed:', e.message));
+      await setDoc(doc(this._firestore, 'accounts', account.uid), safeAccount);
+      console.log('[DB] Account synced to Firestore:', account.email);
+      return { ok: true };
     } catch (e) {
-      console.warn('[DB] syncAccountToFirestore error:', e.message);
+      console.warn('[DB] Account sync to Firestore FAILED:', e.code || '', e.message);
+      if (typeof toast === 'function') {
+        toast('⚠️ User saved locally, but Firestore sync failed: ' + (e.code || e.message), 'error');
+      }
+      return { ok: false, reason: e.message, code: e.code };
     }
   }
 
@@ -2483,7 +2497,10 @@ class Auth {
     // (so we don't silently skip the sync just because the boot-time
     // reconnect was still in progress), then mirror the account over.
     await this.db.whenReady();
-    this.db.syncAccountToFirestore(newAccount);
+    const syncResult = await this.db.syncAccountToFirestore(newAccount);
+    if (!syncResult.ok) {
+      console.warn('[Auth] register() Firestore sync issue:', syncResult.reason);
+    }
 
     // Also try Firebase Auth (non-blocking — failure won't stop registration)
     if (this.db.isOnline && this.db._app) {
@@ -3505,7 +3522,7 @@ class UserManager {
     });
 
     // Add new user form
-    document.getElementById('addUserForm')?.addEventListener('submit', e => {
+    document.getElementById('addUserForm')?.addEventListener('submit', async e => {
       e.preventDefault();
       const name  = document.getElementById('newUserName').value.trim();
       const email = document.getElementById('newUserEmail').value.trim();
@@ -3534,11 +3551,16 @@ class UserManager {
       };
       accounts.push(newAcc);
       localStorage.setItem('fp_accounts', JSON.stringify(accounts));
-      // Mirror to Firestore (non-blocking)
-      this.db.syncAccountToFirestore(newAcc);
       document.getElementById('addUserForm').reset();
       this.render();
-      showToast('User created');
+      // Wait for Firestore sync to settle so success/failure feedback is accurate
+      await this.db.whenReady();
+      const syncResult = await this.db.syncAccountToFirestore(newAcc);
+      if (syncResult.ok) {
+        showToast('User created and synced to Firestore');
+      } else {
+        showToast('User created locally (Firestore sync: ' + syncResult.reason + ')');
+      }
     });
   }
 
