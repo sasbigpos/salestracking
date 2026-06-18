@@ -18,6 +18,7 @@
    Theme: Industrial Utility × Warm Amber Accents
    ────────────────────────────────────────────── */
 
+/* ── Theme tokens — dark (default) ── */
 :root {
   --bg:        #0f0f10;
   --surface:   #1a1a1e;
@@ -40,6 +41,25 @@
   --font-body: 'DM Sans', sans-serif;
   --transition: 200ms cubic-bezier(.4,0,.2,1);
 }
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg:        #f5f5f7;
+  --surface:   #ffffff;
+  --surface2:  #f0f0f4;
+  --border:    #d8d8e0;
+  --accent:    #d4860a;
+  --accent2:   #e05a1e;
+  --text:      #1a1a22;
+  --text2:     #5a5870;
+  --text3:     #9a98aa;
+  --green:     #1a9e68;
+  --red:       #d93030;
+  --blue:      #2e6fd4;
+  --shadow:    0 4px 24px rgba(0,0,0,.12);
+}
+[data-theme="light"] .leaflet-tile { filter: none; }
+[data-theme="light"] .leaflet-container { background: #e8e8ec; }
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -179,6 +199,15 @@ textarea { resize: vertical; }
 .user-role { font-size: .72rem; color: var(--text3); font-family: var(--font-mono); }
 .sign-out-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: .4rem .75rem; color: var(--text2); cursor: pointer; font-size: .78rem; width: 100%; transition: all var(--transition); }
 .sign-out-btn:hover { border-color: var(--red); color: var(--red); }
+.theme-toggle-btn {
+  display: flex; align-items: center; gap: .5rem;
+  background: none; border: 1px solid var(--border);
+  border-radius: 7px; padding: .4rem .75rem;
+  color: var(--text2); cursor: pointer; font-size: .78rem;
+  width: 100%; margin-bottom: .5rem;
+  transition: all var(--transition);
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Main ── */
 #main { overflow-y: auto; }
@@ -730,6 +759,325 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
 .dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
 .dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
 
+/* ── Light mode specific overrides ── */
+[data-theme="light"] body { background: var(--bg); color: var(--text); }
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--text);
+}
+[data-theme="light"] .card { box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+[data-theme="light"] .stat-card { box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+[data-theme="light"] .auth-card { box-shadow: 0 4px 32px rgba(0,0,0,.12); }
+[data-theme="light"] .modal-panel { box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+[data-theme="light"] .nav-item:hover { background: var(--surface2); }
+[data-theme="light"] .nav-item.active { background: rgba(212,134,10,.12); }
+[data-theme="light"] #sidebar { border-right-color: var(--border); }
+[data-theme="light"] #mobileHeader { box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+[data-theme="light"] .splash-title { color: #1a1a22; }
+[data-theme="light"] .feed-item { background: #fff; }
+[data-theme="light"] .q-item { background: #fff; }
+[data-theme="light"] .loc-picker { background: #f8f8fc; }
+[data-theme="light"] .geo-strip { background: #f8f8fc; }
+[data-theme="light"] .info-banner { background: rgba(212,134,10,.06); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--border); }
+[data-theme="light"] .data-table tr:hover td { background: var(--surface2); }
+[data-theme="light"] .outcome-pill.neutral { background: #eeeef4; color: var(--text2); }
+[data-theme="light"] .dep-parent-block { background: #fff; }
+[data-theme="light"] code { background: rgba(212,134,10,.1); color: var(--accent); border-radius: 4px; padding: .1rem .4rem; font-family: var(--font-mono); font-size: .85em; }
+
+/* ── Reports ── */
+.report-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.report-chart {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: .5rem 0;
+}
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .82rem;
+}
+.chart-bar-label {
+  min-width: 130px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+}
+.chart-bar-track {
+  flex: 1;
+  height: 22px;
+  background: var(--surface2);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .4s ease;
+  min-width: 2px;
+}
+.chart-bar-fill.green  { background: linear-gradient(90deg, #3ecf8e, #1ea87e); }
+.chart-bar-fill.blue   { background: linear-gradient(90deg, #4f8ef7, #7b5ea7); }
+.chart-bar-fill.red    { background: linear-gradient(90deg, #f04444, #c93030); }
+.chart-bar-fill.purple { background: linear-gradient(90deg, #9b59b6, #7b5ea7); }
+.chart-bar-count {
+  min-width: 36px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.chart-bar-pct {
+  min-width: 40px;
+  text-align: right;
+  font-size: .72rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+.time-chart-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .5rem;
+}
+.time-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.time-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+  transition: height .4s ease;
+}
+.time-bar-label {
+  font-size: .62rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  text-align: center;
+  white-space: nowrap;
+}
+.time-bar-count {
+  font-size: .68rem;
+  color: var(--text2);
+  font-family: var(--font-mono);
+}
+.report-empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: .87rem;
+  padding: 3rem 1rem;
+}
+.rpt-custom-filter {
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+}
+.rpt-custom-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: .75rem;
+}
+@media (max-width: 768px) {
+  .report-filters-grid { grid-template-columns: 1fr 1fr; }
+  .chart-bar-label { min-width: 80px; max-width: 80px; }
+}
+
+/* ── Photo / Image Upload ── */
+.photo-upload-wrap {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  background: var(--surface2);
+}
+.photo-upload-wrap:hover { border-color: var(--accent); background: rgba(245,166,35,.05); }
+.photo-upload-wrap.has-photo { border-style: solid; border-color: var(--accent); }
+.photo-upload-input { display: none; }
+.photo-upload-label {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  cursor: pointer; color: var(--text2); font-size: .85rem;
+}
+.photo-upload-icon { font-size: 2rem; }
+.photo-preview {
+  max-width: 100%; max-height: 200px;
+  border-radius: var(--radius); margin-top: .5rem;
+  object-fit: contain;
+}
+.photo-actions {
+  display: flex; gap: .5rem; justify-content: center; margin-top: .6rem; flex-wrap: wrap;
+}
+.photo-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: .3rem .75rem; font-size: .78rem;
+  cursor: pointer; color: var(--text2); transition: all var(--transition);
+}
+.photo-btn:hover { border-color: var(--accent); color: var(--accent); }
+.photo-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.photo-thumb {
+  width: 80px; height: 80px; object-fit: cover;
+  border-radius: 6px; border: 2px solid var(--accent);
+}
+
+/* ── Questionnaire drag-and-drop ── */
+.q-seq-badge {
+  min-width: 22px; height: 22px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-family: var(--font-mono); font-weight: 700;
+  color: var(--text3); flex-shrink: 0; margin-right: .25rem;
+}
+.q-order-btns {
+  display: flex; flex-direction: column; gap: 2px; margin-right: .25rem;
+}
+.q-order-btn {
+  background: none; border: 1px solid var(--border); border-radius: 5px;
+  width: 24px; height: 22px; cursor: pointer; color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); padding: 0;
+}
+.q-order-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.q-order-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.q-order-btn:disabled { opacity: .25; cursor: not-allowed; }
+.q-item { transition: box-shadow .15s, opacity .15s; }
+.q-item.q-dragging { opacity: .45; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.q-item.q-drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(245,166,35,.3); }
+[data-drag-handle] { user-select: none; -webkit-user-select: none; }
+
+/* ── Clickable stat cards ── */
+.stat-card-clickable {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card-clickable:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(245,166,35,.2);
+}
+.stat-card-clickable:active { transform: translateY(-1px); }
+.stat-click-hint {
+  font-size: .65rem;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  margin-top: .35rem;
+  letter-spacing: .03em;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.stat-card-clickable:hover .stat-click-hint { opacity: 1; }
+
+/* ── Stat Drawer ── */
+.stat-drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(440px, 100vw);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 32px rgba(0,0,0,.4);
+  z-index: 800;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.stat-drawer.open { transform: translateX(0); }
+.stat-drawer-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 1.25rem 1.25rem .75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.stat-drawer-title {
+  font-family: var(--font-head); font-weight: 800;
+  font-size: 1.15rem; letter-spacing: -.01em;
+}
+.stat-drawer-count {
+  font-size: .75rem; font-family: var(--font-mono);
+  color: var(--text3); margin-top: .2rem; display: block;
+}
+.stat-drawer-close {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; width: 30px; height: 30px;
+  cursor: pointer; color: var(--text2); font-size: .9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all var(--transition);
+}
+.stat-drawer-close:hover { border-color: var(--red); color: var(--red); }
+.stat-drawer-search-wrap {
+  position: relative; padding: .75rem 1rem .5rem; flex-shrink: 0;
+}
+.stat-drawer-list {
+  flex: 1; overflow-y: auto; padding: .5rem 1rem 1rem;
+  display: flex; flex-direction: column; gap: .6rem;
+}
+.drawer-activity-item {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: .85rem 1rem;
+  cursor: pointer; transition: border-color var(--transition), transform var(--transition);
+}
+.drawer-activity-item:hover { border-color: var(--accent); transform: translateX(3px); }
+.drawer-activity-top {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+}
+.drawer-activity-name { font-weight: 700; font-size: .9rem; }
+.drawer-activity-time {
+  font-size: .72rem; font-family: var(--font-mono);
+  color: var(--text3); white-space: nowrap;
+}
+.drawer-activity-meta {
+  font-size: .78rem; color: var(--text2); margin-top: .3rem;
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+}
+.drawer-activity-type {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 99px; padding: .15rem .55rem;
+  font-size: .72rem; font-family: var(--font-mono);
+}
+.drawer-activity-addr {
+  font-size: .75rem; color: var(--text3); margin-top: .25rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.drawer-empty {
+  text-align: center; color: var(--text3);
+  font-size: .87rem; padding: 3rem 1rem;
+}
+@media (max-width: 768px) {
+  .stat-drawer { width: 100vw; border-left: none; border-top: 1px solid var(--border);
+    top: auto; height: 80dvh; transform: translateY(100%); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .stat-drawer.open { transform: translateY(0); }
+  .stat-click-hint { opacity: 1; }
+}
+
   </style>
 </head>
 <body>
@@ -777,6 +1125,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
           History
         </a></li>
+        <li id="navReports" class="hidden"><a href="#" class="nav-item" data-page="reports">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Reports
+        </a></li>
         <li><a href="#" class="nav-item" data-page="questionnaire" id="navQuestionnaire">
           <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Questionnaire
@@ -800,6 +1152,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <span class="user-role" id="userRoleLabel">—</span>
           </div>
         </div>
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="fpToggleTheme()" title="Toggle light/dark mode">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Light Mode</span>
+        </button>
         <button class="sign-out-btn" id="signOutBtn" onclick="
           (async function() {
             try {
@@ -830,7 +1186,10 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span class="mobile-brand">SAS Sales</span>
-      <div class="avatar sm" id="mobileAvatar"></div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button onclick="fpToggleTheme()" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.3rem .5rem;cursor:pointer;font-size:.85rem;color:var(--text2);" title="Toggle theme" id="mobileThemeBtn">☀️</button>
+        <div class="avatar sm" id="mobileAvatar"></div>
+      </div>
     </header>
 
     <!-- Main Content -->
@@ -846,25 +1205,29 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           <span class="date-chip" id="todayDate">—</span>
         </div>
         <div class="stats-grid">
-          <div class="stat-card accent">
+          <div class="stat-card accent stat-card-clickable" data-filter="today" onclick="openStatDrawer('today')" title="Click to view today's activities">
             <div class="stat-label">Today's Activities</div>
             <div class="stat-value" id="statToday">0</div>
             <div class="stat-icon">📍</div>
+            <div class="stat-click-hint">tap to view →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-clickable" data-filter="week" onclick="openStatDrawer('week')" title="Click to view this week's activities">
             <div class="stat-label">This Week</div>
             <div class="stat-value" id="statWeek">0</div>
             <div class="stat-icon">📅</div>
+            <div class="stat-click-hint">tap to view →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-clickable" data-filter="all" onclick="openStatDrawer('all')" title="Click to view all activities">
             <div class="stat-label">Total Logged</div>
             <div class="stat-value" id="statTotal">0</div>
             <div class="stat-icon">📊</div>
+            <div class="stat-click-hint">tap to view →</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-clickable" data-filter="gps" onclick="openStatDrawer('gps')" title="Click to view activities with GPS">
             <div class="stat-label">Locations Visited</div>
             <div class="stat-value" id="statLocations">0</div>
             <div class="stat-icon">🗺️</div>
+            <div class="stat-click-hint">tap to view →</div>
           </div>
         </div>
         <div class="dash-grid">
@@ -898,62 +1261,27 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div class="log-layout">
           <div class="card log-form-card">
 
-            <!-- ── Location Picker ── -->
-            <div class="loc-picker">
-              <div class="loc-picker-header">
-                <span class="loc-picker-label">📍 Location</span>
-                <div class="loc-picker-actions">
-                  <button type="button" class="btn-loc gps-btn" id="gpsBtn" title="Use my current GPS location">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="m4.93 4.93 2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
-                    Use GPS
-                  </button>
-                  <button type="button" class="btn-loc clear-loc-btn" id="clearLocBtn" title="Clear location">
-                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    Clear
-                  </button>
-                </div>
-              </div>
-
-              <!-- Search box -->
-              <div class="loc-search-wrap">
-                <svg class="loc-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="locSearch" class="loc-search-input" placeholder="Search address or place name…" autocomplete="off" />
-                <div id="locSuggestions" class="loc-suggestions hidden"></div>
-              </div>
-
-              <!-- Map — click or drag pin to set location -->
-              <div id="logMap" class="map-container loc-map"></div>
-              <p class="loc-hint">🖱 Click anywhere on the map to drop a pin &nbsp;·&nbsp; Drag the pin to adjust</p>
-
-              <!-- Selected location display -->
-              <div class="loc-result" id="locResult">
-                <div class="loc-result-inner">
-                  <span class="loc-result-addr" id="locAddr">No location selected</span>
-                  <span class="loc-result-coords" id="locCoordsDisplay">—</span>
-                </div>
-              </div>
-            </div>
+            <!-- GPS runs silently in background — hidden from user -->
+            <div id="logMap" style="display:none"></div>
+            <div id="gpsStatusHidden" style="display:none"></div>
 
             <form id="logForm" novalidate>
               <div class="form-group">
                 <label for="clientName">Merchant / Prospect Name <span class="req">*</span></label>
                 <input type="text" id="clientName" placeholder="e.g. Warung ABC, Mr. Ahmad" required />
               </div>
+              <div class="form-group">
+                <label for="businessAddress">Business Address</label>
+                <input type="text" id="businessAddress" placeholder="e.g. No 12, Jalan Utama, Ipoh" />
+              </div>
               <div class="form-row">
                 <div class="form-group">
                   <label for="activityType">Activity Type <span class="req">*</span></label>
                   <select id="activityType" required><option value="">Select…</option></select>
                 </div>
-                <div class="form-group">
-                  <label for="outcome">Outcome</label>
-                  <select id="outcome"><option value="">Select…</option></select>
-                </div>
+  
               </div>
               <div id="dynamicFields"></div>
-              <div class="form-group">
-                <label for="notes">Notes</label>
-                <textarea id="notes" rows="4" placeholder="Key talking points, next steps…"></textarea>
-              </div>
               <div class="form-actions">
                 <button type="button" class="btn secondary" id="clearFormBtn">Clear</button>
                 <button type="submit" class="btn primary" id="submitBtn">
@@ -984,7 +1312,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
               <thead>
                 <tr>
                   <th>Date & Time</th><th>Merchant / Prospect</th><th>Type</th>
-                  <th>Outcome</th><th>Location</th><th>Actions</th>
+                  <th>Business Address</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="histBody">
@@ -1000,7 +1328,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <button class="modal-close" id="modalClose">✕</button>
             <h3 id="modalTitle">Activity Detail</h3>
             <div id="modalBody"></div>
-            <div id="modalMap" class="map-container sm" style="margin-top:1rem"></div>
+            <div id="modalMap" class="map-container sm" style="margin-top:1rem;display:none"></div>
           </div>
         </div>
       </section>
@@ -1045,6 +1373,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
                     <option value="checkbox">Checkboxes</option>
                     <option value="number">Number</option>
                     <option value="date">Date</option>
+                    <option value="photo">Photo / Image Upload</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -1220,22 +1549,124 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         </div>
       </section>
 
+      <!-- ── REPORTS (admin/superadmin only) ── -->
+      <section id="page-reports" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Reports</h2>
+            <p class="page-sub">Generate and analyse sales activity data</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="runReportBtn">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Generate Report
+            </button>
+            <button class="btn secondary" id="exportReportBtn">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters panel -->
+        <div class="card report-filters-card">
+          <h3 class="card-section-title">Filter Parameters</h3>
+          <div class="report-filters-grid">
+            <div class="form-group">
+              <label>Date From</label>
+              <input type="date" id="rptDateFrom" />
+            </div>
+            <div class="form-group">
+              <label>Date To</label>
+              <input type="date" id="rptDateTo" />
+            </div>
+            <div class="form-group">
+              <label>Sales Rep</label>
+              <select id="rptRep">
+                <option value="">All Reps</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Type</label>
+              <select id="rptType">
+                <option value="">All Types</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Has GPS</label>
+              <select id="rptGps">
+                <option value="">All</option>
+                <option value="yes">With GPS</option>
+                <option value="no">Without GPS</option>
+              </select>
+            </div>
+          </div>
+          <!-- Dynamic custom question filters appended here -->
+          <div id="rptCustomFilters"></div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="stats-grid" id="rptStats" style="display:none">
+          <div class="stat-card accent">
+            <div class="stat-label">Total Activities</div>
+            <div class="stat-value" id="rptTotal">0</div>
+            <div class="stat-icon">📊</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unique Reps</div>
+            <div class="stat-value" id="rptReps">0</div>
+            <div class="stat-icon">👤</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Activity Types</div>
+            <div class="stat-value" id="rptWon">0</div>
+            <div class="stat-icon">📋</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">GPS Captured</div>
+            <div class="stat-value" id="rptGpsCount">0</div>
+            <div class="stat-icon">📍</div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="dash-grid" id="rptCharts" style="display:none">
+          <div class="card">
+            <div class="card-header"><h3>By Activity Type</h3></div>
+            <div id="rptTypeChart" class="report-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>By Sales Rep</h3></div>
+            <div id="rptRepChart" class="report-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Activity Over Time</h3></div>
+            <div id="rptTimeChart" class="report-chart"></div>
+          </div>
+        </div>
+
+        <!-- Results table -->
+        <div class="card" id="rptTableCard" style="display:none">
+          <div class="card-header">
+            <h3>Detailed Results</h3>
+            <span class="badge" id="rptResultCount">0 records</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="rptTable">
+              <thead id="rptThead"></thead>
+              <tbody id="rptTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ── SETTINGS (admin/superadmin only) ── -->
       <section id="page-settings" class="page">
         <div class="page-header">
           <div>
             <h2 class="page-title">Settings</h2>
             <p class="page-sub">Configure your SAS workspace</p>
-          </div>
-        </div>
-
-        <!-- Superadmin credentials info box -->
-        <div class="info-banner" id="superAdminBanner">
-          <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div>
-            <strong>Default Super Admin credentials:</strong>
-            Email: <code>allan.koay@bigpos.com</code> &nbsp;|&nbsp; Password: <code>demo1234</code>
-            <br><small>Change this password immediately in User Management after first login.</small>
           </div>
         </div>
 
@@ -1307,20 +1738,6 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
           </div>
 
           <div class="card">
-            <h3 class="card-section-title">Outcomes</h3>
-            <p class="helper-text">Customise the outcome options shown in the Log Activity form. One per line.</p>
-            <form id="outcomesForm" novalidate>
-              <div class="form-group">
-                <textarea id="outcomesInput" rows="7" placeholder="Interested&#10;Not Interested&#10;Follow-up Required"></textarea>
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn secondary" id="resetOutcomesBtn">Reset Defaults</button>
-                <button type="submit" class="btn primary">Save Outcomes</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="card">
             <h3 class="card-section-title">Data Management</h3>
             <p class="helper-text">Danger zone — these actions cannot be undone.</p>
             <div class="danger-actions">
@@ -1382,12 +1799,24 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
         <div id="authError" class="auth-error hidden"></div>
         <button type="submit" class="btn primary full" id="authSubmitBtn">Sign In</button>
       </form>
-      <div class="auth-hint-box">
-        <span class="auth-hint-label">Default Super Admin</span>
-        <code>allan.koay@bigpos.com</code>
-        <code>demo1234</code>
-      </div>
     </div>
+  </div>
+
+  <!-- ── Stat Activity Drawer ── -->
+  <div id="statDrawerOverlay" onclick="closeStatDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;backdrop-filter:blur(2px)"></div>
+  <div id="statDrawer" class="stat-drawer">
+    <div class="stat-drawer-header">
+      <div>
+        <h3 id="statDrawerTitle" class="stat-drawer-title">Activities</h3>
+        <span id="statDrawerCount" class="stat-drawer-count">0 records</span>
+      </div>
+      <button class="stat-drawer-close" onclick="closeStatDrawer()">✕</button>
+    </div>
+    <div id="statDrawerSearch" class="stat-drawer-search-wrap">
+      <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;position:absolute;left:.75rem;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="statDrawerSearchInput" placeholder="Search merchant, type…" style="width:100%;padding:.5rem .75rem .5rem 2.2rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.85rem;outline:none" />
+    </div>
+    <div id="statDrawerList" class="stat-drawer-list"></div>
   </div>
 
   <div id="toastContainer"></div>
@@ -1414,6 +1843,34 @@ function fpToggleSidebar() {
     fpOpenSidebar();
   }
 }
+
+// ── Theme (light / dark) ────────────────────────
+function fpApplyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('fp_theme', theme);
+  var isLight = theme === 'light';
+  // Sidebar button
+  var icon  = document.getElementById('themeIcon');
+  var label = document.getElementById('themeLabel');
+  if (icon)  icon.textContent  = isLight ? '🌙' : '☀️';
+  if (label) label.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+  // Mobile header button
+  var mBtn = document.getElementById('mobileThemeBtn');
+  if (mBtn) mBtn.textContent = isLight ? '🌙' : '☀️';
+}
+
+function fpToggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme') || 'dark';
+  fpApplyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+function fpInitTheme() {
+  var saved = localStorage.getItem('fp_theme') || 'dark';
+  fpApplyTheme(saved);
+}
+
+// Apply theme immediately on script load (before DOMContentLoaded)
+fpInitTheme();
 
 // Simple consistent password hash (replaces btoa which can differ across environments)
 function hashPwd(pwd) {
@@ -1638,7 +2095,37 @@ class DB {
   // init() is now instant — no network calls, no dynamic imports
   // Firebase connects lazily via connectFirestore() called from Settings
   init() {
-    // Synchronous — nothing to do, localStorage is always ready
+    // Synchronous — app boots instantly from localStorage.
+    // If Firebase credentials were saved previously, reconnect
+    // in the BACKGROUND (non-blocking, with a hard timeout so it
+    // can never hang or delay the UI).
+    var cfg = this.getLocalConfig();
+    if (cfg && cfg.apiKey) {
+      var self = this;
+      Promise.race([
+        self.connectFirestore(cfg),
+        new Promise(function(_, rej) {
+          setTimeout(function() { rej(new Error('Firebase reconnect timeout')); }, 8000);
+        })
+      ]).then(async function() {
+        console.log('[DB] Reconnected to Firestore on boot');
+        // Pull latest questionnaire config from Firestore into local cache
+        try {
+          const { doc, getDoc } = self._fs;
+          const snap = await getDoc(doc(self._firestore, 'config', 'questions'));
+          if (snap.exists() && snap.data().questions) {
+            self._localSet(KEYS.questions, snap.data().questions);
+          }
+        } catch (e) {
+          console.warn('[DB] Could not sync questionnaire from Firestore:', e.message);
+        }
+        // Re-render dashboard/history/questionnaire once Firestore data is synced
+        if (typeof refreshDashboard === 'function') refreshDashboard();
+        if (typeof q !== 'undefined' && q.init) q.init();
+      }).catch(function(err) {
+        console.warn('[DB] Firestore reconnect failed, staying in local mode:', err.message);
+      });
+    }
   }
 
   // ── Firestore lazy connect (called from Settings page only) ──
@@ -1691,7 +2178,23 @@ class DB {
   }
 
   async getActivities(userId) {
-    // Always return local data immediately
+    // If connected to Firestore, fetch from there (source of truth)
+    // and refresh the local cache. Falls back to local cache on any error.
+    if (this.isOnline) {
+      try {
+        const { collection, getDocs } = this._fs;
+        const snap = await getDocs(collection(this._firestore, 'activities'));
+        const remote = snap.docs.map(d => ({ ...d.data(), firestoreId: d.id }));
+        // Refresh local cache so the app still works offline next time
+        this._localSet(KEYS.activities, remote);
+        let all = [...remote].sort((a,b) => b.timestamp - a.timestamp);
+        if (userId) all = all.filter(a => a.userId === userId);
+        return all;
+      } catch (e) {
+        console.warn('[DB] Firestore getActivities failed, using local cache:', e.message);
+      }
+    }
+    // Local-only (or Firestore fetch failed) — return cached data
     let all = [...this._localGet(KEYS.activities)].sort((a,b) => b.timestamp - a.timestamp);
     if (userId) all = all.filter(a => a.userId === userId);
     return all;
@@ -1759,7 +2262,20 @@ class DB {
   saveConfig(cfg) { this._localSet('fp_app_config', cfg); }
 
   // ── Config / Profile ────────────────────────────
-  getLocalConfig()      { return this._localGet(KEYS.config, null); }
+  getLocalConfig() {
+    var saved = this._localGet(KEYS.config, null);
+    if (saved) return saved;
+    // Built-in default project config — used only if nothing has been
+    // saved yet, so the Settings form is pre-filled on first run.
+    return {
+      apiKey:            "AIzaSyAdYozjJmmNcK_NRR7ohUiA9qFAo75JsHI",
+      authDomain:        "salestracking-a11f2.firebaseapp.com",
+      projectId:         "salestracking-a11f2",
+      storageBucket:     "salestracking-a11f2.firebasestorage.app",
+      messagingSenderId: "158750163403",
+      appId:             "1:158750163403:web:52ab0292ffdc5d0a2eb64e",
+    };
+  }
   saveLocalConfig(cfg)  { localStorage.setItem(KEYS.config, JSON.stringify(cfg)); }
   getProfile()          { return this._localGet(KEYS.profile, null); }
   saveProfile(p)        { localStorage.setItem(KEYS.profile, JSON.stringify(p)); }
@@ -2043,11 +2559,13 @@ class QuestionnaireManager {
       return;
     }
     const isAdmin = typeof auth !== 'undefined' ? auth.isAdmin() : true;
+    const total   = this.questions.length;
+
     list.innerHTML = this.questions.map((q, idx) => {
       const typeLabels = {
         text:'Short Text', textarea:'Long Text', select:'Dropdown',
         dependent_select:'Dependent Dropdown',
-        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date'
+        radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date', photo:'Photo/Image'
       };
       const typeLabel = typeLabels[q.type] || q.type;
       const reqLabel  = q.required === 'true' ? 'Required' : 'Optional';
@@ -2058,12 +2576,14 @@ class QuestionnaireManager {
         optSummary = ` · ${q.options.length} option${q.options.length>1?'s':''}`;
       }
       return `
-        <div class="q-item" data-id="${q.id}">
-          <div class="q-drag" style="cursor:grab;color:var(--text3)">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.4;stroke:currentColor;fill:none;stroke-width:1.8">
-              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
+        <div class="q-item" data-id="${q.id}" data-idx="${idx}" draggable="${isAdmin}">
+          <div class="q-drag" data-drag-handle title="Drag to reorder" style="cursor:${isAdmin?'grab':'default'};color:var(--text3)">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;opacity:.5;stroke:currentColor;fill:none;stroke-width:2">
+              <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/>
+              <line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/>
             </svg>
           </div>
+          <div class="q-seq-badge">${idx + 1}</div>
           <div class="q-body">
             <div class="q-label">${esc(q.label)}</div>
             <div class="q-meta">${typeLabel} · ${reqLabel}${optSummary}</div>
@@ -2071,6 +2591,14 @@ class QuestionnaireManager {
               <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem">
                 ${q.depData.map(p=>`<span style="font-size:.7rem;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);border-radius:4px;padding:.1rem .45rem;color:var(--accent)">${esc(p.parent)}</span>`).join('')}
               </div>` : ''}
+          </div>
+          <div class="q-order-btns">
+            <button class="q-order-btn move-up-btn" data-id="${q.id}" title="Move up" ${idx === 0 ? 'disabled' : ''}>
+              <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="q-order-btn move-down-btn" data-id="${q.id}" title="Move down" ${idx === total-1 ? 'disabled' : ''}>
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
           </div>
           <div class="q-actions">
             ${isAdmin ? `
@@ -2084,6 +2612,27 @@ class QuestionnaireManager {
         </div>`;
     }).join('');
 
+    // ── Arrow button listeners ──
+    list.querySelectorAll('.move-up-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = this.questions.findIndex(q => q.id === btn.dataset.id);
+        if (idx <= 0) return;
+        [this.questions[idx-1], this.questions[idx]] = [this.questions[idx], this.questions[idx-1]];
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+      });
+    });
+    list.querySelectorAll('.move-down-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = this.questions.findIndex(q => q.id === btn.dataset.id);
+        if (idx >= this.questions.length - 1) return;
+        [this.questions[idx], this.questions[idx+1]] = [this.questions[idx+1], this.questions[idx]];
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+      });
+    });
+
+    // ── Edit / Delete ──
     list.querySelectorAll('.edit-q').forEach(btn =>
       btn.addEventListener('click', () => this.openModal(btn.dataset.id)));
     list.querySelectorAll('.del-q').forEach(btn =>
@@ -2091,9 +2640,101 @@ class QuestionnaireManager {
         if (!confirm('Delete this question?')) return;
         this.questions = this.questions.filter(q => q.id !== btn.dataset.id);
         this.db.saveQuestions(this.questions);
-        this.render();
-        this.renderDynamicFields();
+        this.render(); this.renderDynamicFields();
       }));
+
+    // ── Drag-and-drop reordering ──
+    if (isAdmin) this._bindDragDrop(list);
+  }
+
+  _bindDragDrop(list) {
+    let dragSrc = null;
+    let dragOver = null;
+
+    const items = () => [...list.querySelectorAll('.q-item')];
+
+    list.querySelectorAll('.q-item').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        dragSrc = item;
+        item.classList.add('q-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.id);
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('q-dragging');
+        list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+        if (dragSrc && dragOver && dragSrc !== dragOver) {
+          // Compute new order from DOM
+          const newOrder = items().map(el => el.dataset.id);
+          this.questions = newOrder.map(id => this.questions.find(q => q.id === id)).filter(Boolean);
+          this.db.saveQuestions(this.questions);
+          this.render(); this.renderDynamicFields();
+        }
+        dragSrc = null; dragOver = null;
+      });
+
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragSrc && item !== dragSrc) {
+          list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+          item.classList.add('q-drag-over');
+          dragOver = item;
+          // Move DOM element for visual feedback
+          const allItems = items();
+          const srcIdx  = allItems.indexOf(dragSrc);
+          const dstIdx  = allItems.indexOf(item);
+          if (srcIdx < dstIdx) item.after(dragSrc);
+          else item.before(dragSrc);
+        }
+      });
+
+      item.addEventListener('drop', e => { e.preventDefault(); });
+    });
+
+    // ── Touch drag (mobile) ──
+    list.querySelectorAll('.q-item').forEach(item => {
+      let touchStartY = 0;
+      let touchItem   = null;
+
+      item.addEventListener('touchstart', e => {
+        if (!e.target.closest('[data-drag-handle]')) return;
+        touchStartY = e.touches[0].clientY;
+        touchItem   = item;
+        item.classList.add('q-dragging');
+      }, { passive: true });
+
+      item.addEventListener('touchmove', e => {
+        if (!touchItem) return;
+        e.preventDefault();
+        const y = e.touches[0].clientY;
+        const allItems = items();
+        const target = allItems.find(el => {
+          const r = el.getBoundingClientRect();
+          return y >= r.top && y <= r.bottom && el !== touchItem;
+        });
+        if (target) {
+          allItems.forEach(i => i.classList.remove('q-drag-over'));
+          target.classList.add('q-drag-over');
+          const srcIdx = allItems.indexOf(touchItem);
+          const dstIdx = allItems.indexOf(target);
+          if (srcIdx < dstIdx) target.after(touchItem);
+          else target.before(touchItem);
+        }
+      }, { passive: false });
+
+      item.addEventListener('touchend', () => {
+        if (!touchItem) return;
+        touchItem.classList.remove('q-dragging');
+        list.querySelectorAll('.q-item').forEach(i => i.classList.remove('q-drag-over'));
+        const newOrder = items().map(el => el.dataset.id);
+        this.questions = newOrder.map(id => this.questions.find(q => q.id === id)).filter(Boolean);
+        this.db.saveQuestions(this.questions);
+        this.render(); this.renderDynamicFields();
+        touchItem = null;
+      });
+    });
   }
 
   // ── Render dynamic fields in Log Activity form ──
@@ -2110,6 +2751,10 @@ class QuestionnaireManager {
     // Wire up dependent dropdowns
     qs.filter(q => q.type === 'dependent_select').forEach(q => {
       this._wireDependentSelect(q);
+    });
+    // Wire up photo uploads
+    qs.filter(q => q.type === 'photo').forEach(q => {
+      this._wirePhotoUpload(q);
     });
   }
 
@@ -2155,6 +2800,22 @@ class QuestionnaireManager {
           </label>`).join('');
         return `<div class="check-group">${opts}</div>`;
       }
+      case 'photo': {
+        return `<div class="photo-upload-wrap" id="${id}_wrap">
+          <label class="photo-upload-label" for="${id}_input">
+            <span class="photo-upload-icon">📷</span>
+            <span>Tap to take photo or upload image</span>
+            <span style="font-size:.72rem;color:var(--text3)">JPG, PNG, WEBP — max 4MB</span>
+          </label>
+          <input type="file" id="${id}_input" class="photo-upload-input" accept="image/*" capture="environment" />
+          <img id="${id}_preview" class="photo-preview" style="display:none" alt="Preview" />
+          <div class="photo-actions" id="${id}_actions" style="display:none">
+            <button type="button" class="photo-btn" onclick="photoRetake('${id}')">📷 Retake</button>
+            <button type="button" class="photo-btn danger" onclick="photoClear('${id}')">✕ Remove</button>
+          </div>
+          <input type="hidden" id="${id}" />
+        </div>`;
+      }
       default: return `<input type="text" id="${id}" ${req} />`;
     }
   }
@@ -2185,6 +2846,34 @@ class QuestionnaireManager {
     });
   }
 
+  // ── Wire photo upload input ─────────────────────
+  _wirePhotoUpload(q) {
+    const id    = `dyn_${q.id}`;
+    const input = document.getElementById(`${id}_input`);
+    if (!input) return;
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 4 * 1024 * 1024) {
+        toast('Image too large — max 4MB', 'error');
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const base64 = ev.target.result;  // data:image/jpeg;base64,...
+        document.getElementById(id).value = base64;
+        const preview = document.getElementById(`${id}_preview`);
+        const wrap    = document.getElementById(`${id}_wrap`);
+        const actions = document.getElementById(`${id}_actions`);
+        if (preview) { preview.src = base64; preview.style.display = 'block'; }
+        if (wrap)    wrap.classList.add('has-photo');
+        if (actions) actions.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // ── Collect answers including dependent selects ──
   collectAnswers() {
     const answers = {};
@@ -2200,6 +2889,8 @@ class QuestionnaireManager {
         const parent = document.getElementById(`${id}_parent`)?.value || '';
         const child  = document.getElementById(`${id}_child`)?.value  || '';
         answers[q.id] = parent ? (child ? `${parent} › ${child}` : parent) : '';
+      } else if (q.type === 'photo') {
+        answers[q.id] = document.getElementById(id)?.value || '';  // base64 string
       } else {
         answers[q.id] = document.getElementById(id)?.value || '';
       }
@@ -2349,7 +3040,7 @@ class QuestionnaireManager {
 function typeLabel(type) {
   const map = { text:'Short Text', textarea:'Long Text', select:'Dropdown',
     dependent_select:'Dependent Dropdown',
-    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date' };
+    radio:'Multiple Choice', checkbox:'Checkboxes', number:'Number', date:'Date', photo:'Photo/Image' };
   return map[type] || type;
 }
 
@@ -2393,7 +3084,6 @@ class HistoryManager {
       const matchSearch = !search ||
         a.clientName?.toLowerCase().includes(search) ||
         a.activityType?.toLowerCase().includes(search) ||
-        a.notes?.toLowerCase().includes(search) ||
         a.userName?.toLowerCase().includes(search);
       const matchType = !type || a.activityType === type;
       return matchSearch && matchType;
@@ -2407,7 +3097,8 @@ class HistoryManager {
     const isSuperAdmin = this.auth?.isSuperAdmin();
 
     if (!activities.length) {
-      body.innerHTML = '<tr><td colspan="7" class="empty-td">No activities found.</td></tr>';
+      var colCount = isAdmin ? 8 : 6;
+    body.innerHTML = '<tr><td colspan="' + colCount + '" class="empty-td">No activities found.</td></tr>';
       return;
     }
 
@@ -2416,11 +3107,16 @@ class HistoryManager {
         <td style="white-space:nowrap;font-family:var(--font-mono);font-size:.78rem;color:var(--text2)">${formatDateTime(a.timestamp)}</td>
         <td><strong>${esc(a.clientName)}</strong></td>
         <td>${esc(a.activityType)}</td>
-        <td><span class="outcome-pill ${outcomeClass(a.outcome)}">${esc(a.outcome) || '—'}</span></td>
+        
         ${isAdmin ? `<td style="font-size:.8rem;color:var(--text2)">${esc(a.userName||'—')}</td>` : ''}
-        <td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
-          ${a.lat ? (a.address ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>${esc(a.address.split(',').slice(0,2).join(','))}</span>` : `${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}`) : '<span style="color:var(--text3)">No location</span>'}
+        <td style="font-size:.8rem;color:var(--text2)">
+          ${esc(a.businessAddress || '—')}
         </td>
+        ${isAdmin ? `<td style="font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">
+          ${a.lat ? `<span title='${a.lat.toFixed(5)}, ${a.lng.toFixed(5)}'>
+            📍 ${esc((a.gpsAddress || a.address || '').split(',').slice(0,2).join(',') || 'GPS captured')}
+          </span>` : '<span style="color:var(--text3)">No GPS</span>'}
+        </td>` : ''}
         <td>
           <button class="icon-btn view-btn" data-id="${esc(a.id)}" title="View">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -2436,6 +3132,7 @@ class HistoryManager {
     // Update thead to include Rep column for admins
     const thead = document.querySelector('#histTable thead tr');
     if (thead) {
+      // Rep column
       const hasRepCol = thead.querySelector('.rep-col');
       if (isAdmin && !hasRepCol) {
         const th = document.createElement('th');
@@ -2444,6 +3141,17 @@ class HistoryManager {
         thead.children[3].after(th);
       } else if (!isAdmin && hasRepCol) {
         hasRepCol.remove();
+      }
+      // GPS column (admin only)
+      const hasGpsCol = thead.querySelector('.gps-col');
+      if (isAdmin && !hasGpsCol) {
+        const thg = document.createElement('th');
+        thg.className = 'gps-col';
+        thg.textContent = 'GPS Location';
+        thead.appendChild(thg);
+        // Move Actions column to last (it's naturally last already)
+      } else if (!isAdmin && hasGpsCol) {
+        hasGpsCol.remove();
       }
     }
 
@@ -2460,95 +3168,98 @@ class HistoryManager {
   }
 
   async openDetail(id) {
+    // Determine role FIRST — this gates all location data
+    var isAdm = this.auth ? this.auth.isAdmin() : false;
+
     let activity = null;
     try {
       const all = await this.db.getActivities();
-      activity  = all.find(a => a.id === id);
-      // Also check by stringified id in case of type mismatch
-      if (!activity) activity = all.find(a => String(a.id) === String(id));
+      activity = all.find(a => a.id === id) ||
+                 all.find(a => String(a.id) === String(id));
     } catch(e) {
       console.error('openDetail fetch error:', e);
       return;
     }
-    if (!activity) { console.warn('Activity not found for id:', id); return; }
+    if (!activity) { console.warn('Activity not found:', id); return; }
 
-    // Access check: normal users can only see their own
-    if (!this.auth?.isAdmin() && activity.userId !== this.auth?.currentUser()?.uid) {
-      return;
+    // Normal users can only view their own activities
+    if (!isAdm && activity.userId !== this.auth?.currentUser()?.uid) return;
+
+    // Always ensure map is hidden first (stays hidden for non-admins)
+    var mapEl = document.getElementById('modalMap');
+    if (mapEl) mapEl.style.display = 'none';
+
+    // Destroy any previously rendered map
+    if (this._modalMap) {
+      try { this._modalMap.remove(); } catch(_) {}
+      this._modalMap = null;
     }
 
     document.getElementById('modalTitle').textContent = esc(activity.clientName);
 
-    const questions = this.db.getQuestions();
-    const answers   = activity.customAnswers || {};
+    // Build custom answers HTML
+    const questions  = this.db.getQuestions();
+    const answers    = activity.customAnswers || {};
     const customHtml = questions.map(q => {
       const val = answers[q.id];
       if (!val || (Array.isArray(val) && !val.length)) return '';
-      return `<div class="detail-row"><span class="detail-label">${esc(q.label)}</span><span class="detail-val">${esc(Array.isArray(val) ? val.join(', ') : val)}</span></div>`;
+      if (q.type === 'photo' && typeof val === 'string' && val.startsWith('data:image')) {
+        return '<div class="detail-row full"><span class="detail-label">' + esc(q.label) +
+               '</span><img src="' + val + '" class="photo-preview" style="max-height:180px;border-radius:8px;border:2px solid var(--accent);margin-top:.4rem" alt="' + esc(q.label) + '" /></div>';
+      }
+      return '<div class="detail-row"><span class="detail-label">' + esc(q.label) +
+             '</span><span class="detail-val">' +
+             esc(Array.isArray(val) ? val.join(', ') : val) + '</span></div>';
     }).join('');
 
-    document.getElementById('modalBody').innerHTML = `
-      <div class="detail-grid">
-        <div class="detail-row"><span class="detail-label">Date & Time</span><span class="detail-val">${formatDateTime(activity.timestamp)}</span></div>
-        <div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">${esc(activity.activityType)}</span></div>
-        <div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ${outcomeClass(activity.outcome)}">${esc(activity.outcome)||'—'}</span></span></div>
-        ${activity.userName ? `<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">${esc(activity.userName)}</span></div>` : ''}
-        ${activity.lat ? `<div class="detail-row"><span class="detail-label">Location</span><div><div class="detail-val">${activity.address ? escHtml2(activity.address) : ''}</div><div style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);margin-top:.15rem">${activity.lat.toFixed(6)}, ${activity.lng.toFixed(6)}${activity.accuracy ? ` ±${Math.round(activity.accuracy)}m` : ''}</div></div></div>` : ''}
-        ${activity.notes ? `<div class="detail-row full"><span class="detail-label">Notes</span><p class="detail-notes">${esc(activity.notes)}</p></div>` : ''}
-        ${customHtml}
-      </div>
-      <style>
-        .detail-grid{display:flex;flex-direction:column;gap:.6rem}
-        .detail-row{display:flex;gap:.75rem;align-items:baseline}
-        .detail-row.full{flex-direction:column;gap:.3rem}
-        .detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0}
-        .detail-val{font-size:.88rem}
-        .detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}
-      
-/* ── Dependent Dropdown Builder ── */
-.dep-info-box { display:flex; gap:.6rem; align-items:flex-start; background:rgba(79,142,247,.08); border:1px solid rgba(79,142,247,.2); border-radius:8px; padding:.7rem .85rem; font-size:.8rem; color:var(--text2); line-height:1.5; margin-bottom:1rem; }
-.dep-info-box svg { color:var(--blue); margin-top:.1rem; }
-.dep-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; font-size:.78rem; font-weight:700; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
-.btn-dep-add { background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.3); color:var(--accent); border-radius:6px; padding:.25rem .65rem; font-size:.75rem; font-weight:600; cursor:pointer; transition:all var(--transition); }
-.btn-dep-add:hover { background:rgba(245,166,35,.22); }
-.dep-parent-list { display:flex; flex-direction:column; gap:.6rem; }
-.dep-parent-block { background:var(--surface2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
-.dep-parent-header { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; background:rgba(245,166,35,.06); border-bottom:1px solid var(--border); }
-.dep-parent-label { flex:1; font-weight:600; font-size:.88rem; }
-.dep-parent-input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:.88rem; font-weight:600; padding:0; }
-.dep-parent-input::placeholder { color:var(--text3); font-weight:400; }
-.dep-remove-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:1rem; line-height:1; padding:.1rem .3rem; border-radius:4px; transition:color var(--transition); }
-.dep-remove-btn:hover { color:var(--red); }
-.dep-children-area { padding:.6rem .75rem; }
-.dep-children-label { font-size:.72rem; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.4rem; }
-.dep-children-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:7px; padding:.45rem .7rem; color:var(--text); font-size:.82rem; outline:none; resize:vertical; min-height:64px; transition:border-color var(--transition); }
-.dep-children-input:focus { border-color:var(--accent); }
+    // Build modal body — GPS/location data strictly gated by isAdm
+    var mHtml = '<div class="detail-grid">';
+    mHtml += '<div class="detail-row"><span class="detail-label">Date &amp; Time</span><span class="detail-val">' + formatDateTime(activity.timestamp) + '</span></div>';
+    mHtml += '<div class="detail-row"><span class="detail-label">Activity Type</span><span class="detail-val">' + esc(activity.activityType) + '</span></div>';
+    mHtml += '<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-val"><span class="outcome-pill ' + outcomeClass(activity.outcome) + '">' + (esc(activity.outcome) || '—') + '</span></span></div>';
+    if (isAdm && activity.userName) {
+      mHtml += '<div class="detail-row"><span class="detail-label">Sales Rep</span><span class="detail-val">' + esc(activity.userName) + '</span></div>';
+    }
+    if (activity.businessAddress) {
+      mHtml += '<div class="detail-row"><span class="detail-label">Business Address</span><span class="detail-val">' + escHtml2(activity.businessAddress) + '</span></div>';
+    }
 
-/* Log form — dependent select pair */
-.dep-select-pair { display:flex; flex-direction:column; gap:.5rem; }
-.dep-child-group { transition:opacity .2s, max-height .2s; overflow:hidden; }
-.dep-child-group.hidden-dep { opacity:0; max-height:0; pointer-events:none; }
+    mHtml += customHtml;
 
-  </style>
-    `;
+    // GPS section — ADMIN & SUPERADMIN ONLY
+    if (isAdm && activity.lat) {
+      var gpsAddr   = (activity.gpsAddress || activity.address || '').split(',').slice(0,3).join(',');
+      var gpsCoords = activity.lat.toFixed(6) + ', ' + activity.lng.toFixed(6);
+      var gpsAcc    = activity.accuracy ? ' ±' + Math.round(activity.accuracy) + 'm' : '';
+      mHtml += '<div class="detail-row" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)">';
+      mHtml += '<span class="detail-label" style="color:var(--accent)">GPS Location</span>';
+      mHtml += '<div>';
+      if (gpsAddr) mHtml += '<div class="detail-val" style="font-size:.82rem">' + escHtml2(gpsAddr) + '</div>';
+      mHtml += '<div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3);margin-top:.2rem">' + gpsCoords + gpsAcc + '</div>';
+      mHtml += '</div></div>';
+    }
+
+    mHtml += '</div>';
+    mHtml += '<style>.detail-grid{display:flex;flex-direction:column;gap:.6rem}.detail-row{display:flex;gap:.75rem;align-items:flex-start}.detail-row.full{flex-direction:column;gap:.3rem}.detail-label{font-size:.72rem;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.05em;min-width:110px;flex-shrink:0;padding-top:.15rem}.detail-val{font-size:.88rem}.detail-notes{font-size:.88rem;color:var(--text2);line-height:1.6;white-space:pre-wrap}</style>';
+
+    document.getElementById('modalBody').innerHTML = mHtml;
 
     try {
       document.getElementById('detailModal').classList.remove('hidden');
-    } catch(modalErr) {
-      console.error('Modal open error:', modalErr);
+    } catch(e) {
+      console.error('Modal open error:', e);
     }
 
-    const mapEl = document.getElementById('modalMap');
-    if (activity.lat) {
+    // Map — ADMIN & SUPERADMIN ONLY
+    if (isAdm && activity.lat && mapEl) {
       mapEl.style.display = 'block';
       await MapService.loadLeaflet();
-      if (this._modalMap) { try { this._modalMap.remove(); } catch(_){} }
       this._modalMap = MapService.createMap('modalMap', activity.lat, activity.lng, 15);
-      MapService.addMarker(this._modalMap, activity.lat, activity.lng, `<strong>${esc(activity.clientName)}</strong>`);
-      setTimeout(() => MapService.invalidate(this._modalMap), 100);
-    } else {
-      mapEl.style.display = 'none';
+      MapService.addMarker(this._modalMap, activity.lat, activity.lng,
+        '<strong>' + esc(activity.clientName) + '</strong>');
+      setTimeout(function() { MapService.invalidate(this._modalMap); }.bind(this), 150);
     }
+    // mapEl already set to display:none above for non-admins
   }
 
   _closeModal() {
@@ -2828,6 +3539,14 @@ function boot() {
     if (wall) wall.classList.remove('hidden');
     initAuthForm();
   }
+
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeStatDrawer();
+      fpCloseSidebar();
+    }
+  });
 }
 
 // ── Show App ──────────────────────────────────────
@@ -2856,12 +3575,10 @@ function applyRoleUI() {
 
   // Show/hide nav items
   document.getElementById('navUsers').classList.toggle('hidden', !isAdmin);
+  document.getElementById('navReports').classList.toggle('hidden', !isAdmin);
   document.getElementById('navSettings').classList.toggle('hidden', !isAdmin);
 
   // Super admin info banner only for superadmin
-  const banner = document.getElementById('superAdminBanner');
-  if (banner) banner.classList.toggle('hidden', !isSuperAdmin);
-
   // Hide "Super Admin" option in add-user form for non-superadmins
   const saOpt = document.getElementById('newUserSuperAdminOption');
   if (saOpt) saOpt.style.display = isSuperAdmin ? '' : 'none';
@@ -2877,8 +3594,8 @@ function initNavigation() {
     el.addEventListener('click', e => {
       e.preventDefault();
       const page = el.dataset.page;
-      // Guard: non-admins cannot access settings or users pages
-      if ((page === 'settings' || page === 'users') && !auth.isAdmin()) {
+      // Guard: non-admins cannot access settings, users or reports pages
+      if ((page === 'settings' || page === 'users' || page === 'reports') && !auth.isAdmin()) {
         toast('Access denied — admin only', 'error');
         return;
       }
@@ -2897,6 +3614,7 @@ function navigateTo(page) {
   if (page === 'log')           { loadSelectOptions(); initLogMap(); }
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
+  if (page === 'reports')       initReportPage();
 
   fpCloseSidebar();
 }
@@ -3042,7 +3760,7 @@ async function refreshDashboard() {
       <div class="feed-dot"></div>
       <div class="feed-body">
         <div class="feed-client">${esc(a.clientName)}</div>
-        <div class="feed-meta">${esc(a.activityType)}${a.outcome ? ' · ' + esc(a.outcome) : ''}${a.address ? '<br><span style="font-size:.7rem;color:var(--text3);">📍 ' + esc(a.address.split(',').slice(0,2).join(',')) + '</span>' : ''}</div>
+        <div class="feed-meta">${esc(a.activityType)}${a.businessAddress ? '<br><span style="font-size:.7rem;color:var(--text3);">🏢 ' + esc(a.businessAddress) + '</span>' : ''}</div>
       </div>
       <div class="feed-time">${formatDate(a.timestamp)}</div>
     </div>
@@ -3070,132 +3788,37 @@ async function refreshDashboard() {
 // ── Log Activity ──────────────────────────────────
 let currentGeo = null;
 
-// ── Location Picker ──────────────────────────────
-// Self-contained — all state lives here, safe across page re-visits
+// ── Location (silent background GPS) ────────────────
+// GPS fires automatically when Log Activity page opens.
+// No UI shown to users. Coordinates stored invisibly.
+// Only admins see location data in reports.
+
 const LocPicker = {
   map:    null,
   marker: null,
-  searchTimer: null,
-  geocoding: false,
 
-  // ── Init map (called each time Log page is shown) ──
+  // init — just trigger silent GPS, no map UI needed
   async init() {
-    await MapService.loadLeaflet();
-
-    const el = document.getElementById('logMap');
-    if (!el) return;
-
-    // Build map once; invalidate size on subsequent visits
-    if (!this.map) {
-      this.map = L.map('logMap', { zoomControl: true }).setView([3.139, 101.686], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(this.map);
-
-      // ── Click anywhere to drop / move pin ──
-      this.map.on('click', async e => {
-        await this.setPin(e.latlng.lat, e.latlng.lng);
-      });
-    } else {
-      // Already created — just fix size if container was hidden
-      setTimeout(() => this.map.invalidateSize(), 120);
-    }
-
-    // Restore pin if we already have one
-    if (currentGeo?.lat) {
-      this._renderPin(currentGeo.lat, currentGeo.lng);
-      this.map.setView([currentGeo.lat, currentGeo.lng], 15);
-    }
+    // Map element is hidden — no Leaflet init needed
+    // GPS fires silently via silentGPS() called from initLogForm
   },
 
-  // ── Place or move the draggable pin ──
+  // setPin — stores coords silently (no UI update for users)
   async setPin(lat, lng, knownAddress) {
     currentGeo = { lat, lng, accuracy: null, address: knownAddress || null };
-
-    this._renderPin(lat, lng);
-    this.map.setView([lat, lng], 16);
-    this._showResult('📍 Fetching address…', `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-
     if (!knownAddress) {
-      const addr = await this._reverseGeocode(lat, lng);
-      currentGeo.address = addr;
-      this._showResult(addr, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-    } else {
-      this._showResult(knownAddress, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      // Reverse geocode silently in background
+      this._reverseGeocode(lat, lng).then(addr => {
+        if (currentGeo) currentGeo.address = addr;
+      }).catch(() => {});
     }
   },
 
-  // ── Create or move the Leaflet marker ──
-  _renderPin(lat, lng) {
-    const pinHtml = `
-      <div style="
-        position:relative;
-        width:32px; height:42px;
-        filter: drop-shadow(0 3px 6px rgba(0,0,0,.45));
-      ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="32" height="42">
-          <path d="M16 0C9.4 0 4 5.4 4 12c0 9 12 30 12 30S28 21 28 12C28 5.4 22.6 0 16 0z"
-                fill="#f5a623" stroke="#fff" stroke-width="2"/>
-          <circle cx="16" cy="12" r="5" fill="#fff"/>
-        </svg>
-      </div>`;
-
-    const icon = L.divIcon({
-      className: '',
-      html: pinHtml,
-      iconSize:   [32, 42],
-      iconAnchor: [16, 42],   // tip of the pin
-      popupAnchor:[0, -44],
-    });
-
-    if (this.marker) {
-      // Move existing marker
-      this.marker.setLatLng([lat, lng]);
-    } else {
-      // Create new draggable marker
-      this.marker = L.marker([lat, lng], { icon, draggable: true, autoPan: true })
-        .addTo(this.map);
-
-      // Drag handlers
-      this.marker.on('drag', () => {
-        const p = this.marker.getLatLng();
-        document.getElementById('locCoordsDisplay').textContent =
-          `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
-      });
-
-      this.marker.on('dragend', async () => {
-        const p = this.marker.getLatLng();
-        document.getElementById('locAddr').textContent = '📍 Fetching address…';
-        const addr = await this._reverseGeocode(p.lat, p.lng);
-        currentGeo = { lat: p.lat, lng: p.lng, accuracy: null, address: addr };
-        this._showResult(addr, `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`);
-      });
-    }
-  },
-
-  // ── Clear pin & state ──
   clear() {
-    if (this.marker && this.map) {
-      this.map.removeLayer(this.marker);
-      this.marker = null;
-    }
     currentGeo = null;
-    document.getElementById('locAddr').textContent = 'No location selected';
-    document.getElementById('locCoordsDisplay').textContent = '—';
-    document.getElementById('locResult').classList.remove('has-loc');
-    document.getElementById('locSearch').value = '';
-    document.getElementById('locSuggestions').classList.add('hidden');
   },
 
-  // ── Update the result strip ──
-  _showResult(addr, coords) {
-    document.getElementById('locAddr').textContent = addr;
-    document.getElementById('locCoordsDisplay').textContent = coords;
-    document.getElementById('locResult').classList.add('has-loc');
-  },
-
-  // ── Nominatim reverse geocode ──
+  // Reverse geocode via Nominatim (silent)
   async _reverseGeocode(lat, lng) {
     try {
       const r = await fetch(
@@ -3209,32 +3832,54 @@ const LocPicker = {
     }
   },
 
-  // ── Nominatim forward search ──
-  async search(query) {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en' } }
-    );
-    return r.json();
-  },
-
-  // ── GPS locate ──
+  // GPS locate (non-draggable — fixed position from device)
   async gps() {
     const pos = await new Promise((resolve, reject) => {
       if (!navigator.geolocation) { reject(new Error('Geolocation not supported')); return; }
-      navigator.geolocation.getCurrentPosition(resolve, e => {
+      navigator.geolocation.getCurrentPosition(resolve, err => {
         const msgs = { 1:'Permission denied', 2:'Position unavailable', 3:'Timeout' };
-        reject(new Error(msgs[e.code] || 'GPS error'));
-      }, { enableHighAccuracy: true, timeout: 12000 });
+        reject(new Error(msgs[err.code] || 'GPS error'));
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
     });
     await this.setPin(pos.coords.latitude, pos.coords.longitude, null);
     return pos;
   },
 };
 
+// Silent GPS — called automatically when Log page loads
+// Runs in background, user sees nothing
+function silentGPS() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // Store silently — no toast, no UI
+      currentGeo = {
+        lat:      pos.coords.latitude,
+        lng:      pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        address:  null,
+      };
+      // Reverse geocode quietly in background
+      fetch(
+        'https://nominatim.openstreetmap.org/reverse?lat=' + pos.coords.latitude +
+        '&lon=' + pos.coords.longitude + '&format=json',
+        { headers: { 'Accept-Language': 'en' } }
+      ).then(r => r.json()).then(d => {
+        if (currentGeo) currentGeo.address = d.display_name || null;
+      }).catch(() => {});
+    },
+    function() {
+      // Silent fail — user doesn't need to know
+      currentGeo = null;
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
+}
+
 // ── Wrappers used by initLogMap and initLogForm ───
 async function initLogMap() {
-  await LocPicker.init();
+  // Map is hidden — just trigger silent GPS on page visit
+  silentGPS();
 }
 
 function clearLogLocation() {
@@ -3360,9 +4005,7 @@ function initSettings() {
 
   // Pre-fill current values
   const atInput  = document.getElementById('activityTypesInput');
-  const outInput = document.getElementById('outcomesInput');
   if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
-  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
 
   document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -3384,34 +4027,16 @@ function initSettings() {
     toast('Activity types reset to defaults');
   });
 
-  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
-    const cfg = db.getConfig();
-    cfg.outcomes = outcomes;
-    db.saveConfig(cfg);
-    loadSelectOptions();
-    toast('Outcomes saved!');
-  });
-
-  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
-    const cfg = db.getConfig();
-    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
-    db.saveConfig(cfg);
-    if (outInput) outInput.value = cfg.outcomes.join('\n');
-    loadSelectOptions();
-    toast('Outcomes reset to defaults');
-  });
+// Outcomes config removed
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
-    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || ''
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -3447,18 +4072,17 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.textContent = 'Saving…';
     try {
       const activity = {
-        clientName:    document.getElementById('clientName').value.trim(),
-        activityType:  document.getElementById('activityType').value,
-        outcome:       document.getElementById('outcome').value,
-        notes:         document.getElementById('notes').value.trim(),
-        lat:           currentGeo?.lat     ?? null,
-        lng:           currentGeo?.lng     ?? null,
-        accuracy:      currentGeo?.accuracy ?? null,
-        address:       currentGeo?.address  ?? null,
-        timestamp:     Date.now(),
-        userId:        auth.currentUser()?.uid  || 'local',
-        userName:      auth.currentUser()?.name || 'Unknown',
-        customAnswers: q.collectAnswers(),
+        clientName:      document.getElementById('clientName').value.trim(),
+        businessAddress: document.getElementById('businessAddress').value.trim(),
+        activityType:    document.getElementById('activityType').value,
+        lat:             currentGeo?.lat      ?? null,
+        lng:             currentGeo?.lng      ?? null,
+        accuracy:        currentGeo?.accuracy ?? null,
+        gpsAddress:      currentGeo?.address  ?? null,
+        timestamp:       Date.now(),
+        userId:          auth.currentUser()?.uid  || 'local',
+        userName:        auth.currentUser()?.name || 'Unknown',
+        customAnswers:   q.collectAnswers(),
       };
       if (!activity.clientName || !activity.activityType) {
         toast('Please fill in required fields', 'error'); return;
@@ -3468,6 +4092,10 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('logForm').reset();
       q.renderDynamicFields();
       LocPicker.clear();
+      // Re-acquire GPS silently for next entry
+      silentGPS();
+      // Reset photo fields via photoClear helper
+      db.getQuestions().filter(x => x.type === 'photo').forEach(x => photoClear('dyn_' + x.id));
     } catch (err) {
       toast('Error saving: ' + err.message, 'error');
     } finally {
@@ -3481,79 +4109,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('logForm').reset();
     q.renderDynamicFields();
     LocPicker.clear();
+    // Re-acquire GPS silently after form clear
+    silentGPS();
   });
 
-  // ── GPS button ──
-  document.getElementById('gpsBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('gpsBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Locating…';
-    try {
-      await LocPicker.gps();
-      toast('📍 GPS location set');
-    } catch (err) {
-      toast('GPS: ' + err.message, 'error');
-    } finally {
-      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> Use GPS';
-      btn.disabled = false;
-    }
-  });
-
-  // ── Clear location ──
-  document.getElementById('clearLocBtn').addEventListener('click', () => LocPicker.clear());
-
-  // ── Search box ──
-  const searchInput   = document.getElementById('locSearch');
-  const suggestionsEl = document.getElementById('locSuggestions');
-  let   _searchTimer  = null;
-  let   _lastResults  = [];
-
-  searchInput.addEventListener('input', () => {
-    clearTimeout(_searchTimer);
-    const q2 = searchInput.value.trim();
-    if (q2.length < 3) { suggestionsEl.classList.add('hidden'); return; }
-    suggestionsEl.innerHTML = '<div class="loc-search-loading">🔍 Searching…</div>';
-    suggestionsEl.classList.remove('hidden');
-    _searchTimer = setTimeout(async () => {
-      try {
-        _lastResults = await LocPicker.search(q2);
-        if (!_lastResults.length) {
-          suggestionsEl.innerHTML = '<div class="loc-search-loading">No results found</div>';
-          return;
-        }
-        suggestionsEl.innerHTML = _lastResults.map((r, idx) => {
-          const parts = r.display_name.split(',');
-          const main  = parts[0].trim();
-          const sub   = parts.slice(1, 3).join(',').trim();
-          return `<div class="loc-suggestion" data-idx="${idx}">
-            <span class="loc-suggestion-icon">📍</span>
-            <div class="loc-suggestion-text">
-              <div class="loc-suggestion-main">${escHtml2(main)}</div>
-              <div class="loc-suggestion-sub">${escHtml2(sub)}</div>
-            </div>
-          </div>`;
-        }).join('');
-
-        suggestionsEl.querySelectorAll('.loc-suggestion').forEach(el => {
-          el.addEventListener('click', async () => {
-            const res = _lastResults[+el.dataset.idx];
-            searchInput.value = res.display_name.split(',').slice(0, 2).join(', ');
-            suggestionsEl.classList.add('hidden');
-            await LocPicker.setPin(+res.lat, +res.lon, res.display_name);
-          });
-        });
-      } catch (err) {
-        suggestionsEl.innerHTML = '<div class="loc-search-loading">Search failed — check connection</div>';
-      }
-    }, 500);
-  });
-
-  // Close suggestions on outside click
-  document.addEventListener('click', e => {
-    if (!e.target.closest('#locSearch') && !e.target.closest('#locSuggestions')) {
-      suggestionsEl.classList.add('hidden');
-    }
-  }, true);
+  // ── Silent background GPS — fires automatically, no UI ──
+  // Non-blocking: runs in background, does not affect form flow
+  silentGPS();
 }
 
 
@@ -3680,9 +4242,7 @@ function initSettings() {
 
   // Pre-fill current values
   const atInput  = document.getElementById('activityTypesInput');
-  const outInput = document.getElementById('outcomesInput');
   if (atInput)  atInput.value  = db.getConfig().activityTypes.join('\n');
-  if (outInput) outInput.value = db.getConfig().outcomes.join('\n');
 
   document.getElementById('activityTypesForm')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -3704,34 +4264,16 @@ function initSettings() {
     toast('Activity types reset to defaults');
   });
 
-  document.getElementById('outcomesForm')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const outcomes = outInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if (!outcomes.length) { toast('Enter at least one outcome', 'error'); return; }
-    const cfg = db.getConfig();
-    cfg.outcomes = outcomes;
-    db.saveConfig(cfg);
-    loadSelectOptions();
-    toast('Outcomes saved!');
-  });
-
-  document.getElementById('resetOutcomesBtn')?.addEventListener('click', () => {
-    const cfg = db.getConfig();
-    cfg.outcomes = ['Interested','Not Interested','Follow-up Required','Closed Won','Closed Lost','No Decision'];
-    db.saveConfig(cfg);
-    if (outInput) outInput.value = cfg.outcomes.join('\n');
-    loadSelectOptions();
-    toast('Outcomes reset to defaults');
-  });
+// Outcomes config removed
 }
 
 // ── CSV Export ────────────────────────────────────
 function exportCSV(activities) {
   if (!activities.length) { toast('No data to export', 'error'); return; }
-  const headers = ['Date','Merchant/Prospect','Type','Outcome','Rep','Latitude','Longitude','Notes'];
+  const headers = ['Date','Merchant/Prospect','Business Address','Type','Rep','Latitude','Longitude','GPS Address'];
   const rows = activities.map(a => [
-    formatDateTime(a.timestamp), a.clientName, a.activityType, a.outcome,
-    a.userName || '', a.lat ?? '', a.lng ?? '', (a.notes || '').replace(/\n/g,' ')
+    formatDateTime(a.timestamp), a.clientName, a.businessAddress || '', a.activityType,
+    a.userName || '', a.lat ?? '', a.lng ?? '', a.gpsAddress || a.address || ''
   ]);
   const csv  = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -3746,17 +4288,459 @@ function esc(str) {
 }
 function escHtml2(str) { return esc(str); }
 
+// ── Stat Card Drawer ─────────────────────────────────────────────
+var _drawerActivities = [];  // cached full activity list for drawer
 
-document.addEventListener('DOMContentLoaded', function() {
-  boot().catch(function(err) {
-    console.error('SAS boot error:', err);
-    var splash = document.getElementById('splash');
-    if (splash) splash.remove();
-    var authWall = document.getElementById('authWall');
-    if (authWall) authWall.classList.remove('hidden');
-    var errEl = document.getElementById('authError');
-    if (errEl) { errEl.textContent = 'App failed to start: ' + err.message; errEl.classList.remove('hidden'); }
+async function openStatDrawer(filter) {
+  var drawer  = document.getElementById('statDrawer');
+  var overlay = document.getElementById('statDrawerOverlay');
+  var title   = document.getElementById('statDrawerTitle');
+  var list    = document.getElementById('statDrawerList');
+  var countEl = document.getElementById('statDrawerCount');
+  var search  = document.getElementById('statDrawerSearchInput');
+
+  if (!drawer) return;
+
+  // Fetch activities
+  var user = typeof auth !== 'undefined' ? auth.currentUser() : null;
+  var isAdm = typeof auth !== 'undefined' ? auth.isAdmin() : false;
+  var all = isAdm
+    ? await db.getActivities()
+    : await db.getActivities(user?.uid);
+
+  var today   = new Date().toDateString();
+  var weekAgo = Date.now() - 7 * 86400000;
+
+  // Filter by stat card type
+  var filtered, titleText;
+  switch (filter) {
+    case 'today':
+      filtered  = all.filter(a => new Date(a.timestamp).toDateString() === today);
+      titleText = "Today's Activities";
+      break;
+    case 'week':
+      filtered  = all.filter(a => a.timestamp >= weekAgo);
+      titleText = 'This Week';
+      break;
+    case 'gps':
+      filtered  = all.filter(a => a.lat);
+      titleText = 'Locations Visited';
+      break;
+    default:
+      filtered  = [...all];
+      titleText = 'All Activities';
+  }
+
+  // Sort newest first
+  filtered.sort((a, b) => b.timestamp - a.timestamp);
+  _drawerActivities = filtered;
+
+  title.textContent  = titleText;
+  countEl.textContent = filtered.length + ' record' + (filtered.length !== 1 ? 's' : '');
+  if (search) search.value = '';
+
+  _renderDrawerList(filtered);
+
+  // Show
+  overlay.style.display = 'block';
+  drawer.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Wire search
+  if (search && !search._drawerBound) {
+    search._drawerBound = true;
+    search.addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var shown = !q ? _drawerActivities : _drawerActivities.filter(a =>
+        (a.clientName||'').toLowerCase().includes(q) ||
+        (a.activityType||'').toLowerCase().includes(q) ||
+        (a.businessAddress||'').toLowerCase().includes(q) ||
+        (a.userName||'').toLowerCase().includes(q)
+      );
+      countEl.textContent = shown.length + ' record' + (shown.length !== 1 ? 's' : '');
+      _renderDrawerList(shown);
+    });
+  }
+}
+
+function _renderDrawerList(items) {
+  var list = document.getElementById('statDrawerList');
+  if (!list) return;
+
+  if (!items.length) {
+    list.innerHTML = '<div class="drawer-empty">No activities found</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(a => {
+    var dateStr = new Date(a.timestamp).toLocaleDateString('en-MY', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
+    var timeStr = new Date(a.timestamp).toLocaleTimeString('en-MY', {
+      hour: '2-digit', minute: '2-digit'
+    });
+    var hasGps  = a.lat ? '📍 ' : '';
+    var addr    = a.businessAddress || (a.gpsAddress ? a.gpsAddress.split(',').slice(0,2).join(',') : '');
+    return '<div class="drawer-activity-item" data-id="' + esc(a.id) + '" onclick="_drawerViewDetail(\'' + esc(a.id) + '\')">' +
+      '<div class="drawer-activity-top">' +
+        '<span class="drawer-activity-name">' + esc(a.clientName) + '</span>' +
+        '<span class="drawer-activity-time">' + dateStr + ' ' + timeStr + '</span>' +
+      '</div>' +
+      '<div class="drawer-activity-meta">' +
+        '<span class="drawer-activity-type">' + esc(a.activityType) + '</span>' +
+        (a.userName ? '<span style="font-size:.72rem;color:var(--text3)">👤 ' + esc(a.userName) + '</span>' : '') +
+        (hasGps ? '<span style="font-size:.72rem;color:var(--accent)">📍 GPS</span>' : '') +
+      '</div>' +
+      (addr ? '<div class="drawer-activity-addr">🏢 ' + esc(addr) + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function _drawerViewDetail(id) {
+  // Close drawer and open the detail modal via history manager
+  closeStatDrawer();
+  // Navigate to history page and open the detail
+  navigateTo('history');
+  setTimeout(function() {
+    if (typeof history !== 'undefined' && history.openDetail) {
+      history.openDetail(id);
+    }
+  }, 250);
+}
+
+function closeStatDrawer() {
+  var drawer  = document.getElementById('statDrawer');
+  var overlay = document.getElementById('statDrawerOverlay');
+  if (drawer)  drawer.classList.remove('open');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ── Photo upload helpers (called from inline onclick) ─────────────
+function photoRetake(id) {
+  var input = document.getElementById(id + '_input');
+  if (input) { input.value = ''; input.click(); }
+}
+function photoClear(id) {
+  document.getElementById(id).value = '';
+  var preview = document.getElementById(id + '_preview');
+  var wrap    = document.getElementById(id + '_wrap');
+  var actions = document.getElementById(id + '_actions');
+  var input   = document.getElementById(id + '_input');
+  if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  if (wrap)    wrap.classList.remove('has-photo');
+  if (actions) actions.style.display = 'none';
+  if (input)   input.value = '';
+}
+
+// ── Reports ──────────────────────────────────────────────────────────
+// Full report generation with filters, charts and export
+
+let _reportData = [];   // filtered results cache
+
+function initReportPage() {
+  _populateReportFilters();
+  _renderCustomQuestionFilters();
+
+  // Wire buttons (guard double-binding)
+  var runBtn    = document.getElementById('runReportBtn');
+  var exportBtn = document.getElementById('exportReportBtn');
+  if (runBtn && !runBtn._rptBound) {
+    runBtn._rptBound = true;
+    runBtn.addEventListener('click', generateReport);
+  }
+  if (exportBtn && !exportBtn._rptBound) {
+    exportBtn._rptBound = true;
+    exportBtn.addEventListener('click', exportReportCSV);
+  }
+
+  // Auto-set date range to current month
+  var now   = new Date();
+  var y     = now.getFullYear();
+  var m     = String(now.getMonth() + 1).padStart(2, '0');
+  var d     = String(now.getDate()).padStart(2, '0');
+  var first = y + '-' + m + '-01';
+  var today = y + '-' + m + '-' + d;
+  var dFrom = document.getElementById('rptDateFrom');
+  var dTo   = document.getElementById('rptDateTo');
+  if (dFrom && !dFrom.value) dFrom.value = first;
+  if (dTo   && !dTo.value)   dTo.value   = today;
+}
+
+async function _populateReportFilters() {
+  var cfg       = db.getConfig();
+  var activities = await db.getActivities();
+
+  // Reps
+  var repSel = document.getElementById('rptRep');
+  if (repSel) {
+    var reps = [...new Set(activities.map(a => a.userName).filter(Boolean))].sort();
+    repSel.innerHTML = '<option value="">All Reps</option>' +
+      reps.map(r => '<option value="' + esc(r) + '">' + esc(r) + '</option>').join('');
+  }
+
+  // Activity Types
+  var typeSel = document.getElementById('rptType');
+  if (typeSel) {
+    typeSel.innerHTML = '<option value="">All Types</option>' +
+      cfg.activityTypes.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
+  }
+}
+
+function _renderCustomQuestionFilters() {
+  var container = document.getElementById('rptCustomFilters');
+  if (!container) return;
+  var questions = db.getQuestions().filter(q =>
+    ['select','radio','dependent_select'].includes(q.type));
+  if (!questions.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = '<div class="rpt-custom-filter">' +
+    '<div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem">Custom Question Filters</div>' +
+    '<div class="rpt-custom-filter-grid">' +
+    questions.map(q => {
+      var opts = (q.options || (q.depData || []).map(d => d.parent));
+      return '<div class="form-group"><label>' + esc(q.label) + '</label>' +
+        '<select id="rptQ_' + q.id + '">' +
+        '<option value="">All</option>' +
+        opts.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('') +
+        '</select></div>';
+    }).join('') +
+    '</div></div>';
+}
+
+async function generateReport() {
+  var btn = document.getElementById('runReportBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+  try {
+    var all = await db.getActivities();
+
+    // ── Apply filters ──
+    var dateFrom = document.getElementById('rptDateFrom')?.value;
+    var dateTo   = document.getElementById('rptDateTo')?.value;
+    var repF     = document.getElementById('rptRep')?.value;
+    var typeF    = document.getElementById('rptType')?.value;
+    var gpsF     = document.getElementById('rptGps')?.value;
+
+    var tsFrom = dateFrom ? new Date(dateFrom).setHours(0,0,0,0)   : 0;
+    var tsTo   = dateTo   ? new Date(dateTo).setHours(23,59,59,999) : Infinity;
+
+    var filtered = all.filter(a => {
+      if (a.timestamp < tsFrom || a.timestamp > tsTo) return false;
+      if (repF     && a.userName     !== repF)    return false;
+      if (typeF    && a.activityType !== typeF)   return false;
+        if (gpsF === 'yes' && !a.lat)  return false;
+      if (gpsF === 'no'  &&  a.lat)  return false;
+
+      // Custom question filters
+      var questions = db.getQuestions().filter(q =>
+        ['select','radio','dependent_select'].includes(q.type));
+      for (var q of questions) {
+        var filterEl = document.getElementById('rptQ_' + q.id);
+        var filterVal = filterEl?.value || '';
+        if (!filterVal) continue;
+        var ans = (a.customAnswers || {})[q.id] || '';
+        if (!String(ans).toLowerCase().includes(filterVal.toLowerCase())) return false;
+      }
+      return true;
+    });
+
+    _reportData = filtered;
+    _renderReportSummary(filtered);
+    _renderReportCharts(filtered);
+    _renderReportTable(filtered);
+
+    // Show all sections
+    ['rptStats','rptCharts','rptTableCard'].forEach(id => {
+      var el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+
+    toast('Report generated — ' + filtered.length + ' records');
+  } catch(err) {
+    toast('Report error: ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Generate Report'; }
+  }
+}
+
+function _renderReportSummary(data) {
+  var gpsN  = data.filter(a => a.lat).length;
+  var repsN = new Set(data.map(a => a.userName).filter(Boolean)).size;
+  var types = new Set(data.map(a => a.activityType).filter(Boolean)).size;
+
+  document.getElementById('rptTotal').textContent    = data.length;
+  document.getElementById('rptReps').textContent     = repsN;
+  document.getElementById('rptWon').textContent      = types;
+  document.getElementById('rptGpsCount').textContent = gpsN;
+}
+
+function _countBy(data, key) {
+  var counts = {};
+  data.forEach(a => {
+    var v = a[key] || 'Unknown';
+    counts[v] = (counts[v] || 0) + 1;
   });
-});
+  return Object.entries(counts).sort((x,y) => y[1] - x[1]);
+}
 
-  
+function _renderBarChart(containerId, entries, colorClass) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (!entries.length) { el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+  var total = entries.reduce((s,e) => s + e[1], 0);
+  el.innerHTML = entries.slice(0,10).map(([label, count]) => {
+    var pct = total ? Math.round(count / total * 100) : 0;
+    var w   = total ? Math.round(count / entries[0][1] * 100) : 0;
+    return '<div class="chart-bar-row">' +
+      '<div class="chart-bar-label" title="' + esc(label) + '">' + esc(label) + '</div>' +
+      '<div class="chart-bar-track">' +
+        '<div class="chart-bar-fill ' + (colorClass||'') + '" style="width:' + w + '%"></div>' +
+      '</div>' +
+      '<div class="chart-bar-count">' + count + '</div>' +
+      '<div class="chart-bar-pct">' + pct + '%</div>' +
+    '</div>';
+  }).join('');
+}
+
+function _renderReportCharts(data) {
+  _renderBarChart('rptTypeChart',    _countBy(data, 'activityType'), '');
+  // Outcome chart removed
+  _renderBarChart('rptRepChart',     _countBy(data, 'userName'),     'blue');
+  _renderTimeChart('rptTimeChart',   data);
+}
+
+function _renderTimeChart(containerId, data) {
+  var el = document.getElementById(containerId);
+  if (!el || !data.length) { if(el) el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+
+  // Group by day
+  var buckets = {};
+  data.forEach(a => {
+    var d = new Date(a.timestamp).toLocaleDateString('en-MY', { day:'2-digit', month:'short' });
+    buckets[d] = (buckets[d] || 0) + 1;
+  });
+
+  var entries = Object.entries(buckets).sort((a,b) => {
+    return new Date(a[0]) - new Date(b[0]);
+  }).slice(-14); // last 14 days shown
+
+  if (!entries.length) { el.innerHTML = '<div class="report-empty">No data</div>'; return; }
+  var maxCount = Math.max(...entries.map(e => e[1]));
+
+  el.innerHTML = '<div class="time-chart-row">' +
+    entries.map(([label, count]) => {
+      var h = maxCount ? Math.round(count / maxCount * 100) : 0;
+      return '<div class="time-bar-col">' +
+        '<div class="time-bar-count">' + count + '</div>' +
+        '<div class="time-bar-fill" style="height:' + h + 'px"></div>' +
+        '<div class="time-bar-label">' + esc(label) + '</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+function _renderReportTable(data) {
+  var countEl = document.getElementById('rptResultCount');
+  if (countEl) countEl.textContent = data.length + ' record' + (data.length !== 1 ? 's' : '');
+
+  var questions = db.getQuestions();
+  var isAdm     = auth.isAdmin();
+
+  // Build thead
+  var thead = document.getElementById('rptThead');
+  if (thead) {
+    thead.innerHTML = '<tr>' +
+      '<th>Date &amp; Time</th>' +
+      '<th>Rep</th>' +
+      '<th>Merchant / Prospect</th>' +
+      '<th>Business Address</th>' +
+      '<th>Type</th>' +
+      questions.map(q => '<th>' + esc(q.label) + '</th>').join('') +
+      (isAdm ? '<th>GPS</th>' : '') +
+    '</tr>';
+  }
+
+  // Build tbody
+  var tbody = document.getElementById('rptTbody');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="' + (8 + questions.length + (isAdm?1:0)) + '" class="empty-td">No records match the selected filters.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(a => {
+    var ans = a.customAnswers || {};
+    return '<tr>' +
+      '<td style="white-space:nowrap;font-family:var(--font-mono);font-size:.75rem;color:var(--text2)">' + formatDateTime(a.timestamp) + '</td>' +
+      '<td style="font-size:.82rem">' + esc(a.userName || '—') + '</td>' +
+      '<td><strong>' + esc(a.clientName) + '</strong></td>' +
+      '<td style="font-size:.82rem;color:var(--text2)">' + esc(a.businessAddress || '—') + '</td>' +
+      '<td>' + esc(a.activityType) + '</td>' +
+      questions.map(q => {
+        var v = ans[q.id];
+        var cell;
+        if (q.type === 'photo' && v && v.startsWith && v.startsWith('data:image')) {
+          cell = '<img src="' + v + '" class="photo-thumb" alt="photo" />';
+        } else {
+          cell = esc(Array.isArray(v) ? v.join(', ') : (v||'—'));
+        }
+        return '<td style="font-size:.82rem;color:var(--text2)">' + cell + '</td>';
+      }).join('') +
+      (isAdm ? '<td style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3)">' + (a.lat ? a.lat.toFixed(4)+','+a.lng.toFixed(4) : '—') + '</td>' : '') +
+    '</tr>';
+  }).join('');
+}
+
+function exportReportCSV() {
+  if (!_reportData.length) { toast('Run a report first', 'error'); return; }
+  var questions = db.getQuestions();
+  var isAdm     = auth.isAdmin();
+
+  var headers = ['Date','Rep','Merchant/Prospect','Business Address','Type']
+    .concat(questions.map(q => q.label))
+    .concat(['Notes'])
+    .concat(isAdm ? ['Latitude','Longitude','GPS Address'] : []);
+
+  var rows = _reportData.map(a => {
+    var ans = a.customAnswers || {};
+    var row = [
+      formatDateTime(a.timestamp),
+      a.userName || '',
+      a.clientName,
+      a.businessAddress || '',
+      a.activityType,
+    ];
+    questions.forEach(q => {
+      var v = ans[q.id];
+      if (q.type === 'photo' && v && v.startsWith && v.startsWith('data:image')) {
+        row.push('[Photo attached]');
+      } else {
+        row.push(Array.isArray(v) ? v.join('; ') : (v || ''));
+      }
+    });
+    if (isAdm) {
+      row.push(a.lat ?? '');
+      row.push(a.lng ?? '');
+      row.push(a.gpsAddress || a.address || '');
+    }
+    return row;
+  });
+
+  var csv  = [headers, ...rows].map(r =>
+    r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')
+  ).join('\n');
+
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url;
+  a.download = 'sas-report-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Report exported!');
+}
+</script>
+</body>
+</html>
