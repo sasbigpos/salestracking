@@ -1152,6 +1152,7 @@ input[type="checkbox"] { width: auto; margin-right: .45rem; }
             <span class="user-role" id="userRoleLabel">—</span>
           </div>
         </div>
+        <div id="dbConnStatus" style="font-size:.68rem;font-family:var(--font-mono);color:var(--text3);padding:.3rem .75rem;margin-bottom:.4rem;text-align:center">⚪ Local mode</div>
         <button class="theme-toggle-btn" id="themeToggleBtn" onclick="fpToggleTheme()" title="Toggle light/dark mode">
           <span id="themeIcon">☀️</span>
           <span id="themeLabel">Light Mode</span>
@@ -2090,7 +2091,23 @@ class DB {
     this._firestore = null;
     this._app       = null;
     this._fs        = null;
+    // Resolves once the boot-time reconnect attempt finishes (success or fail).
+    // Callers that need Firestore (e.g. register()) can await this instead
+    // of racing against an arbitrary timeout themselves.
+    this._readyResolvers = [];
+    this._ready = new Promise(resolve => { this._readyResolvers.push(resolve); });
   }
+
+  // Mark the connection attempt as finished (called once, success or fail)
+  _markReady() {
+    if (this._readyResolvers.length) {
+      this._readyResolvers.forEach(r => r());
+      this._readyResolvers = [];
+    }
+  }
+
+  // Await this to know the initial connection attempt has settled
+  async whenReady() { return this._ready; }
 
   // init() is now instant — no network calls, no dynamic imports
   // Firebase connects lazily via connectFirestore() called from Settings
@@ -2100,31 +2117,50 @@ class DB {
     // in the BACKGROUND (non-blocking, with a hard timeout so it
     // can never hang or delay the UI).
     var cfg = this.getLocalConfig();
-    if (cfg && cfg.apiKey) {
-      var self = this;
-      Promise.race([
-        self.connectFirestore(cfg),
-        new Promise(function(_, rej) {
-          setTimeout(function() { rej(new Error('Firebase reconnect timeout')); }, 8000);
-        })
-      ]).then(async function() {
-        console.log('[DB] Reconnected to Firestore on boot');
-        // Pull latest questionnaire config from Firestore into local cache
-        try {
-          const { doc, getDoc } = self._fs;
-          const snap = await getDoc(doc(self._firestore, 'config', 'questions'));
-          if (snap.exists() && snap.data().questions) {
-            self._localSet(KEYS.questions, snap.data().questions);
-          }
-        } catch (e) {
-          console.warn('[DB] Could not sync questionnaire from Firestore:', e.message);
+    if (!cfg || !cfg.apiKey) {
+      this._markReady();  // nothing to connect to — ready immediately
+      return;
+    }
+    var self = this;
+    Promise.race([
+      self.connectFirestore(cfg),
+      new Promise(function(_, rej) {
+        setTimeout(function() { rej(new Error('Firebase reconnect timeout')); }, 8000);
+      })
+    ]).then(async function() {
+      console.log('[DB] Reconnected to Firestore on boot');
+      self._updateConnIndicator(true);
+      // Pull latest questionnaire config from Firestore into local cache
+      try {
+        const { doc, getDoc } = self._fs;
+        const snap = await getDoc(doc(self._firestore, 'config', 'questions'));
+        if (snap.exists() && snap.data().questions) {
+          self._localSet(KEYS.questions, snap.data().questions);
         }
-        // Re-render dashboard/history/questionnaire once Firestore data is synced
-        if (typeof refreshDashboard === 'function') refreshDashboard();
-        if (typeof q !== 'undefined' && q.init) q.init();
-      }).catch(function(err) {
-        console.warn('[DB] Firestore reconnect failed, staying in local mode:', err.message);
-      });
+      } catch (e) {
+        console.warn('[DB] Could not sync questionnaire from Firestore:', e.message);
+      }
+      // Re-render dashboard/history/questionnaire once Firestore data is synced
+      if (typeof refreshDashboard === 'function') refreshDashboard();
+      if (typeof q !== 'undefined' && q.init) q.init();
+    }).catch(function(err) {
+      console.warn('[DB] Firestore reconnect failed, staying in local mode:', err.message);
+      self._updateConnIndicator(false);
+    }).finally(function() {
+      self._markReady();
+    });
+  }
+
+  // Update the small connection badge in the sidebar, if present
+  _updateConnIndicator(connected) {
+    var el = document.getElementById('dbConnStatus');
+    if (!el) return;
+    if (connected) {
+      el.textContent = '🟢 Firestore connected';
+      el.style.color = 'var(--green)';
+    } else {
+      el.textContent = '⚪ Local mode';
+      el.style.color = 'var(--text3)';
     }
   }
 
@@ -2238,6 +2274,47 @@ class DB {
       .catch(() => {});
   }
 
+  // ── Accounts sync (Firestore 'accounts' collection) ──
+  // Non-blocking — local fp_accounts in localStorage remains the
+  // source of truth for auth (so the app keeps working offline);
+  // Firestore is kept in sync as a secondary mirror for visibility
+  // across devices/admins.
+  syncAccountToFirestore(account) {
+    if (!this.isOnline || !account || !account.uid) return;
+    try {
+      const { doc, setDoc } = this._fs;
+      // Never write the hashed password to Firestore
+      const safeAccount = { ...account };
+      delete safeAccount.password;
+      setDoc(doc(this._firestore, 'accounts', account.uid), safeAccount)
+        .then(() => console.log('[DB] Account synced to Firestore:', account.email))
+        .catch(e => console.warn('[DB] Account sync failed:', e.message));
+    } catch (e) {
+      console.warn('[DB] syncAccountToFirestore error:', e.message);
+    }
+  }
+
+  deleteAccountFromFirestore(uid) {
+    if (!this.isOnline || !uid) return;
+    try {
+      const { doc, deleteDoc } = this._fs;
+      deleteDoc(doc(this._firestore, 'accounts', uid)).catch(() => {});
+    } catch (_) {}
+  }
+
+  // Pull all accounts from Firestore (used to merge into local cache on reconnect)
+  async fetchAccountsFromFirestore() {
+    if (!this.isOnline) return null;
+    try {
+      const { collection, getDocs } = this._fs;
+      const snap = await getDocs(collection(this._firestore, 'accounts'));
+      return snap.docs.map(d => d.data());
+    } catch (e) {
+      console.warn('[DB] fetchAccountsFromFirestore failed:', e.message);
+      return null;
+    }
+  }
+
   // ── Questions ───────────────────────────────────
   getQuestions() { return this._localGet(KEYS.questions); }
   saveQuestions(q) {
@@ -2262,7 +2339,20 @@ class DB {
   saveConfig(cfg) { this._localSet('fp_app_config', cfg); }
 
   // ── Config / Profile ────────────────────────────
-  getLocalConfig()      { return this._localGet(KEYS.config, null); }
+  getLocalConfig() {
+    var saved = this._localGet(KEYS.config, null);
+    if (saved) return saved;
+    // Built-in default project config — used only if nothing has been
+    // saved yet, so the Settings form is pre-filled on first run.
+    return {
+      apiKey:            "AIzaSyAdYozjJmmNcK_NRR7ohUiA9qFAo75JsHI",
+      authDomain:        "salestracking-a11f2.firebaseapp.com",
+      projectId:         "salestracking-a11f2",
+      storageBucket:     "salestracking-a11f2.firebasestorage.app",
+      messagingSenderId: "158750163403",
+      appId:             "1:158750163403:web:52ab0292ffdc5d0a2eb64e",
+    };
+  }
   saveLocalConfig(cfg)  { localStorage.setItem(KEYS.config, JSON.stringify(cfg)); }
   getProfile()          { return this._localGet(KEYS.profile, null); }
   saveProfile(p)        { localStorage.setItem(KEYS.profile, JSON.stringify(p)); }
@@ -2389,6 +2479,11 @@ class Auth {
     // Save to local accounts — this is the primary store
     accounts.push(newAccount);
     localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    // Wait for the initial Firestore connection attempt to settle
+    // (so we don't silently skip the sync just because the boot-time
+    // reconnect was still in progress), then mirror the account over.
+    await this.db.whenReady();
+    this.db.syncAccountToFirestore(newAccount);
 
     // Also try Firebase Auth (non-blocking — failure won't stop registration)
     if (this.db.isOnline && this.db._app) {
@@ -2488,6 +2583,8 @@ class Auth {
     if (changes.password) changes.password = hashPwd(changes.password);
     accounts[idx] = { ...accounts[idx], ...changes };
     localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    // Mirror updated account to Firestore (non-blocking)
+    this.db.syncAccountToFirestore(accounts[idx]);
     if (this._user?.uid === uid) {
       this._user = { ...this._user, ...changes };
       localStorage.setItem('fp_user', JSON.stringify(this._user));
@@ -2499,6 +2596,8 @@ class Auth {
     if (uid === this._user?.uid) throw new Error('Cannot delete your own account');
     const accounts = (this._safeGet('fp_accounts') || []).filter(a => a.uid !== uid);
     localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+    // Mirror deletion to Firestore (non-blocking)
+    this.db.deleteAccountFromFirestore(uid);
   }
 
   updateProfile(p) {
@@ -3424,7 +3523,7 @@ class UserManager {
         alert('This email is already registered'); return;
       }
       const uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-      accounts.push({
+      const newAcc = {
         uid, email: email.trim(),
         password: hashPwd(pwd),
         name: name || email.split('@')[0],
@@ -3432,8 +3531,11 @@ class UserManager {
         team: team || '',
         active: true,
         createdAt: Date.now(),
-      });
+      };
+      accounts.push(newAcc);
       localStorage.setItem('fp_accounts', JSON.stringify(accounts));
+      // Mirror to Firestore (non-blocking)
+      this.db.syncAccountToFirestore(newAcc);
       document.getElementById('addUserForm').reset();
       this.render();
       showToast('User created');
