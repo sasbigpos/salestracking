@@ -2140,9 +2140,14 @@ class DB {
       } catch (e) {
         console.warn('[DB] Could not sync questionnaire from Firestore:', e.message);
       }
-      // Re-render dashboard/history/questionnaire once Firestore data is synced
+      // Re-render everything that depends on Firestore data
       if (typeof refreshDashboard === 'function') refreshDashboard();
       if (typeof q !== 'undefined' && q.init) q.init();
+      // Re-render history if it's currently the active page
+      var activePage = document.querySelector('.page.active');
+      if (activePage && activePage.id === 'page-history' && typeof history !== 'undefined') {
+        history.render();
+      }
     }).catch(function(err) {
       console.warn('[DB] Firestore reconnect failed, staying in local mode:', err.message);
       self._updateConnIndicator(false);
@@ -3747,12 +3752,17 @@ function navigateTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page-${page}`)?.classList.add('active');
 
-  if (page === 'dashboard')     refreshDashboard();
-  if (page === 'history')       { loadSelectOptions(); history.render(); }
+  if (page === 'dashboard')     db.whenReady().then(() => refreshDashboard());
+  if (page === 'history') {
+    loadSelectOptions();
+    // Wait for Firestore to be ready before rendering history,
+    // so we always show live data rather than an empty local cache
+    db.whenReady().then(() => history.render());
+  }
   if (page === 'log')           { loadSelectOptions(); initLogMap(); }
   if (page === 'questionnaire') q.render();
   if (page === 'users')         userMgr.render();
-  if (page === 'reports')       initReportPage();
+  if (page === 'reports')       db.whenReady().then(() => initReportPage());
 
   fpCloseSidebar();
 }
@@ -3874,7 +3884,7 @@ function updateUserBadge() {
 }
 
 // ── Dashboard ─────────────────────────────────────
-async function initDashboard() { await refreshDashboard(); }
+async function initDashboard() { db.whenReady().then(() => refreshDashboard()); }
 
 async function refreshDashboard() {
   const user        = auth.currentUser();
